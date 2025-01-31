@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.contrib.auth import get_user_model
 from django.views.generic import TemplateView, CreateView
 from django.urls import reverse_lazy
 from .forms import CustomUserCreationForm
