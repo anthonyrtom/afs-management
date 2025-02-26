@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Accountants{% endblock %}
+
+{% block content %}
+    <h2>All Accountants</h2>
+
+    {% if accountants %}
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for accountant in accountants %}
+                    <tr>
+                        <td>{{ accountant.get_full_name }}</td>
+                        <td>{{ accountant.username }}</td>
+                        <td>{{ accountant.email }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No accountants found.</p>
+    {% endif %}
+{% endblock %}

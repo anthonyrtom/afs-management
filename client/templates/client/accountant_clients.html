@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %} Accountant Clients{% endblock title %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+    <h2>Filter Clients by Accountant</h2>
+
+    {% if form %}
+        <form method="GET">
+        {{ form.as_p }}
+        <button class="btn btn-secondary" type="submit">Filter</button>
+        </form>
+        <div class="container mt-2">
+    {% else %}
+        <p>No accountants available.</p>
+    {% endif %}
+
+    {% if clients is not None %}
+        <h3>Clients</h3>
+        {% if clients %}
+        <table class="table table-striped table-hover">
+            {% include "client/_table_headers.html" with headers=headers %}
+            <tbody>
+                {% for client in clients %}
+                    <tr>
+                        <td>{{client.name}}</td>
+                        <td>{{client.client_type.name}}</td>
+                        <td>{{client.month_end}}</td>
+                        <td>{{client.vat_reg_number}}</td>
+                        <td>{{client.accountant.first_name}} {{client.accountant.last_name}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No clients found for the selected accountant.</p>
+        {% endif %}
+    {% endif %}
+    </div>
+    {% else %}
+    <h2>Need to login first</h2>
+    {% endif %}
+{% endblock %}

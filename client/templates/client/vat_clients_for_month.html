@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %} All Clients{% endblock title %}
+
+{% block content %} 
+    {% if user.is_authenticated %}
+    <form>
+        {{form.as_p}}
+        <button type="submit" class="btn btn-secondary">Get Clients</button>
+    </form>
+    {% if month %}
+        <h2 class="h2 mt-2">VAT Vendors for {{month}}</h2>
+    {% else %}
+        <h2 class="h2 mt-2">All VAT Vendors</h2>
+    {% endif %}
+        <table class="table table-striped table-hover">
+            {% include "client/_table_headers.html" with headers=headers %}
+            <tbody>
+                {% for client in clients %}
+                    <tr>
+                        <td>{{client.name}}</td>
+                        <td>{{client.client_type.name}}</td>
+                        <td>{{client.month_end}}</td>
+                        <td>{{client.vat_reg_number}}</td>
+                        <td>{{client.accountant.first_name}} {{client.accountant.last_name}}</td>
+                        <td>{{client.vat_category.vat_category}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock content %}

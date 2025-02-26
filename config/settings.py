@@ -129,3 +129,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.CustomUser'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
+
+FIRST_FINANCIAL_YEAR = 2000
+LAST_FINANCIAL_YEAR = 9999
+MONTHS_LIST = ["january", "february", "march", "april", "may", "june",
+               "july", "august", "september", "october", "november", "december"]

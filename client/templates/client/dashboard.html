@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %} Dashboard {% endblock title %}
+
+{% block content %} 
+{% if user.is_authenticated %}
+   <h2 class="h2">Dashboard</h2>
+   <table class="table table-striped table-hover table-dark">
+        <thead>
+            <tr scope="col">
+               <th>Description</th>
+               <th>Number</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+               <td>Number of Clients</td>
+               <td>{{client_information.client_count}}</td>
+            </tr>
+            <tr>
+               <td>Number of financial years</td>
+               <td>{{client_information.financial_years}}</td>
+            </tr>
+            <tr>
+               <td>Unique Client Types Count</td>
+               <td>{{client_information.client_types}}</td>
+            </tr>
+            <tr>
+               <td>Number of VAT Categories</td>
+               <td>{{client_information.vat_categories}}</td>
+            </tr>
+            <tr>
+               <td>Number of Accountants</td>
+               <td>{{client_information.accountants}}</td>
+            </tr>
+            <tr>
+               <td>Clients without an Accountants</td>
+               <td>{{client_information.noaccountant}}</td>
+            </tr>
+            <tr>
+               <td>Number of clients registered for VAT</td>
+               <td>{{client_information.vatvendors}}</td>
+            </tr>
+        </tbody>
+   </table>
+{% endif %}
+{% endblock content %}

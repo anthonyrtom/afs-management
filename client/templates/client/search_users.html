@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Users{% endblock %}
+
+{% block content %}
+    <h2>Search Users</h2>
+
+    <form method="GET">
+        <div class="row">
+            <div class="col-md-6">
+                {{ form.query.label_tag }} {{ form.query }}
+            </div>
+            <div class="col-md-4">
+                {{ form.job_title.label_tag }} {{ form.job_title }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary mt-4">Search</button>
+            </div>
+        </div>
+    </form>
+
+    {% if users %}
+        <h3>Results:</h3>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Job Title</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.get_full_name }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.job_title.title }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No users found.</p>
+    {% endif %}
+{% endblock %}

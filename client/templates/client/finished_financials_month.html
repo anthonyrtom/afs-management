@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %} Finished Financials for a month {% endblock title %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+    <form method="GET">
+        {{form.as_p}}
+        <button type="submit" class="btn btn-secondary">Get Finished Clients</button>
+    </form>
+
+      {% if finished_afs %}
+        <h3 class="h3">Results for {{month}}</h3>
+        <table class="table table-striped table-hover">
+            {% include "client/_table_headers.html" with headers=headers %}
+            <tbody>
+                {% for record in finished_afs %}
+                    <tr>
+                        <td>{{record.client.name}}</td>
+                        <td>{{record.financial_year}}</td>
+                        <td>{{record.schedule_date}}</td>
+                        <td>{{record.finish_date}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+      {% else %}
+        {% if month %}
+            <p class="p2">No records found for this month.</p>
+        {% else %}
+            <p class="p2">Please select a month above</p>
+        {% endif %}
+
+      {% endif %}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %} Accountant Clients{% endblock title %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        {% if scheduled %}
+            <h2>Scheduled Accountants</h2>
+        {% else %}
+        <h2>No Scheduled Financials yet to be finished</h2>
+        {% endif %}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %} Unfinished Financials {% endblock title %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+    <form method="GET">
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-secondary">Get Unfinished Clients</button>
+    </form>
+
+    {% if data %}
+        <h3 class="h3">Unfinished AFSs</h3>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    {% for header in headers %}
+                        <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in client_data %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>  <!-- Displays client name and YES/NO values -->
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="p2">Please select the options above</p>
+    {% endif %}
+    {% endif %}
+{% endblock %}

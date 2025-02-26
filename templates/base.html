@@ -17,14 +17,14 @@
 
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a href="#" class="nav-link">Dashboard</a>
+                        <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link">Reports</a>
+                        <a href="{% url 'reports' %}" class="nav-link">Reports</a>
                     </li>
                     {% if user.is_staff %}
                     <li class="nav-item">
-                        <a href="#" class="nav-link">Other</a>
+                        <a href="{% url 'admin:index' %}" class="nav-link">Admin </a>
                     </li>
                     {% endif %}
                     <li class="nav-item">
