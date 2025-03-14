@@ -4,7 +4,6 @@
 
 {% block content %}
     {% if user.is_authenticated %}
-    {% if user.is_authenticated %}
     <form method="GET">
         {{form.as_p}}
         <button type="submit" class="btn btn-secondary">Get Finished Clients</button>
@@ -28,6 +27,5 @@
       {% else %}
 
       {% endif %}
-    {% endif %}
     {% endif %}
 {% endblock %}

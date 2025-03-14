@@ -3,13 +3,14 @@
 {% block title %}Search Clients{% endblock %}
 
 {% block content %}
+{% if user.is_authenticated %}
     <h2>Search Clients</h2>
 
     <form method="GET">
         {{ form.as_p }}
         <button type="submit" class="btn btn-secondary">Search</button>
     </form>
-    {% if user.is_authenticated %}
+    
         {% if clients %}
             <h3>Results:</h3>
             <table class="table table-bordered table-striped">
@@ -33,7 +34,7 @@
                             <td>{{ client.income_tax_number }}</td>
                             <td>{{ client.paye_reg_number }}</td>
                             <td>{{ client.uif_reg_number }}</td>
-                            <td>{{ client.cipc_reg_number }}</td>
+                            <td>{{ client.entity_reg_number }}</td>
                             <td>{{ client.vat_reg_number }}</td>
                             <td>{{ client.internal_id_number }}</td>
                         </tr>

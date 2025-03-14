@@ -1,11 +1,13 @@
+from django.utils.html import format_html
+from django.urls import reverse
 from django.contrib import admin
 from django.db.models import Q
-from .models import VatCategories, Client, FinancialYear, ClientType, ClientFinancialYear, Months, VatSubmissionHistory
+from .models import VatCategory, Client, FinancialYear, ClientType, ClientFinancialYear, Month, VatSubmissionHistory, FinancialYearSetup
 from . forms import ClientAddForm, ClientFinancialYearForm, VatSubmissionHistoryForm
 
 
 class VatCategoryAdmin(admin.ModelAdmin):
-    model = VatCategories
+    model = VatCategory
     list_display = ["vat_category", "category_descr"]
 
 
@@ -19,7 +21,8 @@ class ClientFinancialYearAdmin(admin.ModelAdmin):
 class ClientAdmin(admin.ModelAdmin):
     model = Client
     form = ClientAddForm
-    list_display = ["name", "month_end", "last_day", "cipc_reg_number"]
+    list_display = ["name", "vat_reg_number",
+                    "month_end", "last_day", "entity_reg_number"]
     search_fields = ('name', 'surname')
 
 
@@ -38,10 +41,18 @@ class VatSubmissionHistoryAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-admin.site.register(VatCategories, VatCategoryAdmin)
+admin.site.register(VatCategory, VatCategoryAdmin)
 admin.site.register(Client, ClientAdmin)
 admin.site.register(ClientFinancialYear, ClientFinancialYearAdmin)
 admin.site.register(VatSubmissionHistory, VatSubmissionHistoryAdmin)
 admin.site.register(FinancialYear)
 admin.site.register(ClientType)
-admin.site.register(Months)
+admin.site.register(Month)
+admin.site.register(FinancialYearSetup)
+
+admin.site.site_header = format_html(
+    '<a href="{}" style="text-decoration: none; color: white;">Home</a>',
+    reverse('home')
+)
+admin.site.site_title = "E-Accountant Admin"
+admin.site.index_title = "Welcome to E-Accountant Admin Panel"

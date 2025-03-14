@@ -1,6 +1,6 @@
 from django import forms
 from django.conf import settings
-from .models import ClientType, Client, ClientFinancialYear, VatSubmissionHistory, VatCategories
+from .models import ClientType, Client, ClientFinancialYear, VatSubmissionHistory, VatCategory, FinancialYear
 from users.models import CustomUser, JobTitle
 
 
@@ -53,7 +53,7 @@ class ClientFilterForm(forms.Form):
         ('income_tax_number', 'Income Tax Number'),
         ('paye_reg_number', 'PAYE Registration Number'),
         ('uif_reg_number', 'UIF Registration Number'),
-        ('cipc_reg_number', 'CIPC Registration Number'),
+        ('entity_reg_number', 'CIPC Registration Number'),
         ('vat_reg_number', 'VAT Registration Number'),
         ('vat_category', 'VAT Category'),
         ('registered_address', 'Registered Address'),
@@ -134,9 +134,16 @@ class VatSubmissionHistoryForm(forms.ModelForm):
 
 class VatCategoryForm(forms.Form):
     vat_category = forms.ModelChoiceField(
-        queryset=VatCategories.objects.all(),
+        queryset=VatCategory.objects.all(),
         required=False,
-        empty_label="Select Vat Category",
+        empty_label="Select VAT Category",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    accountant = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(job_title__title="Accountant"),
+        required=False,
+        empty_label="All Accountants",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
@@ -145,5 +152,95 @@ class VatClientsByMonthForm(forms.Form):
     months_list = settings.MONTHS_LIST
     choices = [("all", "ALL")] + [(month, month.upper())
                                   for month in months_list]
-    month = forms.ChoiceField(choices=choices, required=False, widget=forms.Select(
-        attrs={"class": "form-control"}))
+
+    month = forms.ChoiceField(
+        choices=choices,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"})
+    )
+
+    accountant = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(job_title__title="Accountant"),
+        required=False,
+        empty_label="All Accountants",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+
+class VatClientsPeriodProcess(forms.Form):
+    client = forms.ModelChoiceField(
+        queryset=Client.objects.filter(vat_category__isnull=False),
+        required=False,
+        empty_label="All VAT Vendors",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    year = forms.ModelChoiceField(
+        queryset=FinancialYear.objects.all(),
+        required=True,
+        empty_label="Select a year",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    months_list = settings.MONTHS_LIST
+    choices = [("all", "ALL")] + [(month, month.upper())
+                                  for month in months_list]
+
+    month = forms.ChoiceField(
+        choices=choices,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"})
+    )
+
+    accountant = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(job_title__title="Accountant"),
+        required=False,
+        empty_label="All Accountants",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+
+class VatSubmissionUpdateForm(forms.ModelForm):
+    class Meta:
+        model = VatSubmissionHistory
+        fields = ['submitted', 'client_notified', 'paid', 'comment']
+
+
+class ClientFinancialYearProcessForm(forms.Form):
+    client = forms.ModelChoiceField(
+        queryset=Client.objects.all(),
+        required=False,
+        empty_label="All Clients",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    financial_year = forms.ModelChoiceField(
+        queryset=FinancialYear.objects.all(),
+        required=True,
+        empty_label="Select a year",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+
+class ClientFinancialYearUpdateForm(forms.ModelForm):
+    class Meta:
+        model = ClientFinancialYear
+        fields = ['schedule_date', 'finish_date',
+                  'wp_done', 'afs_done', 'posting_done']
+    finish_date = forms.DateField(required=False)
+
+
+class CreateandViewVATForm(forms.Form):
+
+    year = forms.ModelChoiceField(
+        queryset=FinancialYear.objects.all(),
+        required=True,
+        empty_label="Select a year",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    months_list = settings.MONTHS_LIST
+    choices = [("all", "ALL")] + [(month, month.upper())
+                                  for month in months_list]
+
+    month = forms.ChoiceField(
+        choices=choices,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"})
+    )

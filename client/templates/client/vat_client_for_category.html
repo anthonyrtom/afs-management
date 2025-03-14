@@ -1,32 +1,42 @@
 {% extends 'base.html' %}
 
-{% block title %} All Clients{% endblock title %}
+{% block title %}VAT Clients by Category and Accountant{% endblock %}
 
-{% block content %} 
-    {% if user.is_authenticated %}
-    <form>
-        {{form.as_p}}
-        <button type="submit" class="btn btn-secondary">Get Clients</button>
+{% block content %}
+{% if user.is_authenticated %}
+    <h2>Filter VAT Clients</h2>
+
+    <form method="GET">
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-secondary">Filter</button>
     </form>
-    {% if vat_category %}
-        <h2 class="h2 mt-2">VAT Vendors in category {{vat_category}}</h2>
-    {% else %}
-        <h2 class="h2 mt-2">All VAT Vendors</h2>
-    {% endif %}
-        <table class="table table-striped table-hover">
-            {% include "client/_table_headers.html" with headers=headers %}
+
+    {% if clients %}
+        <h3>Results:</h3>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    {% for header in headers %}
+                        <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
             <tbody>
                 {% for client in clients %}
                     <tr>
-                        <td>{{client.name}}</td>
-                        <td>{{client.client_type.name}}</td>
-                        <td>{{client.month_end}}</td>
-                        <td>{{client.vat_reg_number}}</td>
-                        <td>{{client.accountant.first_name}} {{client.accountant.last_name}}</td>
-                        <td>{{client.vat_category.vat_category}}</td>
+                        <td>{{ client.name }}</td>
+                        <td>{{ client.client_type }}</td>
+                        <td>{{ client.month_end }}</td>
+                        <td>{{ client.vat_reg_number }}</td>
+                        <td>{{ client.accountant.get_full_name }}</td>
+                        <td>{{ client.vat_category.vat_category }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
+    {% else %}
+        <p>No clients found for the selected filters.</p>
     {% endif %}
-{% endblock content %}
+    {% endif %}
+{% endblock %}
+

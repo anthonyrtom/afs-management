@@ -3,6 +3,7 @@
 {% block title %}Accountants{% endblock %}
 
 {% block content %}
+{% if user.is_authenticated %}
     <h2>All Accountants</h2>
 
     {% if accountants %}
@@ -27,4 +28,5 @@
     {% else %}
         <p>No accountants found.</p>
     {% endif %}
+{% endif %}
 {% endblock %}

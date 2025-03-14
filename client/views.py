@@ -1,8 +1,11 @@
 from django.shortcuts import render
 from django.db.models import Q
-from . models import Client, FinancialYear, ClientType, VatCategories
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Month
 from users.models import JobTitle, CustomUser
-from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, ClientSearchForm, UserSearchForm, VatCategoryForm, VatClientsByMonthForm
+from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, ClientSearchForm, UserSearchForm, VatCategoryForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm
 
 
 def dashboard(request):
@@ -13,9 +16,10 @@ def dashboard(request):
     client_information["financial_years"] = financial_years
     client_types = ClientType.objects.count()
     client_information["client_types"] = client_types
-    vat_categories = VatCategories.objects.count()
+    vat_categories = VatCategory.objects.count()
     client_information["vat_categories"] = vat_categories
-    accountants = JobTitle.objects.filter(title="Accountant").count()
+    accountants = CustomUser.objects.filter(
+        job_title__title="Accountant").count()
     client_information["accountants"] = accountants
     noaccountant = Client.objects.filter(accountant__isnull=True).count()
     client_information["noaccountant"] = noaccountant
@@ -24,10 +28,12 @@ def dashboard(request):
     return render(request, "client/dashboard.html", {"client_information": client_information})
 
 
+@login_required
 def reports(request):
     return render(request, "client/reports.html")
 
 
+@login_required
 def view_all_clients(request):
     all_clients = Client.objects.all()
     headers = ["Client Name", "Client Type",
@@ -35,6 +41,7 @@ def view_all_clients(request):
     return render(request, "client/all_clients.html", {"clients": all_clients, "headers": headers})
 
 
+@login_required
 def client_filter_view(request):
     form = ClientFilterForm(request.GET or None)
     with_without = "without"
@@ -49,11 +56,14 @@ def client_filter_view(request):
             with_without = "with"
         clients = Client.objects.all()
         clients = clients.filter(**filter_kwargs)
-        return render(request, 'client/filtered_clients.html', {'form': form, "clients": clients, "statutory_type": field, "with_without": with_without})
+        headers = ["Client Name", "Client Type",
+                   "Month End", "VAT No"]
+        return render(request, 'client/filtered_clients.html', {'form': form, "clients": clients, "statutory_type": field, "with_without": with_without, "headers": headers})
     else:
         return render(request, 'client/get_clients.html', {'form': form})
 
 
+@login_required
 def filter_clients_by_accountant(request):
     form = AccountantFilterForm()
     clients = None
@@ -71,12 +81,14 @@ def filter_clients_by_accountant(request):
     })
 
 
+@login_required
 def scheduled_financials(request):
     scheduled = ClientFinancialYear.objects.filter(
         schedule_date__isnull=False, finish_date__isnull=True)
     return render(request, "client/scheduled_financials.html", {"scheduled": scheduled})
 
 
+@login_required
 def completed_financials(request):
     finished_afs = ClientFinancialYear.objects.filter(
         schedule_date__isnull=False, finish_date__isnull=False)
@@ -85,6 +97,7 @@ def completed_financials(request):
     return render(request, "client/finished_financials.html", {"finished_afs": finished_afs, "headers": headers})
 
 
+@login_required
 def completed_financials_month(request):
     form = CompletedAFSsForm(request.GET or None)
     if form.is_valid():
@@ -97,6 +110,7 @@ def completed_financials_month(request):
     return render(request, "client/finished_financials_month.html", {"form": form})
 
 
+@login_required
 def get_unfinished_financials(request):
     form = MissingAFSsForm(request.GET or None)
     data = False
@@ -148,6 +162,7 @@ def get_unfinished_financials(request):
     })
 
 
+@login_required
 def search_clients(request):
     form = ClientSearchForm(request.GET or None)
     clients = Client.objects.all()  # Default to all clients
@@ -162,7 +177,7 @@ def search_clients(request):
                 Q(income_tax_number__icontains=query) |
                 Q(paye_reg_number__icontains=query) |
                 Q(uif_reg_number__icontains=query) |
-                Q(cipc_reg_number__icontains=query) |
+                Q(entity_reg_number__icontains=query) |
                 Q(vat_reg_number__icontains=query) |
                 Q(internal_id_number__icontains=query)
             )
@@ -170,6 +185,7 @@ def search_clients(request):
     return render(request, "client/search_clients.html", {"form": form, "clients": clients})
 
 
+@login_required
 def get_all_accountants(request):
     accountant = JobTitle.objects.filter(title="Accountant").first()
     if accountant:
@@ -178,6 +194,7 @@ def get_all_accountants(request):
     return render(request, "client/accountants.html")
 
 
+@login_required
 def search_users(request):
     form = UserSearchForm(request.GET or None)
     users = CustomUser.objects.all()  # Default to all users
@@ -199,27 +216,156 @@ def search_users(request):
     return render(request, "client/search_users.html", {"form": form, "users": users})
 
 
+@login_required
 def get_clients_for_category(request):
     form = VatCategoryForm(request.GET or None)
     if form.is_valid():
         selected_category = form.cleaned_data["vat_category"]
-        if selected_category:
-            clients = Client.get_vat_clients_for_category(
-                selected_category.vat_category)
-        else:
-            clients = Client.get_vat_clients_for_category()
+        selected_accountant = form.cleaned_data["accountant"]
+
+        clients = Client.get_vat_clients_for_category(
+            selected_category.vat_category if selected_category else None,
+            selected_accountant if selected_accountant else None
+        )
+
         headers = ["Client Name", "Client Type",
                    "Month End", "VAT No", "Accountant", "Category"]
-        return render(request, "client/vat_client_for_category.html", {"clients": clients, "headers": headers, "vat_category": selected_category})
+
+        return render(request, "client/vat_client_for_category.html", {
+            "clients": clients,
+            "headers": headers,
+            "vat_category": selected_category,
+            "selected_accountant": selected_accountant
+        })
+
     return render(request, "client/vat_client_for_category.html", {"form": form})
 
 
+@login_required
 def get_clients_for_month(request):
     form = VatClientsByMonthForm(request.GET or None)
+
     if form.is_valid():
         month = form.cleaned_data["month"]
-        clients = Client.get_vat_clients_for_month(month=month)
+        selected_accountant = form.cleaned_data["accountant"]
+
+        clients = Client.get_vat_clients_for_month(
+            month=month,
+            accountant=selected_accountant if selected_accountant else None
+        )
+
         headers = ["Client Name", "Client Type",
                    "Month End", "VAT No", "Accountant", "Category"]
-        return render(request, "client/vat_clients_for_month.html", {"clients": clients, "month": month.title(), "headers": headers})
+
+        return render(request, "client/vat_clients_for_month.html", {
+            "clients": clients,
+            "month": month.title() if month else "All",
+            "selected_accountant": selected_accountant,
+            "headers": headers
+        })
+
     return render(request, "client/vat_clients_for_month.html", {"form": form})
+
+
+@login_required
+def process_dashboard(request):
+    return render(request, "client/process_dashboard.html")
+
+
+@login_required
+def process_vat_clients_for_period(request):
+    form = VatClientsPeriodProcess(request.POST or None)
+
+    if form.is_valid():
+        client = form.cleaned_data['client']
+        year = form.cleaned_data['year']
+        month = form.cleaned_data['month']
+        accountant = form.cleaned_data['accountant']
+
+        vat_clients = VatSubmissionHistory.objects.filter(year=year)
+
+        if client and client != "all":
+            vat_clients = vat_clients.filter(client=client)
+        if month and month != "all":
+            month = month.lower()
+            month = settings.MONTHS_LIST.index(month) + 1
+            vat_clients = vat_clients.filter(month=month)
+        if accountant:
+            vat_clients = vat_clients.filter(client__accountant=accountant)
+
+        headers = ["Name", "Period", "Submitted",
+                   "Client Notified", "Paid", "Comment", "Update"]
+
+        return render(request, "client/process_vat_clients_for_month.html", {
+            "vat_clients": vat_clients,
+            "headers": headers
+        })
+
+    if request.method == "POST" and 'client_id' in request.POST:
+        client_id = request.POST.get('client_id')
+        client_instance = VatSubmissionHistory.objects.get(id=client_id)
+        update_form = VatSubmissionUpdateForm(
+            request.POST, instance=client_instance)
+
+        if update_form.is_valid():
+            update_form.save()
+            messages.success(
+                request, "Client VAT status and comment updated successfully!")
+        else:
+            messages.error(
+                request, "Failed to update client data. Please try again.")
+
+    return render(request, "client/process_vat_clients_for_month.html", {"form": form})
+
+
+@login_required
+def process_client_financial_years(request):
+    form = ClientFinancialYearProcessForm(request.POST or None)
+
+    if form.is_valid():
+        client = form.cleaned_data['client']
+        financial_year = form.cleaned_data['financial_year']
+
+        client_financial_years = ClientFinancialYear.objects.filter(
+            financial_year=financial_year)
+        if client:
+            client_financial_years = client_financial_years.filter(
+                client=client)
+
+        headers = ["Client Name", "Financial Year", "Schedule Date",
+                   "Finish Date", "WP Done", "AFS Done", "Posting Done", "Update"]
+
+        return render(request, "client/process_client_financial_years.html", {
+            "client_financial_years": client_financial_years,
+            "headers": headers
+        })
+
+    if request.method == "POST" and 'client_id' in request.POST:
+        client_id = request.POST.get('client_id')
+        client_instance = ClientFinancialYear.objects.get(id=client_id)
+        update_form = ClientFinancialYearUpdateForm(
+            request.POST, instance=client_instance)
+
+        if update_form.is_valid():
+            update_form.save()
+            messages.success(
+                request, "Client financial year updated successfully!")
+        else:
+            messages.error(
+                request, "Failed to update client data. Please try again.")
+            # print(update_form.errors)
+
+    return render(request, "client/process_client_financial_years.html", {"form": form})
+
+
+def create_or_update_vat(request):
+    form = CreateandViewVATForm(request.POST or None)
+    if form.is_valid():
+        year = form.cleaned_data["year"]
+        month = form.cleaned_data["month"]
+        created_clients = VatSubmissionHistory.create_or_get_vat_clients(
+            year, month)
+        count = len(created_clients)
+        headers = ["Name", "Month", "Year", "Update"]
+        return render(request, "client/create_or_view_vat.html", {"created_clients": created_clients, "count": count, "headers": headers})
+    return render(request, "client/create_or_view_vat.html", {"form": form})

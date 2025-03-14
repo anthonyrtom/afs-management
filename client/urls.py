@@ -1,9 +1,10 @@
 from django.urls import path
-from . views import dashboard, reports, view_all_clients, client_filter_view, filter_clients_by_accountant, scheduled_financials, completed_financials, completed_financials_month, get_unfinished_financials, search_clients, get_all_accountants, search_users, get_clients_for_category, get_clients_for_month
+from . views import dashboard, reports, view_all_clients, client_filter_view, filter_clients_by_accountant, scheduled_financials, completed_financials, completed_financials_month, get_unfinished_financials, search_clients, get_all_accountants, search_users, get_clients_for_category, get_clients_for_month, process_dashboard, process_vat_clients_for_period, process_client_financial_years, create_or_update_vat
 
 urlpatterns = [
-    path('dashboard/', dashboard, name="dashboard"),
+    path('process/', process_dashboard, name="process"),
     path('reports/', reports, name="reports"),
+    path('dashboard/', dashboard, name="dashboard"),
     path('all-clients/', view_all_clients, name="all-clients"),
     path('statutory-clients/', client_filter_view, name="statutory-clients"),
     path('get-accountant-clients/', filter_clients_by_accountant,
@@ -26,4 +27,10 @@ urlpatterns = [
          name="get-clients-for-category"),
     path('get-clients-for-month/', get_clients_for_month,
          name="get-clients-for-month"),
+    path('get-clients-for-month-or-accountant/', process_vat_clients_for_period,
+         name="get-clients-for-month-or-accountant"),
+    path('process-clients-for-financial-years/', process_client_financial_years,
+         name="process-clients-for-financial-years"),
+    path('create-or-update-vat/', create_or_update_vat,
+         name="create-or-update-vat"),
 ]

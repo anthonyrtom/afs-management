@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Create VAT{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <h2>Create VAT Clients by Month and year</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-secondary">Create or View Clients</button>
+    </form>
+
+    {% if created_clients %}
+        <h1 class="h1">{{count}} clients found or created</h1>
+    {% else %}
+        <h1 class="h1">No clients found or created</h1>
+    {% endif %}
+{% endif %}
+{% endblock %}

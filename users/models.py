@@ -20,3 +20,12 @@ class JobTitle(models.Model):
 class CustomUser(AbstractUser):
     job_title = models.ForeignKey(
         JobTitle, on_delete=models.SET_NULL, null=True)
+
+    def save(self, *args, **kwargs):
+        if not CustomUser.objects.exists():
+            self.is_superuser = True
+            self.is_staff = True
+        else:
+            if not self.pk:
+                self.is_active = False
+        super().save(*args, **kwargs)

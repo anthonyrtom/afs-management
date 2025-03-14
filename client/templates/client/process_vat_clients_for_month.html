@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}VAT Clients{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <h2>Process VAT Clients by Month or Accountant</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-secondary">Get Clients</button>
+    </form>
+
+    {% if vat_clients %}
+        <h3>VAT Clients</h3>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    {% for header in headers %}
+                        <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in vat_clients %}
+                    <tr>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="client_id" value="{{ client.id }}">
+
+                            <td>{{ client.client.name }}</td>
+                            <td>{{ client.month }} {{ client.year }}</td>
+
+                            <td>
+                                <input type="checkbox" name="submitted" {% if client.submitted %}checked{% endif %}>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="client_notified" {% if client.client_notified %}checked{% endif %}>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="paid" {% if client.paid %}checked{% endif %}>
+                            </td>
+
+                            <!-- Add comment box -->
+                            <td>
+                                <textarea name="comment" class="form-control" rows="2">{{ client.comment }}</textarea>
+                            </td>
+
+                            <td>
+                                <button type="submit" class="btn btn-secondary">Update</button>
+                            </td>
+                        </form>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No clients found for the selected filters.</p>
+    {% endif %}
+{% endif %}
+{% endblock %}
