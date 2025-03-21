@@ -6,14 +6,23 @@ from django.conf import settings
 from users.models import CustomUser
 
 
+from django.core.exceptions import ValidationError
+
+
 class ClientType(models.Model):
-    name = models.CharField(max_length=50, null=False, unique=True)
+    name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
+    def clean(self):
+        self.name = self.name.strip().title()
+        if ClientType.objects.exclude(id=self.id).filter(name__iexact=self.name).exists():
+            raise ValidationError(
+                {'name': f'A client type with the name "{self.name}" already exists.'})
+
     def save(self, *args, **kwargs):
-        self.name = self.name.title()
+        self.full_clean()  # Ensure clean() is called before saving
         super().save(*args, **kwargs)
 
 
@@ -47,7 +56,14 @@ class Month(models.Model):
 
     def save(self, *args, **kwargs):
         self.name = self.name.title()
+        self.full_clean()
         super().save(*args, **kwargs)
+
+    def clean(self):
+        self.name = self.name.strip().title()
+        if Month.objects.exclude(id=self.id).filter(name__iexact=self.name).exists():
+            raise ValidationError(
+                {'name': f'A month with that name "{self.name}" already exists.'})
 
 
 class Client(models.Model):
@@ -90,9 +106,29 @@ class Client(models.Model):
         FinancialYear, on_delete=models.SET_NULL, null=True, related_name="first_fin_year")
     financial_years = models.ManyToManyField(
         FinancialYear, through='ClientFinancialYear', related_name='clients')
+    client_service = models.ManyToManyField(
+        'Service', through='ClientService', related_name='client_services')
 
     def __str__(self):
         return self.name
+
+    def is_afs_client(self):
+        if self.client_type and self.client_type.name == "Individual":
+            return False
+        if not self.is_active:
+            return False
+        if not (self.month_end and self.last_day):
+            return False
+        if not self.first_financial_year:
+            return False
+        return True
+
+    def is_year_after_afs_first(self, year):
+        if not self.is_afs_client():
+            return False
+        if int(self.first_financial_year.the_year) > year:
+            return False
+        return True
 
     @staticmethod
     def get_vat_clients_for_category(category=None, accountant=None):
@@ -122,7 +158,8 @@ class Client(models.Model):
 
         month = month.lower()
         if month == "all":
-            clients = Client.objects.filter(vat_category__isnull=False)
+            clients = Client.objects.filter(
+                vat_category__isnull=False).order_by("name")
         else:
             index = settings.MONTHS_LIST.index(month) + 1
 
@@ -150,7 +187,7 @@ class Client(models.Model):
 
         if accountant:
             clients = clients.filter(accountant=accountant)
-
+        clients = clients.order_by("name")
         return clients
 
 
@@ -162,6 +199,9 @@ class ClientFinancialYear(models.Model):
     wp_done = models.BooleanField(default=False)
     afs_done = models.BooleanField(default=False)
     posting_done = models.BooleanField(default=False)
+    itr34c_issued = models.BooleanField(default=False)
+    client_invoiced = models.BooleanField(default=False)
+    comment = models.TextField(null=True)
 
     class Meta:
         unique_together = ('client', 'financial_year')
@@ -174,6 +214,23 @@ class ClientFinancialYear(models.Model):
             if self.finish_date < self.schedule_date:
                 raise ValidationError(
                     "Finish date must be greater than or equal to schedule date.")
+
+    @staticmethod
+    def setup_clients_afs_for_year(year):
+        created_clients = []
+        if not isinstance(year, int):
+            return created_clients
+        all_clients = Client.objects.all().order_by("name")
+        for client in all_clients:
+            if client.is_afs_client() and client.is_year_after_afs_first(year):
+                fin_year = FinancialYear.objects.filter(the_year=year).first()
+
+                if fin_year:
+                    curr_client, created = ClientFinancialYear.objects.get_or_create(
+                        client=client, financial_year=fin_year
+                    )
+                    created_clients.append(curr_client)
+        return created_clients
 
 
 class FinancialYearSetup(models.Model):
@@ -211,7 +268,6 @@ class VatSubmissionHistory(models.Model):
         vat_clients = Client.get_vat_clients_for_month(month=month)
         created_clients = []
         for vat_client in vat_clients:
-            # year_instance = FinancialYear.objects.filter(the_year=year).first()
             month_instance = Month.objects.filter(name=month.title()).first()
             created_client, _ = VatSubmissionHistory.objects.get_or_create(
                 client=vat_client, year=year, month=month_instance)
@@ -220,3 +276,45 @@ class VatSubmissionHistory(models.Model):
 
     def __str__(self):
         return f"{self.client.name}"
+
+
+class Service(models.Model):
+    name = models.CharField(max_length=150, unique=True, null=False)
+    description = models.TextField(null=True)
+
+    def __str__(self):
+        return f"{self.name}"
+
+    def save(self, *args, **kwargs):
+        self.name = self.name.title()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        self.name = self.name.strip().title()
+        if Service.objects.exclude(id=self.id).filter(name__iexact=self.name).exists():
+            raise ValidationError(
+                {'name': f'A service with that name "{self.name}" already exists.'})
+
+
+class ClientService(models.Model):
+    client = models.ForeignKey(
+        Client, on_delete=models.SET_NULL, null=True, related_name="client_services")
+    service = models.ForeignKey(
+        Service, on_delete=models.SET_NULL, null=True, related_name="client_service")
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
+    comment = models.TextField(null=True)
+
+    class Meta:
+        unique_together = ["client", "service"]
+        verbose_name_plural = "Client Services"
+
+    def __str__(self):
+        return f"{self.client.name}-{self.service.name}"
+
+    def clean(self):
+        if self.start_date and self.end_date:
+            if self.end_date < self.start_date:
+                raise ValidationError(
+                    "Finish date must be greater than or equal to start date.")

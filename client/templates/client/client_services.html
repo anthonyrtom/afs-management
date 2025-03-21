@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <div class="container m-2">
+        <h2 class="h2 m-2">Select a Service</h2>
+        <form method="get">
+            <label for="service">Service:</label>
+            <select name="service" id="service" onchange="this.form.submit()">
+                <option value="">-- Select a Service --</option>
+                {% for service in services %}
+                    <option value="{{ service.id }}" {% if request.GET.service == service.id|stringformat:"s" %}selected{% endif %}>
+                        {{ service.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        {% if clients %}
+            <h3 class="h3 m-2">{{count}} Clients for Selected Service</h3>
+            <ol>
+                {% for client_service in clients %}
+                    <li><a href="{% url 'client-detail' client_service.client.id %}" class="text-decoration-none">{{client_service.client.name}}</a></li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            {% if request.GET.service %}
+                <p>No clients found for this service.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

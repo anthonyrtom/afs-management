@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Client Financial Years{% endblock %}
+
+{% block content %}
+<h2>Manage Client Financial Statements Flow</h2>
+
+{% if client_financial_years %}
+    <h3>{{count}} Clients found</h3>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                {% for header in headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in client_financial_years %}
+            <tr>
+                <form method="post" action="{% url 'update_client_financial_year' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="client_id" value="{{ entry.id }}">
+                    <td><a href="{% url 'client-detail' entry.client.id %}" class="text-decoration-none">{{entry.client.name}}</a></td>
+                    
+                    <td>{{ entry.financial_year }}</td>
+                    <td><input type="date" name="schedule_date" value="{{ entry.schedule_date|date:'Y-m-d' }}"></td>
+                    <td><input type="date" name="finish_date" value="{{ entry.finish_date|date:'Y-m-d' }}"></td>                        
+                    
+                    <!-- Handle checkboxes -->
+                    <td>
+                        <input type="hidden" name="wp_done" value="false">
+                        <input type="checkbox" name="wp_done" value="true" {% if entry.wp_done %} checked {% endif %}>
+                    </td>
+                    <td>
+                        <input type="hidden" name="afs_done" value="false">
+                        <input type="checkbox" name="afs_done" value="true" {% if entry.afs_done %} checked {% endif %}>
+                    </td>
+                    <td>
+                        <input type="hidden" name="posting_done" value="false">
+                        <input type="checkbox" name="posting_done" value="true" {% if entry.posting_done %} checked {% endif %}>
+                    </td>
+                    <td>
+                        <input type="hidden" name="itr34c_issued" value="false">
+                        <input type="checkbox" name="itr34c_issued" value="true" {% if entry.itr34c_issued %} checked {% endif %}>
+                    </td>
+                    
+                    <td>
+                        <button type="submit" class="btn btn-secondary">Update</button>
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No clients found for the selected filters.</p>
+{% endif %}
+
+{% endblock %}

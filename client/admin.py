@@ -2,8 +2,8 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.contrib import admin
 from django.db.models import Q
-from .models import VatCategory, Client, FinancialYear, ClientType, ClientFinancialYear, Month, VatSubmissionHistory, FinancialYearSetup
-from . forms import ClientAddForm, ClientFinancialYearForm, VatSubmissionHistoryForm
+from .models import VatCategory, Client, FinancialYear, ClientType, ClientFinancialYear, Month, VatSubmissionHistory, FinancialYearSetup, Service, ClientService
+from . forms import ClientAddForm, ClientFinancialYearForm, VatSubmissionHistoryForm, ClientServiceAddForm, ServiceAddForm
 
 
 class VatCategoryAdmin(admin.ModelAdmin):
@@ -41,6 +41,18 @@ class VatSubmissionHistoryAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+class ServiceAdmin(admin.ModelAdmin):
+    model = Service
+    form = ServiceAddForm
+    search_fields = ("name", "description")
+
+
+class ClientServiceAdmin(admin.ModelAdmin):
+    model = ClientService
+    form = ClientServiceAddForm
+    search_fields = ("comment",)
+
+
 admin.site.register(VatCategory, VatCategoryAdmin)
 admin.site.register(Client, ClientAdmin)
 admin.site.register(ClientFinancialYear, ClientFinancialYearAdmin)
@@ -48,6 +60,8 @@ admin.site.register(VatSubmissionHistory, VatSubmissionHistoryAdmin)
 admin.site.register(FinancialYear)
 admin.site.register(ClientType)
 admin.site.register(Month)
+admin.site.register(Service, ServiceAdmin)
+admin.site.register(ClientService, ClientServiceAdmin)
 admin.site.register(FinancialYearSetup)
 
 admin.site.site_header = format_html(

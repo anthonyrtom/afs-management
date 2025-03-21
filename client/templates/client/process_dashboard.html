@@ -11,7 +11,10 @@
                 <h2 class="p2">Process Accounting</h2>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'process-clients-for-financial-years'%}" class="list-group-item-action">Process or update clients financial statements status</a>
+                        <a href="{% url 'process_client_financial_years'%}" class="list-group-item-action">View and update AFSs clients for a period</a>
+                    </li> 
+                    <li class="list-group-item d-flex justify-content-between">
+                        <a href="{% url 'create_client_financial_year'%}" class="list-group-item-action">Create or return AFSs table</a>
                     </li> 
                 </ul>
             </div>
@@ -20,10 +23,10 @@
                 <ul class="list-group list-group-flush">
                    
                     <li class="list-group-item">
-                        <a href="{% url 'get-clients-for-month-or-accountant' %}" class="list-group-item-action">Process or update clients VAT for a period</a>
+                        <a href="{% url 'process_vat_clients_for_period' %}" class="list-group-item-action">View and update VAT clients for a period</a>
                     </li> 
                     <li class="list-group-item">
-                        <a href="{% url 'create-or-update-vat' %}" class="list-group-item-action">Create and or view VAT for period</a>
+                        <a href="{% url 'create-or-update-vat' %}" class="list-group-item-action">Create VAT Client for period</a>
                     </li> 
                 </ul>
             </div>

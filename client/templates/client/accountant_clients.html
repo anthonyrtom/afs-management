@@ -17,14 +17,14 @@
     {% endif %}
 
     {% if clients is not None %}
-        <h3>Clients</h3>
+        <h3>{{count}} Clients found</h3>
         {% if clients %}
         <table class="table table-striped table-hover">
             {% include "client/_table_headers.html" with headers=headers %}
             <tbody>
                 {% for client in clients %}
                     <tr>
-                        <td>{{client.name}}</td>
+                        <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.name}}</a></td>
                         <td>{{client.client_type.name}}</td>
                         <td>{{client.month_end}}</td>
                         <td>{{client.vat_reg_number}}</td>

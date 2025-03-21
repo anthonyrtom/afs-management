@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Filter Client Financial Years{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<h2>Filter Client Financial Years</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-secondary">Filter Clients</button>
+</form>
+{% endif %}
+{% endblock %}

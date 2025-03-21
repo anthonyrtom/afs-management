@@ -12,7 +12,7 @@
     </form>
 
     {% if clients %}
-        <h3>Results for {{ month }}{% if selected_accountant %} - {{ selected_accountant.get_full_name }}{% else %} - All Accountants{% endif %}</h3>
+        <h3>{{count}} Results for {{ month }}{% if selected_accountant %} - {{ selected_accountant.get_full_name }}{% else %} - All Accountants{% endif %}</h3>
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
@@ -24,7 +24,7 @@
             <tbody>
                 {% for client in clients %}
                     <tr>
-                        <td>{{ client.name }}</td>
+                        <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.name}}</a></td>
                         <td>{{ client.client_type }}</td>
                         <td>{{ client.month_end }}</td>
                         <td>{{ client.vat_reg_number }}</td>

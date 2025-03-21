@@ -10,13 +10,14 @@
     </form>
 
       {% if finished_afs %}
-        <h3 class="h3">Results for {{month}}</h3>
+        <h3 class="h3">We found {{count}} finished financials for month {{month}}</h3>
         <table class="table table-striped table-hover">
             {% include "client/_table_headers.html" with headers=headers %}
             <tbody>
                 {% for record in finished_afs %}
                     <tr>
-                        <td>{{record.client.name}}</td>
+                        <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{record.client.name}}</a></td>
+                        <!-- <td>{{record.client.name}}</td> -->
                         <td>{{record.financial_year}}</td>
                         <td>{{record.schedule_date}}</td>
                         <td>{{record.finish_date}}</td>

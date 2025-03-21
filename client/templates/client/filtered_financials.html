@@ -1,22 +1,18 @@
 {% extends 'base.html' %}
 
-{% block title %} Finished Financials {% endblock title %}
+{% block title %} Filtered Financials {% endblock title %}
 
 {% block content %}
     {% if user.is_authenticated %}
-    <form method="GET">
-        {{form.as_p}}
-        <button type="submit" class="btn btn-secondary">Get Finished Clients</button>
-    </form>
 
-      {% if finished_afs %}
-        <h3 class="h3">Finished Financials</h3>
+      {% if financials %}
+        <h3 class="h3">{{count}} Financials of {{total}} found</h3>
         <table class="table table-striped table-hover">
             {% include "client/_table_headers.html" with headers=headers %}
             <tbody>
-                {% for record in finished_afs %}
+                {% for record in financials %}
                     <tr>
-                        <td>{{record.client.name}}</td>
+                        <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{record.client.name}}</a></td>
                         <td>{{record.financial_year}}</td>
                         <td>{{record.schedule_date}}</td>
                         <td>{{record.finish_date}}</td>
@@ -25,7 +21,7 @@
             </tbody>
         </table>
       {% else %}
-
+      <h3 class="h3">No Financials</h3>
       {% endif %}
     {% endif %}
 {% endblock %}

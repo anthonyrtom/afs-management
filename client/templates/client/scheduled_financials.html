@@ -1,13 +1,34 @@
 {% extends 'base.html' %}
 
-{% block title %} Accountant Clients{% endblock title %}
+{% block title %} Scheduled Clients{% endblock title %}
 
 {% block content %}
     {% if user.is_authenticated %}
-        {% if scheduled %}
-            <h2>Scheduled Accountants</h2>
+        {% if form %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group m-2">
+                    {{ form.financial_year.label_tag }}  
+                    {{ form.financial_year }}  
+                </div>
+                <button type="submit" class="btn btn-secondary mt2">Submit</button>
+            </form>
         {% else %}
-        <h2>No Scheduled Financials yet to be finished</h2>
+            <h3 class="h3">{{count}} Financials of {{total}} found</h3>
+            <table class="table table-striped table-hover">
+                {% include "client/_table_headers.html" with headers=headers %}
+                <tbody>
+                    {% for record in scheduled %}
+                        <tr>
+                            <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{record.client.name}}</a></td>
+                            <!-- <td>{{record.client.name}}</td> -->
+                            <td>{{record.financial_year}}</td>
+                            <td>{{record.schedule_date}}</td>
+                            <td>{{record.finish_date|default:"Not Finished"}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% endif %}
     {% endif %}
 {% endblock %}

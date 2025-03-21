@@ -1,6 +1,6 @@
 from django import forms
 from django.conf import settings
-from .models import ClientType, Client, ClientFinancialYear, VatSubmissionHistory, VatCategory, FinancialYear
+from .models import ClientType, Client, ClientFinancialYear, VatSubmissionHistory, VatCategory, FinancialYear, Service, ClientService
 from users.models import CustomUser, JobTitle
 
 
@@ -20,11 +20,11 @@ class ClientAddForm(forms.ModelForm):
 
         accountant_job_title = JobTitle.objects.filter(
             title="Accountant").first()
-
-        if accountant_job_title:  # Check if the job title exists
-            self.fields['accountant'].queryset = CustomUser.objects.filter(
-                job_title=accountant_job_title)
-        else:
+        try:
+            if accountant_job_title:
+                self.fields['accountant'].queryset = CustomUser.objects.filter(
+                    job_title=accountant_job_title)
+        except:
             pass
 
         for field_name in self.fields:
@@ -44,8 +44,35 @@ class ClientFinancialYearForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         for field_name in self.fields:
-            if field_name in ["schedule_date", "finish_date"]:
+            if field_name in ["schedule_date", "finish_date", "comment"]:
                 self.fields[field_name].required = False
+
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+
+class ClientFinancialYearGetForm(forms.ModelForm):
+    class Meta:
+        model = ClientFinancialYear
+        fields = ["financial_year", "afs_done", "itr34c_issued",
+                  "wp_done", "posting_done", "client_invoiced"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.fields:
+            if field_name in ["afs_done", "itr34c_issued", "wp_done", "posting_done", "client_invoiced"]:
+                self.fields[field_name].required = False
+
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                # Use 'form-check-input' for checkboxes
+                field.widget.attrs['class'] = 'form-check-input'
+            else:
+                field.widget.attrs['class'] = 'form-control'
+
+        if 'financial_year' in self.fields:
+            self.fields['financial_year'].queryset = FinancialYear.objects.all().order_by(
+                '-the_year')
 
 
 class ClientFilterForm(forms.Form):
@@ -61,6 +88,7 @@ class ClientFilterForm(forms.Form):
         ('internal_id_number', 'Internal ID Number'),
         ('uif_dept_reg_number', 'UIF Department Registration Number'),
         ('accountant', 'Accountant'),
+        ("first_financial_year", "First Financial Year"),
     ]
 
     field = forms.ChoiceField(choices=NULLABLE_FIELDS,
@@ -169,13 +197,14 @@ class VatClientsByMonthForm(forms.Form):
 
 class VatClientsPeriodProcess(forms.Form):
     client = forms.ModelChoiceField(
-        queryset=Client.objects.filter(vat_category__isnull=False),
+        queryset=Client.objects.filter(
+            vat_category__isnull=False).order_by("name"),
         required=False,
         empty_label="All VAT Vendors",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     year = forms.ModelChoiceField(
-        queryset=FinancialYear.objects.all(),
+        queryset=FinancialYear.objects.all().order_by("-the_year"),
         required=True,
         empty_label="Select a year",
         widget=forms.Select(attrs={'class': 'form-control'})
@@ -203,16 +232,22 @@ class VatSubmissionUpdateForm(forms.ModelForm):
         model = VatSubmissionHistory
         fields = ['submitted', 'client_notified', 'paid', 'comment']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.fields:
+            if field_name in ["submitted", "paid", "client_notified", "comment"]:
+                self.fields[field_name].required = False
+
 
 class ClientFinancialYearProcessForm(forms.Form):
     client = forms.ModelChoiceField(
-        queryset=Client.objects.all(),
+        queryset=Client.objects.all().order_by("name"),
         required=False,
         empty_label="All Clients",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     financial_year = forms.ModelChoiceField(
-        queryset=FinancialYear.objects.all(),
+        queryset=FinancialYear.objects.all().order_by("-the_year"),
         required=True,
         empty_label="Select a year",
         widget=forms.Select(attrs={'class': 'form-control'})
@@ -223,14 +258,18 @@ class ClientFinancialYearUpdateForm(forms.ModelForm):
     class Meta:
         model = ClientFinancialYear
         fields = ['schedule_date', 'finish_date',
-                  'wp_done', 'afs_done', 'posting_done']
-    finish_date = forms.DateField(required=False)
+                  'wp_done', 'afs_done', 'posting_done', 'itr34c_issued', 'client_invoiced', 'comment']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["finish_date"].required = False
+        self.fields["comment"].required = False
 
 
 class CreateandViewVATForm(forms.Form):
 
     year = forms.ModelChoiceField(
-        queryset=FinancialYear.objects.all(),
+        queryset=FinancialYear.objects.all().order_by("-the_year"),
         required=True,
         empty_label="Select a year",
         widget=forms.Select(attrs={'class': 'form-control'})
@@ -241,6 +280,40 @@ class CreateandViewVATForm(forms.Form):
 
     month = forms.ChoiceField(
         choices=choices,
-        required=False,
+        required=True,
         widget=forms.Select(attrs={"class": "form-control"})
     )
+
+
+class ClientForMonthForm(forms.Form):
+    months_list = settings.MONTHS_LIST
+    choices = [("all", "ALL")] + [(month, month.upper())
+                                  for month in months_list]
+
+    month = forms.ChoiceField(
+        choices=choices,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"})
+    )
+
+
+class ServiceAddForm(forms.ModelForm):
+    class Meta:
+        model = Service
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["description"].required = False
+
+
+class ClientServiceAddForm(forms.ModelForm):
+    class Meta:
+        model = ClientService
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["start_date"].required = False
+        self.fields["end_date"].required = False
+        self.fields["comment"].required = False

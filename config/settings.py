@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+import dj_database_url
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -82,6 +83,8 @@ DATABASES = {
     }
 }
 
+database_url = os.environ.get("DATABASE_URL")
+DATABASES["default"] = dj_database_url.parse(database_url)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -130,7 +133,7 @@ AUTH_USER_MODEL = 'users.CustomUser'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
-FIRST_FINANCIAL_YEAR = 2000
+FIRST_FINANCIAL_YEAR = 2015
 LAST_FINANCIAL_YEAR = 9999
 MONTHS_LIST = ["january", "february", "march", "april", "may", "june",
                "july", "august", "september", "october", "november", "december"]

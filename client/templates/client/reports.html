@@ -41,7 +41,7 @@
                     <a href="{% url 'view-scheduled' %}" class="list-group-item-action">View Scheduled AFSs</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'completed-financials' %}" class="list-group-item-action">View Completed AFSs</a>
+                    <a href="{% url 'filter-financials' %}" class="list-group-item-action">Filter Financials</a>
                 </li> 
                 <li class="list-group-item">
                     <a href="{% url 'completed-financials-month' %}" class="list-group-item-action">View Completed AFSs Specific Month</a>
@@ -49,6 +49,13 @@
                 <li class="list-group-item">
                     <a href="{% url 'unfinished-financials' %}" class="list-group-item-action">View Unfinished AFSs</a>
                 </li> 
+                <li class="list-group-item">
+                    <a href="{% url 'client-with-monthend' %}" class="list-group-item-action">Get Clients with a monthend</a>
+                </li> 
+                <li class="list-group-item">
+                    <a href="{% url 'client_services' %}" class="list-group-item-action">Get Clients for this service</a>
+                </li> 
+               
             </ul>
         </div>
         <div class="col-md-4">

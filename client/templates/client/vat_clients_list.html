@@ -4,16 +4,10 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-    <h2>Process VAT Clients by Month or Accountant</h2>
-
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-secondary">Get Clients</button>
-    </form>
+    <h2>VAT Clients</h2>
 
     {% if vat_clients %}
-        <h3>VAT Clients</h3>
+        <h3>{{count}} VAT Submission History</h3>
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
@@ -25,26 +19,28 @@
             <tbody>
                 {% for client in vat_clients %}
                     <tr>
-                        <form method="post">
+                        <form method="post" action="{% url 'update_vat_client_status' %}">
                             {% csrf_token %}
                             <input type="hidden" name="client_id" value="{{ client.id }}">
-
-                            <td>{{ client.client.name }}</td>
+                            <td><a href="{% url 'client-detail' client.client.id %}" class="text-decoration-none">{{client.client.name}}</a></td>
+                            <!-- <td>{{ client.client.name }}</td> -->
                             <td>{{ client.month }} {{ client.year }}</td>
 
                             <td>
-                                <input type="checkbox" name="submitted" {% if client.submitted %}checked{% endif %}>
+                                <input type="hidden" name="submitted" value="false">
+                                <input type="checkbox" name="submitted" value="true" {% if client.submitted %} checked {% endif %}>
                             </td>
                             <td>
-                                <input type="checkbox" name="client_notified" {% if client.client_notified %}checked{% endif %}>
+                                <input type="hidden" name="client_notified" value="false">
+                                <input type="checkbox" name="client_notified" value="true" {% if client.client_notified %} checked {% endif %}>
                             </td>
                             <td>
-                                <input type="checkbox" name="paid" {% if client.paid %}checked{% endif %}>
+                                <input type="hidden" name="paid" value="false">
+                                <input type="checkbox" name="paid" value="true" {% if client.paid %} checked {% endif %}>
                             </td>
 
-                            <!-- Add comment box -->
                             <td>
-                                <textarea name="comment" class="form-control" rows="2">{{ client.comment }}</textarea>
+                                <textarea name="comment" class="form-control" rows="2">{% if client.comment %}{{ client.comment }} {% endif %}</textarea>
                             </td>
 
                             <td>
@@ -58,5 +54,5 @@
     {% else %}
         <p>No clients found for the selected filters.</p>
     {% endif %}
-{% endif %}
+ {% endif %}
 {% endblock %}

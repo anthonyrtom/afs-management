@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Client Details{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <div class="container mt-5">
+        <h2>Client Details: {{ client.name }}</h2>
+
+        <table class="table table-bordered mt-3">
+            <tr>
+                <th>Name</th>
+                <td>{{ client.name }}</td>
+            </tr>
+            <tr>
+                <th>Surname</th>
+                <td>{{ client.surname|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ client.email|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Cell Number</th>
+                <td>{{ client.cell_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Contact Person</th>
+                <td>{{ client.contact_person|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Contact Person Cell</th>
+                <td>{{ client.contact_person_cell|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Client Type</th>
+                <td>{{ client.client_type|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Month End</th>
+                <td>{{ client.month_end|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Last Day</th>
+                <td>{{ client.last_day|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Is Active?</th>
+                <td>{% if client.is_active %} ✅ Yes {% else %} ❌ No {% endif %}</td>
+            </tr>
+            <tr>
+                <th>Is SA Resident?</th>
+                <td>{% if client.is_sa_resident %} ✅ Yes {% else %} ❌ No {% endif %}</td>
+            </tr>
+            <tr>
+                <th>Income Tax Number</th>
+                <td>{{ client.income_tax_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>PAYE Registration Number</th>
+                <td>{{ client.paye_reg_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>First Month for PAYE Submission</th>
+                <td>{{ client.first_month_for_paye_sub|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>UIF Registration Number</th>
+                <td>{{ client.uif_reg_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Entity Registration Number</th>
+                <td>{{ client.entity_reg_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>VAT Registration Number</th>
+                <td>{{ client.vat_reg_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>First Month for VAT Submission</th>
+                <td>{{ client.first_month_for_vat_sub|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>VAT Category</th>
+                <td>{{ client.vat_category|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Registered Address</th>
+                <td>{{ client.registered_address|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>COIDA Registration Number</th>
+                <td>{{ client.coida_reg_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>First Month for COIDA Submission</th>
+                <td>{{ client.first_month_for_coida_sub|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Internal ID Number</th>
+                <td>{{ client.internal_id_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>UIF Department Registration Number</th>
+                <td>{{ client.uif_dept_reg_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Accountant</th>
+                <td>{{ client.accountant|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>First Financial Year</th>
+                <td>{{ client.first_financial_year|default:"N/A" }}</td>
+            </tr>
+        </table>
+
+        <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
+    </div>
+{% endif %}
+{% endblock %}
