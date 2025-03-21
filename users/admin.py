@@ -12,22 +12,25 @@ class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
     model = CustomUser
-    list_display = ['email', 'username', 'job_title']
+    list_display = ['email', 'job_title']
+    ordering = ('email',)  # Fix: Order users by email instead of username
 
     fieldsets = (
-        (None, {'fields': ('username', 'password')}),
+        (None, {'fields': ('email', 'password')}),
+        # Removed 'email' to avoid duplicates
         ('Personal info', {
-         'fields': ('first_name', 'last_name', 'email', 'job_title')}),
+         'fields': ('first_name', 'last_name', 'job_title')}),
         ('Permissions', {'fields': ('is_active', 'is_staff',
          'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
+
     add_fieldsets = (
         (
             None,
             {
                 "classes": ("wide",),
-                "fields": ("username", "email", "password1", "password2", "job_title"),
+                "fields": ("email", "password1", "password2", "job_title"),
             },
         ),
     )
