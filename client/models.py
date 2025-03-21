@@ -85,9 +85,9 @@ class Client(models.Model):
     paye_reg_number = models.CharField(max_length=15, null=True, unique=True)
     first_month_for_paye_sub = models.ForeignKey(
         Month, on_delete=models.SET_NULL, null=True, related_name="paye_clients")
-    uif_reg_number = models.CharField(max_length=15, null=True, unique=True)
-    entity_reg_number = models.CharField(max_length=15, null=True, unique=True)
-    vat_reg_number = models.CharField(max_length=15, null=True, unique=True)
+    uif_reg_number = models.CharField(max_length=25, null=True, unique=True)
+    entity_reg_number = models.CharField(max_length=25, null=True, unique=True)
+    vat_reg_number = models.CharField(max_length=25, null=True, unique=True)
     first_month_for_vat_sub = models.ForeignKey(
         Month, on_delete=models.SET_NULL, null=True, related_name="vat_clients")
     vat_category = models.ForeignKey(
