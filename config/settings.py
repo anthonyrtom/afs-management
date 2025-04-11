@@ -13,10 +13,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import dj_database_url
 import os
+from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -24,8 +25,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY = 'django-insecure-o_um9wa%v%$lgkp@wyv%b2le&bth_s_#a=qjza600r0(fz*3wg'
 SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
+# DEBUG = False
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 
@@ -85,8 +86,8 @@ DATABASES = {
     }
 }
 
-database_url = os.environ.get("DATABASE_URL")
-DATABASES["default"] = dj_database_url.parse(database_url)
+# database_url = os.environ.get("DATABASE_URL")
+# DATABASES["default"] = dj_database_url.parse(database_url)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -125,6 +126,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -140,3 +144,6 @@ FIRST_FINANCIAL_YEAR = 2015
 LAST_FINANCIAL_YEAR = 9999
 MONTHS_LIST = ["january", "february", "march", "april", "may", "june",
                "july", "august", "september", "october", "november", "december"]
+
+# print(
+#     f"BASE_DIR: {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}")
