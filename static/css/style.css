@@ -1,3 +1,15 @@
 .header-color{
     background-image: linear-gradient(to right, #18A0BE, #622DB9);
 }
+
+
+.back-btn{
+    color: #18A0BE;
+    display: flex;
+    width: 10%;
+    border: none;
+}
+
+.back-btn__icon{
+    font-size: 200px;
+}

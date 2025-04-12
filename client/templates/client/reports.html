@@ -4,68 +4,69 @@
 
 {% block content %} 
    <h2 class="display-5">Reports</h2>
+   
    {% if user.is_authenticated %}
    <div class="container mt-5 p5">
     <div class="row">
         <div class="col-md-4">
-            <h2 class="p2">Client Reports</h2>
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item d-flex justify-content-between">
-                    <a href="{% url 'dashboard' %}" class="list-group-item-action">Dashboard</a>
+            <h2 class="p2">Standard Reports</h2>
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action list-group-item-primary">Dashboard</a>
                 </li> 
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'all-clients' %}" class="list-group-item-action">View All Clients</a>
+                    <li class="list-group-item">
+                        <a href="{% url 'all-clients' %}" class="list-group-item list-group-item-action list-group-item-primary">View All Clients</a>
+                    </li> 
+                    <li class="list-group-item">
+                        <a href="{% url 'statutory-clients' %}" class="list-group-item list-group-item-action list-group-item-primary">Filter Clients</a>
+                    </li> 
+                    <li class="list-group-item">
+                        <a href="{% url 'get-accountants' %}" class="list-group-item list-group-item-action list-group-item-primary">View All Accountants</a>
+                    </li> 
+                    <li class="list-group-item">
+                        <a href="{% url 'get_accountant_clients' %}" class="list-group-item list-group-item-action list-group-item-primary">Filter By Accountant</a>
+                    </li> 
+                    <li class="list-group-item">
+                        <a href="{% url 'get-clients-for-category' %}" class="list-group-item list-group-item-action list-group-item-primary">Get VAT clients for a category</a>
                     </li> 
                     <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'statutory-clients' %}" class="list-group-item-action">Filter Clients</a>
-                    </li> 
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'get-accountants' %}" class="list-group-item-action">View All Accountants</a>
-                    </li> 
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'get_accountant_clients' %}" class="list-group-item-action">Filter By Accountant</a>
-                    </li> 
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'get-clients-for-category' %}" class="list-group-item-action">Get VAT clients for a category</a>
-                    </li> 
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'get-clients-for-month' %}" class="list-group-item-action">Get VAT clients for a specified month</a>
+                        <a href="{% url 'get-clients-for-month' %}" class="list-group-item list-group-item-action list-group-item-primary">Get VAT clients for a specified month</a>
                     </li> 
             </ul>
         </div>
         <div class="col-md-4">
-            <h2 class="p2">Financial Statements Reports</h2>
-            <ul class="list-group list-group-flush">
+            <h2 class="p2">Accounting Reports</h2>
+            <ul class="list-group">
                
                 <li class="list-group-item">
-                    <a href="{% url 'view-scheduled' %}" class="list-group-item-action">View Scheduled AFSs</a>
+                    <a href="{% url 'view-scheduled' %}" class="list-group-item list-group-item-action list-group-item-primary">View Scheduled AFSs</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'filter-financials' %}" class="list-group-item-action">Filter Financials</a>
+                    <a href="{% url 'filter-financials' %}" class="list-group-item list-group-item-action list-group-item-primary">Filter Financials</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'completed-financials-month' %}" class="list-group-item-action">View Completed AFSs Specific Month</a>
+                    <a href="{% url 'completed-financials-month' %}" class="list-group-item list-group-item-action list-group-item-primary">View Completed AFSs Specific Month</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'unfinished-financials' %}" class="list-group-item-action">View Unfinished AFSs</a>
+                    <a href="{% url 'unfinished-financials' %}" class="list-group-item list-group-item-action list-group-item-primary">View Unfinished AFSs</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'client-with-monthend' %}" class="list-group-item-action">Get Clients with a monthend</a>
+                    <a href="{% url 'client-with-monthend' %}" class="list-group-item list-group-item-action list-group-item-primary">Get Clients with a monthend</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'client_services' %}" class="list-group-item-action">Get Clients for this service</a>
+                    <a href="{% url 'client_services' %}" class="list-group-item list-group-item-action list-group-item-primary">Get Clients for this service</a>
                 </li> 
                
             </ul>
         </div>
         <div class="col-md-4">
             <h2 class="p2">Search </h2>
-            <ul class="list-group list-group-flush">
+            <ul class="list-group">
                 <li class="list-group-item">
-                    <a href="{% url 'search-client'%}" class="list-group-item-action">Search Client By a Category</a>
+                    <a href="{% url 'search-client'%}" class="list-group-item list-group-item-action list-group-item-primary">Search Client By a Category</a>
                 </li>  
                 <li class="list-group-item">
-                    <a href="{% url 'search-users'%}" class="list-group-item-action">Search Users</a>
+                    <a href="{% url 'search-users'%}" class="list-group-item list-group-item-action list-group-item-primary">Search Users</a>
                 </li>  
             </ul>
         </div>
