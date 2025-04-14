@@ -41,8 +41,19 @@ def reports(request):
 @login_required
 def view_all_clients(request):
     all_clients = Client.objects.all().order_by("name")
-    headers = ["Client Name", "Client Type",
-               "Month End", "VAT No", "Accountant"]
+    headers = ["Name", "Internal ID", "Registration No.",
+               "Entity Type", "Year End",  "Accountant"]
+
+    query = request.GET.get("searchterm", "")
+    if query:
+        all_clients = all_clients.filter(Q(name__icontains=query) |
+                                         Q(surname__icontains=query) |
+                                         Q(income_tax_number__icontains=query) |
+                                         Q(paye_reg_number__icontains=query) |
+                                         Q(uif_reg_number__icontains=query) |
+                                         Q(entity_reg_number__icontains=query) |
+                                         Q(vat_reg_number__icontains=query) |
+                                         Q(internal_id_number__icontains=query))
     count = len(all_clients)
     return render(request, "client/all_clients.html", {"clients": all_clients, "headers": headers, "count": count})
 
@@ -65,8 +76,8 @@ def client_filter_view(request):
         clients = clients.filter(**filter_kwargs)
         clients = clients.order_by("name")
         count = len(clients)
-        headers = ["Client Name", "Client Type",
-                   "Month End", "VAT No"]
+        headers = ["Client Name", "Internal ID", "Reg No.", "Client Type",
+                   "Year End", "VAT No", "Accountant"]
         field = field.replace("_", " ")
         return render(request, 'client/filtered_clients.html', {'form': form, "clients": clients, "statutory_type": field, "with_without": with_without, "headers": headers, "count": count, "total": total})
     else:

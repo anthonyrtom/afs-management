@@ -67,7 +67,7 @@
         {% endif %}
         {% url 'home' as home_url %}
         {% if user.is_authenticated and request.path != '/' and request.path != home_url %}
-            <button onclick="history.back()" class="btn btn-secondary mt-2"><i class="fas fa-arrow-left"></i> Back</button>
+            <button onclick="history.back()" class="btn btn-secondary mt-5"><i class="fas fa-arrow-left"></i> Back</button>
         {% endif %}
         {% block content %}
 

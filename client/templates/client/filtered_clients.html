@@ -5,13 +5,15 @@
 {% block content %} 
     {% if user.is_authenticated %}
 
-    <h2 class="h2">Clients {{with_without}} {{statutory_type}} - {{count}} of {{total}}</h2>
-    <table class="table table-striped table-hover">
+    <h6 class="h6 mt-2">Clients {{with_without}} {{statutory_type}} - {{count}} of {{total}}</h6>
+    <table class="table table-striped table-hover table-bordered">
         {% include "client/_table_headers.html" with headers=headers %}
         <tbody>
             {% for client in clients %}
                 <tr>
                     <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.name}}</a></td>
+                    <td>{{client.internal_id_number}}</td>
+                    <td>{{client.entity_reg_number}}</td>
                     <td>{{client.client_type.name}}</td>
                     <td>{{client.month_end}}</td>
                     <td>{{client.vat_reg_number}}</td>

@@ -4,11 +4,13 @@
 
 {% block content %} 
     {% if user.is_authenticated %}
-    <form method="get">
-        {{ form.as_p }}
-    <div class="container mt-2">
-        <button class="btn btn-secondary" type="submit">Filter</button>
+    <div class="container mt-2 text-left">
+        <form method="get">
+            {{ form.as_p }}
+        <div class="container mt-2">
+            <button class="btn btn-secondary" type="submit">Filter</button>
+        </div>
+        </form>
     </div>
-    </form>
     {% endif %}
 {% endblock content %}

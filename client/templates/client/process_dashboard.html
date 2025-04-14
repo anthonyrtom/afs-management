@@ -4,12 +4,12 @@
 
 {% block content %}
     {% if user.is_authenticated %}
-       <h2 class="display-5">Process</h2>
+       <h2 class="h2 text-center">Process</h2>
        
        <div class="container mt-5 p5">
         <div class="row">
             <div class="col-md-6">
-                <h2 class="p2">Process Accounting</h2>
+                <h6 class="h6">Process Accounting</h6>
                 <ul class="list-group">
                     <li class="list-group-item">
                         <a href="{% url 'process_client_financial_years'%}" class="list-group-item list-group-item-action list-group-item-primary">View and update AFSs clients for a period</a>
@@ -20,7 +20,7 @@
                 </ul>
             </div>
             <div class="col-md-6">
-                <h2 class="p2">Process Taxation</h2>
+                <h6 class="h6">Process Taxation</h6>
                 <ul class="list-group">
                    
                     <li class="list-group-item">

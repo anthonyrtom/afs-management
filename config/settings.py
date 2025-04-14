@@ -30,7 +30,9 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 
-
+SESSION_COOKIE_AGE = 1800
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+IDLE_TIMEOUT = 900
 # Application definition
 
 INSTALLED_APPS = [
@@ -53,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'middleware.idle_timeout.IdleSessionTimeoutMiddleware',
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 ROOT_URLCONF = 'config.urls'

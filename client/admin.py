@@ -68,5 +68,5 @@ admin.site.site_header = format_html(
     '<a href="{}" style="text-decoration: none; color: white;">Home</a>',
     reverse('home')
 )
-admin.site.site_title = "E-Accountant Admin"
-admin.site.index_title = "Welcome to E-Accountant Admin Panel"
+admin.site.site_title = "E-Practice Admin"
+admin.site.index_title = "Welcome to E-Practice Admin Panel"
