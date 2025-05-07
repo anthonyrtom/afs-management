@@ -3,6 +3,8 @@ from . import views
 
 urlpatterns = [
     path('process/', views.process_dashboard, name="process"),
+    path('dashboard/list/<str:filter_type>/<str:client_type>/',
+         views.dashboard_list, name='dashboard_list'),
     path('reports/', views.reports, name="reports"),
     path('dashboard/', views.dashboard, name="dashboard"),
     path('all-clients/', views.view_all_clients, name="all-clients"),
@@ -17,8 +19,8 @@ urlpatterns = [
          name="completed-financials-month"),
     path('unfinished-financials/', views.get_unfinished_financials,
          name="unfinished-financials"),
-    path('search-client/', views.search_clients,
-         name="search-client"),
+    #     path('search-client/', views.search_clients,
+    #          name="search-client"),
     path('get-accountants/', views.get_all_accountants,
          name="get-accountants"),
     path('search-users/', views.search_users,

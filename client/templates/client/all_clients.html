@@ -4,9 +4,10 @@
 {% block content %} 
     {% if user.is_authenticated %}
     <div class="container mt-2">
-        <form method="get" onchange="this.form.submit()">
-            <input type="text" class="form-control" placeholder="Search by Name, tax number, VAT number, PAYE number, UIF Reg number or internal ID number" name="searchterm">
-        </form>   
+            <form method="get" onchange="this.form.submit()" class="mt-2">
+                <input type="text" class="form-control" placeholder="Search by Name, tax number, VAT number, PAYE number, UIF Reg number or internal ID number" name="searchterm">
+            </form>   
+      
     <h6 class="h6 mt-2">{{count}} clients found in the system</h6>
 
     <table class="table table-striped table-hover table-bordered">

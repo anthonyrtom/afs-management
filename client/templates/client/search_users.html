@@ -4,7 +4,7 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-    <h2>Search Users</h2>
+    <h6 class="h6 mt-2">Search Users</h6>
 
     <form method="GET">
         <div class="row">
@@ -15,18 +15,17 @@
                 {{ form.job_title.label_tag }} {{ form.job_title }}
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-secondary mt-4">Search</button>
+                <button type="submit" class="btn btn-outline-primary mt-4">Search</button>
             </div>
         </div>
     </form>
 
     {% if users %}
-        <h3>{{count}} Results:</h3>
-        <table class="table table-bordered table-striped">
+        <h6 class="h6 mt-4">{{count}} Results:</h6>
+        <table class="table table-bordered table-striped table-hover">
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Username</th>
                     <th>Email</th>
                     <th>Job Title</th>
                 </tr>
@@ -35,7 +34,6 @@
                 {% for user in users %}
                     <tr>
                         <td>{{ user.get_full_name }}</td>
-                        <td>{{ user.username }}</td>
                         <td>{{ user.email }}</td>
                         <td>{{ user.job_title.title }}</td>
                     </tr>

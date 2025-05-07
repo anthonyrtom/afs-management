@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+   {% if user.is_authenticated %}
+   <h2>{{ filter_type }} - {{ client_type }}</h2>
+
+   <form method="get">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search clients...">
+      <button type="submit">Search</button>
+   </form>
+
+   <table class="table table-striped table-hover table-bordered">
+      <thead>
+         <tr>
+            <th>Name</th>
+            <th>More Info</th>
+         </tr>
+      </thead>
+      <tbody>
+         {% for client in clients %}
+         <tr>
+            <td>{{ client.name }}</td>
+         </tr>
+         {% endfor %}
+      </tbody>
+   </table>
+   {% endif %}
+{% endblock %}

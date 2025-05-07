@@ -1,3 +1,5 @@
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.urls import reverse
@@ -13,24 +15,160 @@ from users.models import JobTitle, CustomUser
 from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, ClientSearchForm, UserSearchForm, VatCategoryForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm, ClientFinancialYearGetForm, ClientForMonthForm
 
 
+@login_required
 def dashboard(request):
-    client_information = {}
-    client_count = Client.objects.count()
-    client_information["client_count"] = client_count
-    financial_years = FinancialYear.objects.count()
-    client_information["financial_years"] = financial_years
-    client_types = ClientType.objects.count()
-    client_information["client_types"] = client_types
-    vat_categories = VatCategory.objects.count()
-    client_information["vat_categories"] = vat_categories
-    accountants = CustomUser.objects.filter(
-        job_title__title="Accountant").count()
-    client_information["accountants"] = accountants
-    noaccountant = Client.objects.filter(accountant__isnull=True).count()
-    client_information["noaccountant"] = noaccountant
-    vatvendors = Client.objects.filter(vat_category__isnull=False).count()
-    client_information["vatvendors"] = vatvendors
-    return render(request, "client/dashboard.html", {"client_information": client_information})
+    headers = [c_type.name for c_type in ClientType.objects.all()]
+    total_all = 0
+    total_vendors = 0
+    total_curr_vendors = 0
+    total_cipc = 0
+    total_afs = 0
+    total_provs = 0
+    total_curr_afs = 0
+    total_curr_provs = 0
+    total_curr_cipc = 0
+
+    today = datetime.date(datetime.now())
+    last_vat_month_date = today - relativedelta(months=1)
+    all_counts = []
+    vendor_counts = []
+    curr_vendor_counts = []
+    cipc_counts = []
+    afs_counts = []
+    curr_afs_counts = []
+    prov_tax_counts = []
+    curr_prov_tax_counts = []
+    curr_cipc_counts = []
+    try:
+        all_vat_vendors = Client.get_vat_clients_for_category()
+        vat_vendors_due_this_month = Client.get_vat_clients_for_month(
+            month=last_vat_month_date.strftime("%B"))
+        cipc_clients = Client.get_clients_of_type("Cipc Returns", today)
+        afs_clients = Client.get_afs_clients(today)
+        prov_clients = Client.get_prov_tax_clients(today)
+        cipc_service = Service.objects.get(name="Cipc Returns")
+        for name in headers:
+            client_type = ClientType.objects.get(name=name)
+            count = Client.count_clients_of_type(name)
+            total_all += count
+            all_counts.append(count)
+            cipc_count = sum(
+                1 for cipc in cipc_clients if cipc.client_type == client_type and ClientService.is_service_offered(cipc.id, cipc_service.id, today) and cipc.is_client_cipc_reg_eligible())
+
+            curr_cipc_count = sum(
+                1 for cipc in cipc_clients if cipc.client_type == client_type and ClientService.is_service_offered(cipc.id, cipc_service.id, today) and cipc.is_client_cipc_reg_eligible() and cipc.get_birthday_in_year(today.year) and (cipc.get_birthday_in_year(today.year).month == today.month))
+            total_cipc += cipc_count
+
+            vendor_count = sum(
+                1 for vendor in all_vat_vendors
+                if vendor.client_type == client_type and vendor.is_vat_vendor(as_at_date=today, service_name="Vat Submission")
+            )
+            curr_vendor_count = sum(
+                1 for vendor in vat_vendors_due_this_month if vendor.client_type == client_type and vendor.is_vat_vendor(as_at_date=today, service_name="Vat Submission")
+            )
+            afs_count = sum(
+                1 for client in afs_clients if client.client_type == client_type)
+            curr_afs_count = sum(
+                1 for client in afs_clients if client.client_type == client_type and client.month_end == today.month)
+            prov_count = sum(
+                1 for client in prov_clients if client.client_type == client_type)
+
+            curr_prov_count = sum(
+                1 for client in prov_clients if client.client_type == client_type and (client.is_first_prov_tax_month(today) or client.is_second_prov_tax_month(today)))
+
+            total_afs += afs_count
+            total_vendors += vendor_count
+            total_curr_vendors += curr_vendor_count
+            total_provs += prov_count
+            total_curr_afs += curr_afs_count
+            total_curr_provs += curr_prov_count
+            total_curr_cipc += curr_cipc_count
+
+            vendor_counts.append(vendor_count)
+            cipc_counts.append(cipc_count)
+            curr_vendor_counts.append(curr_vendor_count)
+            afs_counts.append(afs_count)
+            prov_tax_counts.append(prov_count)
+            curr_afs_counts.append(curr_afs_count)
+            curr_prov_tax_counts.append(curr_prov_count)
+            curr_cipc_counts.append(curr_cipc_count)
+
+        return render(request, "client/dashboard.html", {
+            "headers": headers,
+            "all_counts": all_counts,
+            "vendor_counts": vendor_counts,
+            "total_all": total_all,
+            "total_vendors": total_vendors,
+            "cipc_counts": cipc_counts,
+            "total_cipc": total_cipc,
+            "total_provs": total_provs,
+            "total_curr_afs": total_curr_afs,
+            "total_curr_provs": total_curr_provs,
+            "total_curr_cipc": total_curr_cipc,
+            "curr_vendor_counts": curr_vendor_counts,
+            "total_curr_vendors": total_curr_vendors,
+            "afs_counts": afs_counts,
+            "total_afs": total_afs,
+            "prov_tax_counts": prov_tax_counts,
+            "curr_afs_counts": curr_afs_counts,
+            "curr_prov_tax_counts": curr_prov_tax_counts,
+            "curr_cipc_counts": curr_cipc_counts
+        })
+    except Exception as e:
+        print(e)
+        messages.error(request, "There was an error")
+        return redirect(reverse('home'))
+
+
+@login_required
+def dashboard_list(request, filter_type, client_type):
+    query = request.GET.get("q", "")
+    today = datetime.date.today()
+    clients = Client.objects.all()
+
+    # Filter by client_type
+    clients = clients.filter(client_type__name=client_type)
+
+    # Apply additional filter depending on "filter_type"
+    if filter_type == "all_clients":
+        pass  # Already filtered by client_type
+
+    elif filter_type == "vat_vendors":
+        clients = clients.filter(vat_registration_number__isnull=False)
+
+    elif filter_type == "current_vat_vendors":
+        last_month = today - relativedelta(months=1)
+        clients = Client.get_vat_clients_for_month(
+            last_month.strftime("%B")).filter(client_type__name=client_type)
+
+    elif filter_type == "afs_clients":
+        clients = Client.get_afs_clients(today).filter(
+            client_type__name=client_type)
+
+    elif filter_type == "prov_tax_clients":
+        clients = Client.get_prov_tax_clients(
+            today).filter(client_type__name=client_type)
+
+    elif filter_type == "cipc_clients":
+        clients = Client.get_clients_of_type(
+            "Cipc Returns", today).filter(client_type__name=client_type)
+
+    elif filter_type == "current_cipc_clients":
+        clients = Client.get_clients_of_type(
+            "Cipc Returns", today).filter(client_type__name=client_type)
+        clients = [client for client in clients if client.get_birthday_in_year(
+            today.year) and client.get_birthday_in_year(today.year).month == today.month]
+
+    # Apply search
+    if query:
+        clients = clients.filter(name__icontains=query)
+
+    return render(request, "client/dashboard_list.html", {
+        "clients": clients,
+        "filter_type": filter_type.replace("_", " ").title(),
+        "client_type": client_type,
+        "query": query
+    })
 
 
 @login_required
@@ -62,45 +200,82 @@ def view_all_clients(request):
 def client_filter_view(request):
     form = ClientFilterForm(request.GET or None)
     with_without = "without"
+
     if form.is_valid():
         field = form.cleaned_data['field']
         null_filter = form.cleaned_data['null_filter']
 
-        if null_filter == 'null':
-            filter_kwargs = {f"{field}__isnull": True}
-        else:
-            filter_kwargs = {f"{field}__isnull": False}
-            with_without = "with"
-        clients = Client.objects.all()
-        total = len(clients)
-        clients = clients.filter(**filter_kwargs)
+        filter_kwargs = {f"{field}__isnull": null_filter == 'null'}
+        with_without = "without" if null_filter == 'null' else "with"
+
+        clients = Client.objects.filter(**filter_kwargs)
+        total = Client.objects.count()
+        headers = ["Client Name", "Internal ID", "Reg No.",
+                   "Client Type", "Year End", "VAT No", "Accountant"]
+
+        search_term = request.GET.get("searchterm", "")
+        if search_term:
+            clients = clients.filter(
+                Q(name__icontains=search_term) |
+                Q(surname__icontains=search_term) |
+                Q(income_tax_number__icontains=search_term) |
+                Q(paye_reg_number__icontains=search_term) |
+                Q(uif_reg_number__icontains=search_term) |
+                Q(entity_reg_number__icontains=search_term) |
+                Q(vat_reg_number__icontains=search_term) |
+                Q(internal_id_number__icontains=search_term)
+            )
+
         clients = clients.order_by("name")
-        count = len(clients)
-        headers = ["Client Name", "Internal ID", "Reg No.", "Client Type",
-                   "Year End", "VAT No", "Accountant"]
-        field = field.replace("_", " ")
-        return render(request, 'client/filtered_clients.html', {'form': form, "clients": clients, "statutory_type": field, "with_without": with_without, "headers": headers, "count": count, "total": total})
-    else:
-        return render(request, 'client/get_clients.html', {'form': form})
+        count = clients.count()
+        field_display = field.replace("_", " ")
+
+        return render(request, 'client/filtered_clients.html', {
+            'form': form,
+            'clients': clients,
+            'statutory_type': field_display,
+            'with_without': with_without,
+            'headers': headers,
+            'count': count,
+            'total': total
+        })
+
+    return render(request, 'client/get_clients.html', {'form': form})
 
 
 @login_required
 def filter_clients_by_accountant(request):
-    form = AccountantFilterForm()
+    form = AccountantFilterForm(request.GET or None)
     clients = None
     count = 0
     headers = ["Client Name", "Client Type",
-               "Month End", "VAT No", "Accountant"]
-    if 'accountant' in request.GET:
-        form = AccountantFilterForm(request.GET)
-        if form.is_valid():
-            accountant = form.cleaned_data['accountant']
-            clients = Client.objects.filter(
-                accountant=accountant).order_by("name")
-            count = len(clients)
+               "Month End", "VAT No.", "Accountant"]
+    search_term = request.GET.get("search", "")
+
+    if form.is_valid() and form.cleaned_data.get('accountant'):
+        accountant = form.cleaned_data['accountant']
+        clients = Client.objects.filter(accountant=accountant)
+
+        if search_term:
+            clients = clients.filter(
+                Q(name__icontains=search_term) |
+                Q(vat_reg_number__icontains=search_term) |
+                Q(internal_id_number__icontains=search_term) |
+                Q(entity_reg_number__icontains=search_term) |
+                Q(paye_reg_number__icontains=search_term)
+            )
+
+        clients = clients.order_by("name")
+        count = clients.count()
+
+    has_accountants = CustomUser.objects.filter(clients__isnull=False).exists()
+
     return render(request, 'client/accountant_clients.html', {
-        'form': form if CustomUser.objects.filter(clients__isnull=False).exists() else None,
-        'clients': clients, "headers": headers, "count": count
+        'form': form if has_accountants else None,
+        'clients': clients,
+        'headers': headers,
+        'count': count,
+        'search_term': search_term
     })
 
 
@@ -219,39 +394,30 @@ def get_unfinished_financials(request):
 
 
 @login_required
-def search_clients(request):
-    form = ClientSearchForm(request.GET or None)
-    clients = Client.objects.all().order_by("name")  # Default to all clients
-    count = 0
-
-    if form.is_valid():
-        query = form.cleaned_data.get("query", "")
-        if query:
-            # Perform search using OR conditions
-            clients = clients.filter(
-                Q(name__icontains=query) |
-                Q(surname__icontains=query) |
-                Q(income_tax_number__icontains=query) |
-                Q(paye_reg_number__icontains=query) |
-                Q(uif_reg_number__icontains=query) |
-                Q(entity_reg_number__icontains=query) |
-                Q(vat_reg_number__icontains=query) |
-                Q(internal_id_number__icontains=query)
-            )
-    count = len(clients)
-    return render(request, "client/search_clients.html", {"form": form, "clients": clients, "count": count})
-
-
-@login_required
 def get_all_accountants(request):
-    accountant = JobTitle.objects.filter(title="Accountant").first()
+    accountant_title = JobTitle.objects.filter(title="Accountant").first()
+    accountants = CustomUser.objects.none()
     count = 0
-    if accountant:
-        accountants = CustomUser.objects.filter(
-            job_title=accountant).order_by("email")
-        count = len(accountants)
-        return render(request, "client/accountants.html", {"accountants": accountants, "count": count})
-    return render(request, "client/accountants.html")
+    query = request.GET.get("search", "")
+
+    if accountant_title:
+        accountants = CustomUser.objects.filter(job_title=accountant_title)
+
+        if query:
+            accountants = accountants.filter(
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query) |
+                Q(email__icontains=query)
+            )
+
+        accountants = accountants.order_by("email")
+        count = accountants.count()
+
+    return render(request, "client/accountants.html", {
+        "accountants": accountants,
+        "count": count,
+        "query": query
+    })
 
 
 @login_required
@@ -280,6 +446,12 @@ def search_users(request):
 @login_required
 def get_clients_for_category(request):
     form = VatCategoryForm(request.GET or None)
+    clients = None
+    count = 0
+    headers = ["Client Name", "Client Type",
+               "Month End", "VAT No", "Accountant", "Category"]
+    searchterm = request.GET.get("searchterm", "")
+
     if form.is_valid():
         selected_category = form.cleaned_data["vat_category"]
         selected_accountant = form.cleaned_data["accountant"]
@@ -289,14 +461,24 @@ def get_clients_for_category(request):
             selected_accountant if selected_accountant else None
         ).order_by("name")
 
-        headers = ["Client Name", "Client Type",
-                   "Month End", "VAT No", "Accountant", "Category"]
-        count = len(clients)
+        if searchterm:
+            clients = clients.filter(
+                Q(name__icontains=searchterm) |
+                Q(surname__icontains=searchterm) |
+                Q(income_tax_number__icontains=searchterm) |
+                Q(vat_reg_number__icontains=searchterm)
+            )
+
+        count = clients.count()
+
         return render(request, "client/vat_client_for_category.html", {
+            "form": form,
             "clients": clients,
             "headers": headers,
             "vat_category": selected_category,
-            "selected_accountant": selected_accountant, "count": count
+            "selected_accountant": selected_accountant,
+            "searchterm": searchterm,
+            "count": count
         })
 
     return render(request, "client/vat_client_for_category.html", {"form": form})
@@ -305,6 +487,11 @@ def get_clients_for_category(request):
 @login_required
 def get_clients_for_month(request):
     form = VatClientsByMonthForm(request.GET or None)
+    clients = None
+    count = 0
+    headers = ["Client Name", "Client Type",
+               "Month End", "VAT No", "Accountant", "Category"]
+    searchterm = request.GET.get("searchterm", "")
 
     if form.is_valid():
         month = form.cleaned_data["month"]
@@ -315,14 +502,23 @@ def get_clients_for_month(request):
             accountant=selected_accountant if selected_accountant else None
         )
 
-        headers = ["Client Name", "Client Type",
-                   "Month End", "VAT No", "Accountant", "Category"]
-        count = len(clients)
+        if searchterm:
+            clients = clients.filter(
+                Q(name__icontains=searchterm) |
+                Q(surname__icontains=searchterm) |
+                Q(income_tax_number__icontains=searchterm) |
+                Q(vat_reg_number__icontains=searchterm)
+            )
+
+        count = clients.count()
         return render(request, "client/vat_clients_for_month.html", {
+            "form": form,
             "clients": clients,
             "month": month.title() if month else "All",
             "selected_accountant": selected_accountant,
-            "headers": headers, "count": count
+            "headers": headers,
+            "count": count,
+            "searchterm": searchterm
         })
 
     return render(request, "client/vat_clients_for_month.html", {"form": form})

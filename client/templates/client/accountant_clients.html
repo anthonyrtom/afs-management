@@ -1,44 +1,57 @@
 {% extends 'base.html' %}
 
-{% block title %} Accountant Clients{% endblock title %}
+{% block title %}Accountant Clients{% endblock %}
 
 {% block content %}
-    {% if user.is_authenticated %}
-    <h2>Filter Clients by Accountant</h2>
+{% if user.is_authenticated %}
+<div class="container mt-4">
+
+    <h5 class="mb-3">Filter Clients by Accountant</h5>
 
     {% if form %}
-        <form method="GET">
-        {{ form.as_p }}
-        <button class="btn btn-secondary" type="submit">Filter</button>
-        </form>
-        <div class="container mt-2">
+    <form method="get" class="row align-items-end g-3 mb-3">
+        <div class="col-md-5">
+            <label for="id_accountant" class="form-label">{{ form.accountant.label }}</label>
+            {{ form.accountant}}
+        </div>
+        <div class="col-md-4">
+            <label for="search" class="form-label">Search Clients</label>
+            <input type="text" name="search" id="search" value="{{ search_term }}" class="form-control" placeholder="Name, VAT, PAYE...">
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-outline-primary w-100" type="submit">Filter Clients</button>
+        </div>
+    </form>
     {% else %}
-        <p>No accountants available.</p>
+        <p class="text-muted">No accountants available.</p>
     {% endif %}
 
     {% if clients is not None %}
-        <h3>{{count}} Clients found</h3>
+        <h6 class="mb-3">{{ count }} client{{ count|pluralize }} found</h6>
         {% if clients %}
-        <table class="table table-striped table-hover">
+        <table class="table table-striped table-hover table-bordered">
             {% include "client/_table_headers.html" with headers=headers %}
             <tbody>
                 {% for client in clients %}
-                    <tr>
-                        <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.name}}</a></td>
-                        <td>{{client.client_type.name}}</td>
-                        <td>{{client.month_end}}</td>
-                        <td>{{client.vat_reg_number}}</td>
-                        <td>{{client.accountant.first_name}} {{client.accountant.last_name}}</td>
-                    </tr>
+                <tr>
+                    <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{ client.name }}</a></td>
+                    <td>{{ client.client_type.name }}</td>
+                    <td>{{ client.month_end }}</td>
+                    <td>{{ client.vat_reg_number }}</td>
+                    <td>{{ client.accountant.get_full_name }}</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <p>No clients found for the selected accountant.</p>
+        <p class="text-muted">No clients found for the selected accountant.</p>
         {% endif %}
     {% endif %}
-    </div>
-    {% else %}
-    <h2>Need to login first</h2>
-    {% endif %}
+
+</div>
+{% else %}
+<div class="container mt-4">
+    <h2>You need to login first</h2>
+</div>
+{% endif %}
 {% endblock %}

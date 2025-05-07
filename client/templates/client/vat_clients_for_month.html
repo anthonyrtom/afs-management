@@ -4,16 +4,42 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-    <h2>Filter VAT Clients by Month and Accountant</h2>
+<div class="container mt-3">
+    <h6 class="h6">Filter VAT Clients by Month and Accountant</h6>
 
-    <form method="GET">
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-secondary">Filter</button>
+    <form method="GET" class="row g-3 mb-3">
+        <div class="col-md-4">
+            {{ form.month.label_tag }}
+            {{ form.month }}
+        </div>
+        <div class="col-md-4">
+            {{ form.accountant.label_tag }}
+            {{ form.accountant }}
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+        </div>
     </form>
 
     {% if clients %}
-        <h3>{{count}} Results for {{ month }}{% if selected_accountant %} - {{ selected_accountant.get_full_name }}{% else %} - All Accountants{% endif %}</h3>
-        <table class="table table-bordered table-striped">
+        <form method="get" class="row mb-3">
+            <!-- Keep selected filters -->
+            <input type="hidden" name="month" value="{{ form.month.value }}">
+            <input type="hidden" name="accountant" value="{{ form.accountant.value }}">
+            <div class="col-md-6">
+                <input type="text" name="searchterm" class="form-control"
+                       placeholder="Search clients..." value="{{ searchterm }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+            </div>
+        </form>
+
+        <h6 class="h6 mb-3">{{ count }} Results for <strong>{{ month }}</strong>
+            {% if selected_accountant %} - {{ selected_accountant.get_full_name }}{% else %} - All Accountants{% endif %}
+        </h6>
+
+        <table class="table table-bordered table-striped table-hover">
             <thead>
                 <tr>
                     {% for header in headers %}
@@ -24,7 +50,7 @@
             <tbody>
                 {% for client in clients %}
                     <tr>
-                        <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.name}}</a></td>
+                        <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{ client.name }}</a></td>
                         <td>{{ client.client_type }}</td>
                         <td>{{ client.month_end }}</td>
                         <td>{{ client.vat_reg_number }}</td>
@@ -35,7 +61,8 @@
             </tbody>
         </table>
     {% else %}
-        <p>No clients found for the selected filters.</p>
+        <p class="mt-3">No clients found for the selected filters.</p>
     {% endif %}
-    {% endif %}
+</div>
+{% endif %}
 {% endblock %}

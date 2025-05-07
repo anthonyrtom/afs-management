@@ -1,47 +1,89 @@
 {% extends 'base.html' %}
 
-{% block title %} Dashboard {% endblock title %}
-
 {% block content %} 
 {% if user.is_authenticated %}
-   <h2 class="h2">Dashboard</h2>
-   <table class="table table-striped table-hover table-dark">
-        <thead>
-            <tr scope="col">
-               <th>Description</th>
-               <th>Number</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-               <td>Number of Clients</td>
-               <td>{{client_information.client_count}}</td>
-            </tr>
-            <tr>
-               <td>Number of financial years</td>
-               <td>{{client_information.financial_years}}</td>
-            </tr>
-            <tr>
-               <td>Unique Client Types Count</td>
-               <td>{{client_information.client_types}}</td>
-            </tr>
-            <tr>
-               <td>Number of VAT Categories</td>
-               <td>{{client_information.vat_categories}}</td>
-            </tr>
-            <tr>
-               <td>Number of Accountants</td>
-               <td>{{client_information.accountants}}</td>
-            </tr>
-            <tr>
-               <td>Clients without Accountants</td>
-               <td>{{client_information.noaccountant}}</td>
-            </tr>
-            <tr>
-               <td>Number of clients registered for VAT</td>
-               <td>{{client_information.vatvendors}}</td>
-            </tr>
-        </tbody>
+   <h2 class="h2 mt-4 text-center">Dashboard</h2>
+
+   <table class="table table-striped table-hover table-bordered">
+      <thead>
+         <tr>
+            <th>Description</th>
+            {% for header in headers %}
+               <th>{{ header }}</th>
+            {% endfor %}
+            <th>Total</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <td>All Clients</td>
+            {% for count in all_counts %}
+            <td>
+               <a href="{% url 'dashboard_list' 'all_clients' header %}">
+                  {{count}}
+            </a>
+         </td>
+         {% endfor %}
+            <td>{{ total_all }}</td>
+         </tr>
+         <tr>
+            <td>VAT Vendors</td>
+            {% for count in vendor_counts %}
+               <td>{{ count }}</td>
+            {% endfor %}
+            <td>{{ total_vendors }}</td>
+         </tr>
+         <tr>
+            <td>Current Month VAT Vendors</td>
+            {% for count in curr_vendor_counts %}
+               <td>{{ count }}</td>
+            {% endfor %}
+            <td>{{ total_curr_vendors }}</td>
+         </tr>
+         <tr>
+            <td>All Active CIPC Clients</td>
+            {% for count in cipc_counts %}
+               <td>{{ count }}</td>
+            {% endfor %}
+            <td>{{ total_cipc }}</td>
+         </tr>
+         <tr>
+            <td>No. of CIPC Returns this month</td>
+            {% for count in curr_cipc_counts %}
+               <td>{{ count }}</td>
+            {% endfor %}
+            <td>{{ total_curr_cipc }}</td>
+         </tr>
+         <tr>
+            <td>All AFS Clients</td>
+            {% for count in afs_counts %}
+               <td>{{ count }}</td>
+            {% endfor %}
+            <td>{{ total_afs }}</td>
+         </tr>
+         <tr>
+            <td>Current Clients AFSs Due</td>
+            {% for count in curr_afs_counts %}
+               <td>{{ count }}</td>
+            {% endfor %}
+            <td>{{ total_curr_afs }}</td>
+         </tr>
+
+         <tr>
+            <td>All Provisional Tax Clients</td>
+            {% for count in prov_tax_counts %}
+               <td>{{ count }}</td>
+            {% endfor %}
+            <td>{{ total_provs }}</td>
+         </tr>
+         <tr>
+            <td>Current Month Provisional Tax Clients</td>
+            {% for count in curr_prov_tax_counts %}
+               <td>{{ count }}</td>
+            {% endfor %}
+            <td>{{ total_curr_provs }}</td>
+         </tr>
+      </tbody>
    </table>
 {% endif %}
-{% endblock content %}
+{% endblock %}

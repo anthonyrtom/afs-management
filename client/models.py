@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
@@ -87,6 +88,7 @@ class Client(models.Model):
         Month, on_delete=models.SET_NULL, null=True, related_name="paye_clients")
     uif_reg_number = models.CharField(max_length=25, null=True, unique=True)
     entity_reg_number = models.CharField(max_length=25, null=True, unique=True)
+    birthday_of_entity = models.DateField(null=True)
     vat_reg_number = models.CharField(max_length=25, null=True, unique=True)
     first_month_for_vat_sub = models.ForeignKey(
         Month, on_delete=models.SET_NULL, null=True, related_name="vat_clients")
@@ -112,8 +114,47 @@ class Client(models.Model):
     def __str__(self):
         return self.name
 
-    def is_afs_client(self):
-        if self.client_type and self.client_type.name == "Individual":
+    def get_birthday_in_year(self, year):
+        curr_date = None
+        if not self.is_client_cipc_reg_eligible():
+            return curr_date
+
+        if not isinstance(self.month_end, int) or not 1 <= self.month_end <= 12:
+            # Handle invalid month_end appropriately (e.g., raise an error, log, return None)
+            print(f"Warning: Invalid month_end: {self.month_end}")
+            return None
+
+        try:
+            curr_date = date(
+                year, self.birthday_of_entity.month, self.birthday_of_entity.day)
+        except ValueError as e:
+            print(e)
+            if self.birthday_of_entity.day == 29 and self.month_end == 2:  # Specifically handle Feb 29th
+                curr_date = date(year, self.month_end, 28)
+            else:
+                # Handle other ValueError cases if needed (e.g., log, return None)
+                print(
+                    f"Warning: Invalid date for year {year}, month {self.month_end}, day {self.birthday_of_entity.day}: {e}")
+                pass  # Keep curr_date as None
+
+        return curr_date
+
+    def is_client_cipc_reg_eligible(self):
+        if self.client_type.name in ["Sole Proprietor", "Individual", "Trust", "Partnership", "Non Profit Organisation", "Foreign Company"]:
+            return False
+        if not self.entity_reg_number:
+            return False
+        if len(self.entity_reg_number) != 14:
+            return False
+        if not self.birthday_of_entity:
+            return False
+        split_arr = self.entity_reg_number.split("/")
+        if len(split_arr[0]) != 4 or len(split_arr[1]) != 6 or len(split_arr[2]) != 2:
+            return False
+        return True
+
+    def is_afs_client(self, as_at_date=None):
+        if self.client_type and self.client_type.name in ["Individual", "Foreign Company", "Partnership"]:
             return False
         if not self.is_active:
             return False
@@ -121,14 +162,122 @@ class Client(models.Model):
             return False
         if not self.first_financial_year:
             return False
-        return True
+        if as_at_date:
+            service_name = self.get_service_name("afs")
+            try:
+                service = Service.objects.get(name=service_name)
+                return ClientService.is_service_offered(self.id, service.id, as_at_date)
+            except:
+                return False
+        else:
+            return False
 
-    def is_year_after_afs_first(self, year):
-        if not self.is_afs_client():
+    def is_prov_tax_client(self, as_at_date=None):
+        if not self.is_active:
+            return False
+        if self.client_type and self.client_type.name in ["Foreign Company", "Partnership"]:
+            return False
+        if not (self.month_end and self.last_day):
+            return False
+        if not self.first_financial_year:
+            return False
+        if as_at_date:
+            service_name = self.get_service_name("prov_tax")
+            try:
+                service = Service.objects.get(name=service_name)
+                return ClientService.is_service_offered(self.id, service.id, as_at_date)
+            except:
+                return False
+        else:
+            return False
+
+    def is_first_prov_tax_month(self, as_at_date):
+        if not self.is_prov_tax_client(as_at_date):
+            return False
+        if not isinstance(as_at_date, date):
+            raise ValueError("Date required")
+        month = as_at_date.month
+        prov_tax_month = self.get_first_prov_tax_month()
+        return month == prov_tax_month
+
+    def is_second_prov_tax_month(self, as_at_date):
+        if not self.is_prov_tax_client(as_at_date):
+            return False
+        if not isinstance(as_at_date, date):
+            raise ValueError(f"{as_at_date} is not a valid date")
+        month = as_at_date.month
+        return month == self.month_end
+
+    def get_first_prov_tax_month(self):
+        if not self.month_end:
+            raise ValueError("Mont can not be blank")
+        if self.month_end < 7:
+            return self.month_end + 6
+        elif self.month_end <= 12:
+            return (self.month_end + 6) % 12
+
+    def get_service_name(self, service_name):
+        if service_name == "afs":
+            return "Annual Financial Statements"
+        elif service_name == "prov_tax":
+            return "Provisional Tax"
+        return None
+
+    def is_year_after_afs_first(self, year, as_of_date=None):
+        if not self.is_afs_client(as_of_date):
             return False
         if int(self.first_financial_year.the_year) > year:
             return False
         return True
+
+    def is_vat_vendor(self, as_at_date, service_name):
+        if not self.vat_category:
+            return False
+        service = Service.objects.filter(name=service_name).first()
+        if not service:
+            return False
+        is_client_service = ClientService.is_service_offered(
+            client_id=self.id, service_id=service.id, as_at_date=as_at_date)
+        return is_client_service
+
+    @staticmethod
+    def get_afs_clients(as_of_date, month=None, client_type=None):
+        clients = []
+        try:
+            if client_type:
+                client_type = ClientType.objects.filter(
+                    name=client_type).first()
+                clients = Client.objects.filter(client_type=client_type)
+            else:
+                clients = Client.objects.all()
+            if month:
+                clients = clients.filter(month_end=month)
+            clients = clients.order_by("name")
+            clients = [
+                client for client in clients if client.is_afs_client(as_of_date)]
+            return clients
+        except:
+            return clients
+
+    @staticmethod
+    def get_prov_tax_clients(as_of_date, month=None, client_type=None):
+        clients = []
+        try:
+            if client_type:
+                client_type = ClientType.objects.filter(
+                    name=client_type).first()
+                clients = Client.objects.filter(client_type=client_type)
+            else:
+                clients = Client.objects.all()
+            if month:
+                clients = clients.filter(month_end=month)
+            clients = clients.order_by("name")
+            clients = [
+                client for client in clients if client.is_prov_tax_client(as_of_date)]
+
+            return clients
+        except:
+            return clients
 
     @staticmethod
     def get_vat_clients_for_category(category=None, accountant=None):
@@ -190,6 +339,29 @@ class Client(models.Model):
         clients = clients.order_by("name")
         return clients
 
+    @staticmethod
+    def count_clients_of_type(the_type=None):
+        if not the_type:
+            return Client.objects.count()
+        if the_type and not isinstance(the_type, str):
+            raise ValueError("Wrong type supplied")
+        c_type = ClientType.objects.filter(name=the_type).first()
+        if not c_type:
+            return 0
+        return Client.objects.filter(client_type=c_type).count()
+
+    @staticmethod
+    def get_clients_of_type(service_name, as_of_date):
+        all_clients = []
+        try:
+            service = Service.objects.get(name=service_name)
+            for client in Client.objects.all():
+                if ClientService.is_service_offered(client.id, service.id, as_of_date):
+                    all_clients.append(client)
+        except Service.DoesNotExist:
+            return all_clients
+        return all_clients
+
 
 class ClientFinancialYear(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
@@ -216,13 +388,13 @@ class ClientFinancialYear(models.Model):
                     "Finish date must be greater than or equal to schedule date.")
 
     @staticmethod
-    def setup_clients_afs_for_year(year):
+    def setup_clients_afs_for_year(year, as_of_date=datetime.now().date()):
         created_clients = []
         if not isinstance(year, int):
             return created_clients
         all_clients = Client.objects.all().order_by("name")
         for client in all_clients:
-            if client.is_afs_client() and client.is_year_after_afs_first(year):
+            if client.is_afs_client(as_of_date) and client.is_year_after_afs_first(year, datetime.now().date()):
                 fin_year = FinancialYear.objects.filter(the_year=year).first()
 
                 if fin_year:
@@ -318,3 +490,21 @@ class ClientService(models.Model):
             if self.end_date < self.start_date:
                 raise ValidationError(
                     "Finish date must be greater than or equal to start date.")
+
+    @staticmethod
+    def is_service_offered(client_id, service_id, as_at_date):
+        if not isinstance(as_at_date, date):
+            raise ValueError("as_at_date must be a valid date")
+
+        try:
+            cs = ClientService.objects.get(
+                client_id=client_id, service_id=service_id)
+        except ClientService.DoesNotExist:
+            return False
+
+        if cs.start_date and cs.start_date > as_at_date:
+            return False
+        if cs.end_date and cs.end_date < as_at_date:
+            return False
+
+        return True

@@ -4,29 +4,42 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-    <h2>All Accountants {{count}}</h2>
 
-    {% if accountants %}
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for accountant in accountants %}
+    <div class="container mt-4">
+        <h6 class="mb-3">Accountants ({{ count }})</h6>
+    
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-6">
+                <input type="text" name="search" value="{{ query }}" class="form-control"
+                       placeholder="Search by name, surname, or email">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+            </div>
+        </form>
+    
+        {% if accountants %}
+            <table class="table table-striped">
+                <thead>
                     <tr>
-                        <td>{{ accountant.get_full_name }}</td>
-                        <td>{{ accountant.username }}</td>
-                        <td>{{ accountant.email }}</td>
+                        <th>Email</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No accountants found.</p>
-    {% endif %}
+                </thead>
+                <tbody>
+                    {% for user in accountants %}
+                        <tr>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.first_name }}</td>
+                            <td>{{ user.last_name }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No accountants found.</p>
+        {% endif %}
+    </div>
 {% endif %}
 {% endblock %}
