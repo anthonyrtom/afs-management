@@ -32,6 +32,9 @@
                     <li class="list-group-item d-flex justify-content-between">
                         <a href="{% url 'get-clients-for-month' %}" class="list-group-item list-group-item-action list-group-item-primary">Get VAT clients for a specified month</a>
                     </li> 
+                    <li class="list-group-item d-flex justify-content-between">
+                        <a href="{% url 'view-service-overview' %}" class="list-group-item list-group-item-action list-group-item-primary">View Client with specified service due in a month</a>
+                    </li> 
             </ul>
         </div>
         <div class="col-md-4">
@@ -39,22 +42,22 @@
             <ul class="list-group">
                
                 <li class="list-group-item">
-                    <a href="{% url 'view-scheduled' %}" class="list-group-item list-group-item-action list-group-item-primary">View Scheduled AFSs</a>
+                    <a href="{% url 'view-scheduled' %}" class="list-group-item list-group-item-action list-group-item-primary">View Financials that have been scheduled and unfinished for a specific year</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'filter-financials' %}" class="list-group-item list-group-item-action list-group-item-primary">Filter Financials</a>
+                    <a href="{% url 'filter-financials' %}" class="list-group-item list-group-item-action list-group-item-primary">Get Finished Financials, Working papers or Income Tax Returns for a specific year</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'completed-financials-month' %}" class="list-group-item list-group-item-action list-group-item-primary">View Completed AFSs Specific Month</a>
+                    <a href="{% url 'completed-financials-month' %}" class="list-group-item list-group-item-action list-group-item-primary">View Financials finished in a specified month</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'unfinished-financials' %}" class="list-group-item list-group-item-action list-group-item-primary">View Unfinished AFSs</a>
+                    <a href="{% url 'unfinished-financials' %}" class="list-group-item list-group-item-action list-group-item-primary">View Unfinished Financials specific year</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'client-with-monthend' %}" class="list-group-item list-group-item-action list-group-item-primary">Get Clients with a monthend</a>
+                    <a href="{% url 'client-with-monthend' %}" class="list-group-item list-group-item-action list-group-item-primary">Get Clients with a certain monthend</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'client_services' %}" class="list-group-item list-group-item-action list-group-item-primary">Get Clients for this service</a>
+                    <a href="{% url 'client_services' %}" class="list-group-item list-group-item-action list-group-item-primary">See clients offered a certain service </a>
                 </li> 
                
             </ul>
@@ -65,6 +68,9 @@
 
                 <li class="list-group-item">
                     <a href="{% url 'search-users'%}" class="list-group-item list-group-item-action list-group-item-primary">Search Users</a>
+                </li>  
+                <li class="list-group-item">
+                    <a href="{% url 'search-clients'%}" class="list-group-item list-group-item-action list-group-item-primary">Search Clients By Type</a>
                 </li>  
             </ul>
         </div>

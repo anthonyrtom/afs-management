@@ -2,24 +2,29 @@
 
 {% block content %}
    {% if user.is_authenticated %}
-   <h2>{{ filter_type }} - {{ client_type }}</h2>
-
-   <form method="get">
-      <input type="text" name="q" value="{{ query }}" placeholder="Search clients...">
-      <button type="submit">Search</button>
+   
+   <form method="get" class="row mt-4">
+      <div class="col-md-10">
+         <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Search clients...">
+      </div>
+      <div class="col md-2">
+         <button class="btn btn-outline-primary w-100" type="submit">Search</button>
+      </div>
    </form>
-
+   
+   <h6 class="h6 mt-4">{{ filter_type }} - {{ client_type }} - {{count}} found</h6>
    <table class="table table-striped table-hover table-bordered">
       <thead>
          <tr>
             <th>Name</th>
-            <th>More Info</th>
+            <th>Registration Number</th>
          </tr>
       </thead>
       <tbody>
          {% for client in clients %}
          <tr>
-            <td>{{ client.name }}</td>
+            <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{ client.name }}</a></td>
+            <td>{{ client.entity_reg_number }}</td>
          </tr>
          {% endfor %}
       </tbody>

@@ -4,13 +4,32 @@
 {% block content %}
 <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
     <div class="col-md-6 col-lg-4 border border-light shadow-sm rounded p-4 bg-white">
-        <h2 class="h4 text-center mb-4">Login</h2>
+        <h2 class="h4 text-center mb-1">Login</h2>
+        
+        {# Dismissible alert for admin authorization #}
+        <div class="h6 text-center mb-4 alert alert-warning alert-dismissible fade show" role="alert">
+            Please note that admin must authorise you after signing up before attempting to login, if done,please login
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <form method="post" novalidate>
             {% csrf_token %}
+
+            {# Display non-field errors (e.g. incorrect login) #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# Loop through all fields (username, password) #}
             {% for field in form %}
                 <div class="mb-3">
                     <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
+                    {# Assuming you've now set the 'form-control' class in your custom form's __init__ #}
+                    {{ field }} 
                     {% if field.errors %}
                         <div class="text-danger small">
                             {{ field.errors|striptags }}
@@ -18,9 +37,17 @@
                     {% endif %}
                 </div>
             {% endfor %}
+
             <div class="d-grid">
-                <button type="submit" class="btn btn-secondary">Log In</button>
+                <button type="submit" class="btn btn-success">Log In</button>
             </div>
+
+            <div class="text-center mt-3">
+                <small>Don't have an account? <a href="{% url 'signup' %}" class="text-decoration-none">Sign Up</a></small>
+            </div>
+            <!-- <div class="text-center">
+                <small><a href="{% url 'password_reset' %}" class="text-decoration-none">Forgot Password?</a></small>
+            </div> -->
         </form>
     </div>
 </div>

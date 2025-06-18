@@ -4,12 +4,11 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-    <h2>Process VAT Clients by Month or Accountant</h2>
-
+    <h6 class="h6 mt-4">Process VAT Clients by Month or Accountant</h6>
     <form method="POST">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-secondary">Get Clients</button>
+        <button type="submit" class="btn btn-outline-primary">Get Clients</button>
     </form>
 {% endif %}
 {% endblock %}

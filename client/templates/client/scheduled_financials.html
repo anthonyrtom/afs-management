@@ -5,23 +5,28 @@
 {% block content %}
     {% if user.is_authenticated %}
         {% if form %}
-            <form method="post">
+            <form method="post" class="mt-4 mb-4">
                 {% csrf_token %}
-                <div class="form-group m-2">
+                <div class="form-group mt-2 mb-2">
                     {{ form.financial_year.label_tag }}  
                     {{ form.financial_year }}  
                 </div>
-                <button type="submit" class="btn btn-secondary mt2">Submit</button>
+                {% if data %}
+                    <div class="mb-4 mt-4">
+                        <label for="q" class="form-label">Search Clients</label>
+                        <input type="text" name="q" id="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search by client name" />
+                    </div>
+                {% endif %}
+                <button type="submit" class="btn btn-outline-primary">Submit</button>
             </form>
         {% else %}
-            <h3 class="h3">{{count}} Financials of {{total}} found</h3>
-            <table class="table table-striped table-hover">
+            <h6 class="h6 mt-4">{{count}} Financials of {{total}} found</h6>
+            <table class="table table-striped table-hover table-bordered">
                 {% include "client/_table_headers.html" with headers=headers %}
                 <tbody>
                     {% for record in scheduled %}
                         <tr>
                             <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{record.client.name}}</a></td>
-                            <!-- <td>{{record.client.name}}</td> -->
                             <td>{{record.financial_year}}</td>
                             <td>{{record.schedule_date}}</td>
                             <td>{{record.finish_date|default:"Not Finished"}}</td>

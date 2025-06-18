@@ -1,52 +1,70 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block title %}VAT Clients{% endblock %}
 
 {% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<div id="ajax-urls"
+     data-update-status-url="{% url 'ajax_update_vat_status' %}"
+     data-update-comment-url="{% url 'ajax_update_comment' %}">
+</div>
 {% if user.is_authenticated %}
-    <h2>VAT Clients</h2>
+    <h6 class="h6 mt-4">VAT Clients</h6>
 
     {% if vat_clients %}
-        <h3>{{count}} VAT Submission History</h3>
-        <table class="table table-bordered table-striped">
+        <h6 class="mt-4 h6">{{ count }} VAT Submission History</h6>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="text" class="form-control" placeholder="Search by client name" name="search">
+            <button type="submit" class="mt-2 btn btn-outline-primary">Search</button>
+        </form>
+
+        <table class="mt-4 table table-bordered table-striped table-hover">
             <thead>
                 <tr>
+                    
                     {% for header in headers %}
                         <th>{{ header }}</th>
                     {% endfor %}
                 </tr>
             </thead>
             <tbody>
+                <!-- Summary Row -->
+                <tr>
+                    <td></td>
+                    <td><strong>Summary</strong></td>
+                    <td></td>
+                    <td>{{ metrics.submitted }} of {{ count }}</td>
+                    <td>{{ metrics.client_notified }} of {{ count }}</td>
+                    <td>{{ metrics.paid }} of {{ count }}</td>
+                    <td colspan="2"></td>
+                </tr>
+
+                <!-- Client Rows -->
                 {% for client in vat_clients %}
                     <tr>
-                        <form method="post" action="{% url 'update_vat_client_status' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="client_id" value="{{ client.id }}">
-                            <td><a href="{% url 'client-detail' client.client.id %}" class="text-decoration-none">{{client.client.name}}</a></td>
-                            <!-- <td>{{ client.client.name }}</td> -->
-                            <td>{{ client.month }} {{ client.year }}</td>
+                        <td><input type="checkbox" class="mark-complete" data-client-id="{{ client.id }}" data-client-name="{{client.client.name}}" {% if client.submitted and client.client_notified and client.paid %} checked {% endif %} {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}></td>
+                        <td><a href="{% url 'client-detail' client.client.id %}" class="text-decoration-none">{{ client.client.name }}</a></td>
+                        <td>{{ client.month }} {{ client.year }}</td>
 
-                            <td>
-                                <input type="hidden" name="submitted" value="false">
-                                <input type="checkbox" name="submitted" value="true" {% if client.submitted %} checked {% endif %}>
-                            </td>
-                            <td>
-                                <input type="hidden" name="client_notified" value="false">
-                                <input type="checkbox" name="client_notified" value="true" {% if client.client_notified %} checked {% endif %}>
-                            </td>
-                            <td>
-                                <input type="hidden" name="paid" value="false">
-                                <input type="checkbox" name="paid" value="true" {% if client.paid %} checked {% endif %}>
-                            </td>
+                        <td>
+                            <input type="checkbox" class="update-field" data-field="submitted" data-client-id="{{ client.id }}" data-client-name="{{client.client.name}}" {% if client.submitted %}checked{% endif %} {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>
+                        </td>
+                        <td>
+                            <input type="checkbox" class="update-field" data-field="client_notified" data-client-id="{{ client.id }}" data-client-name="{{client.client.name}}"{% if client.client_notified %}checked{% endif %} {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>
+                        </td>
+                        <td>
+                            <input type="checkbox" class="update-field" data-field="paid" data-client-id="{{ client.id }}" data-client-name="{{client.client.name}}" {% if client.paid %}checked{% endif %} {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>
+                        </td>
 
-                            <td>
-                                <textarea name="comment" class="form-control" rows="2">{% if client.comment %}{{ client.comment }} {% endif %}</textarea>
-                            </td>
-
-                            <td>
-                                <button type="submit" class="btn btn-secondary">Update</button>
-                            </td>
-                        </form>
+                        <td>
+                            <textarea class="form-control update-comment" data-client-id="{{ client.id }}" data-client-name="{{ client.client.name }}" rows="2">{{ client.comment|default_if_none:'' }}</textarea>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-outline-primary update-comment-button" data-client-id="{{ client.id }}" {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>Save</button>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -54,5 +72,9 @@
     {% else %}
         <p>No clients found for the selected filters.</p>
     {% endif %}
- {% endif %}
+{% endif %}
 {% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/custom.js' %}"></script>
+{% endblock extra_js %}

@@ -8,8 +8,8 @@
       <thead>
          <tr>
             <th>Description</th>
-            {% for header in headers %}
-               <th>{{ header }}</th>
+            {% for data in data_list %}
+               <th>{{ data.name }}</th>
             {% endfor %}
             <th>Total</th>
          </tr>
@@ -17,10 +17,12 @@
       <tbody>
          <tr>
             <td>All Clients</td>
-            {% for count in all_counts %}
+            {% for data in data_list %}
             <td>
-               <a href="{% url 'dashboard_list' 'all_clients' header %}">
-                  {{count}}
+               {% if data.count_all > 0 %}
+                  <a class="text-decoration-none" href="{% url 'dashboard_list' 'all_clients' data.name %}">
+               {% endif %}
+                  {{data.count_all}}
             </a>
          </td>
          {% endfor %}
@@ -28,58 +30,106 @@
          </tr>
          <tr>
             <td>VAT Vendors</td>
-            {% for count in vendor_counts %}
-               <td>{{ count }}</td>
+            {% for data in data_list %}
+            <td>
+               {% if data.vendor_count > 0 %}
+               <a class="text-decoration-none" href="{% url 'dashboard_list' 'vat_vendors' data.name %}">
+                  {% endif %}
+                     {{data.vendor_count}}
+               </a>
+            </td>
             {% endfor %}
             <td>{{ total_vendors }}</td>
          </tr>
          <tr>
-            <td>Current Month VAT Vendors</td>
-            {% for count in curr_vendor_counts %}
-               <td>{{ count }}</td>
+            <td>VAT Vendors with returns due this month</td>
+            {% for data in data_list %}
+               <td>
+                  {% if data.curr_vendor_count > 0 %}
+                        <a class="text-decoration-none" href="{% url 'dashboard_list' 'current_vat_vendors' data.name %}">
+                  {% endif %}
+                           {{ data.curr_vendor_count }}
+                        </a>
+               </td>
             {% endfor %}
             <td>{{ total_curr_vendors }}</td>
          </tr>
          <tr>
-            <td>All Active CIPC Clients</td>
-            {% for count in cipc_counts %}
-               <td>{{ count }}</td>
+            <td>Active CIPC Clients</td>
+            {% for data in data_list %}
+               <td>
+                  {% if data.cipc_count > 0 %}
+                     <a class="text-decoration-none" href="{% url 'dashboard_list' 'cipc_clients' data.name %}">
+                  {% endif %}
+                     {{ data.cipc_count }}
+                     </a>
+               </td>
             {% endfor %}
             <td>{{ total_cipc }}</td>
          </tr>
          <tr>
             <td>No. of CIPC Returns this month</td>
-            {% for count in curr_cipc_counts %}
-               <td>{{ count }}</td>
+            {% for data in data_list %}
+               <td>
+                     {% if data.curr_cipc_count > 0 %}
+                        <a class="text-decoration-none" href="{% url 'dashboard_list' 'current_cipc_clients' data.name %}">
+                     {% endif %}
+                  {{ data.curr_cipc_count }}
+                        </a>
+               </td>
             {% endfor %}
             <td>{{ total_curr_cipc }}</td>
          </tr>
          <tr>
             <td>All AFS Clients</td>
-            {% for count in afs_counts %}
-               <td>{{ count }}</td>
-            {% endfor %}
+               {% for data in data_list %}
+                  <td>
+                     {% if data.afs_count > 0 %}
+                        <a class="text-decoration-none" href="{% url 'dashboard_list' 'afs_clients' data.name %}">
+                     {% endif %}
+                     {{ data.afs_count }}
+                        </a>
+                  </td>
+               {% endfor %}
             <td>{{ total_afs }}</td>
          </tr>
          <tr>
-            <td>Current Clients AFSs Due</td>
-            {% for count in curr_afs_counts %}
-               <td>{{ count }}</td>
+            <td>Clients with AFSs Due</td>
+            {% for data in data_list %}
+               <td>
+                  {% if data.curr_afs_count > 0 %}
+                     <a class="text-decoration-none" href="{% url 'dashboard_list' 'current_afs_clients' data.name %}">
+                  {% endif %}
+                  {{ data.curr_afs_count }}
+                     </a>
+               </td>
             {% endfor %}
             <td>{{ total_curr_afs }}</td>
          </tr>
 
          <tr>
             <td>All Provisional Tax Clients</td>
-            {% for count in prov_tax_counts %}
-               <td>{{ count }}</td>
+            {% for data in data_list %}
+               <td>
+                  {% if data.prov_count > 0 %}
+                     <a class="text-decoration-none" href="{% url 'dashboard_list' 'prov_tax_clients' data.name %}">
+                  {% endif %}
+                  {{ data.prov_count }}
+                     </a>
+               </td>
             {% endfor %}
             <td>{{ total_provs }}</td>
          </tr>
          <tr>
             <td>Current Month Provisional Tax Clients</td>
-            {% for count in curr_prov_tax_counts %}
-               <td>{{ count }}</td>
+            {% for data in data_list %}
+               <td>
+                  {% if data.curr_prov_count > 0 %}
+                     <a class="text-decoration-none" href="{% url 'dashboard_list' 'curr_prov_tax_clients' data.name %}">
+                  {% endif %}
+                  {{ data.curr_prov_count }}
+               </a>
+               </td>
             {% endfor %}
             <td>{{ total_curr_provs }}</td>
          </tr>

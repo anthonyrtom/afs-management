@@ -12,11 +12,13 @@
                 <h6 class="h6">Process Accounting</h6>
                 <ul class="list-group">
                     <li class="list-group-item">
-                        <a href="{% url 'process_client_financial_years'%}" class="list-group-item list-group-item-action list-group-item-primary">View and update AFSs clients for a period</a>
+                        <a href="{% url 'process_client_financial_years'%}" class="list-group-item list-group-item-action list-group-item-primary">Update Financial status for a period for clients</a>
                     </li> 
+                    {% if perms.client.change_clientfinancialyear %}
                     <li class="list-group-item">
-                        <a href="{% url 'create_client_financial_year'%}" class="list-group-item list-group-item-action list-group-item-primary">Create or return AFSs table</a>
+                        <a href="{% url 'create_client_financial_year'%}" class="list-group-item list-group-item-action list-group-item-primary">Create Financials for a year</a>
                     </li> 
+                    {% endif %}
                 </ul>
             </div>
             <div class="col-md-6">
@@ -24,11 +26,13 @@
                 <ul class="list-group">
                    
                     <li class="list-group-item">
-                        <a href="{% url 'process_vat_clients_for_period' %}" class="list-group-item list-group-item-action list-group-item-primary">View and update VAT clients for a period</a>
+                        <a href="{% url 'process_vat_clients_for_period' %}" class="list-group-item list-group-item-action list-group-item-primary">Update VAT status of clients for a VAT period</a>
                     </li> 
+                    {% if perms.client.change_vatsubmissionhistory %}
                     <li class="list-group-item">
-                        <a href="{% url 'create-or-update-vat' %}" class="list-group-item list-group-item-action list-group-item-primary">Create VAT Client for period</a>
+                        <a href="{% url 'create-or-update-vat' %}" class="list-group-item list-group-item-action list-group-item-primary">Create VAT Clients for a VAT period</a>
                     </li> 
+                    {% endif %}
                 </ul>
             </div>
         </div>

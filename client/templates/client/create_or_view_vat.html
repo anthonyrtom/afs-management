@@ -4,18 +4,18 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-    <h2>Create VAT Clients by Month and year</h2>
+    <h6 class="h6 mt-4">Create VAT Clients by Month and year</h6>
 
     <form method="POST">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-secondary">Create or View Clients</button>
+        <button type="submit" class="btn btn-outline-primary">Create Clients</button>
     </form>
 
     {% if created_clients %}
-        <h1 class="h1">{{count}} clients found or created</h1>
+        <h6 class="h6 mt-4">{{count}} clients found or created</h6>
     {% else %}
-        <h1 class="h1">No clients found or created</h1>
+        <h6 class="h6 mt-4">Please select the options above</h6>
     {% endif %}
 {% endif %}
 {% endblock %}

@@ -1,13 +1,26 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block title %}Client Financial Years{% endblock %}
 
 {% block content %}
-<h2>Manage Client Financial Statements Flow</h2>
+<h6 class="mt-4">Manage Client Financial Statements Flow</h6>
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<div id="ajax-urls"
+     data-update-status-url="{% url 'ajax_update_afs_status' %}"
+     data-update-comment-url="{% url 'ajax_update_afs_comment' %}">
+</div>
 
 {% if client_financial_years %}
-    <h3>{{count}} Clients found</h3>
-    <table class="table table-bordered table-striped">
+    
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="text" class="form-control" placeholder="Search by client name" name="search">
+            <button type="submit" class="mt-2 btn btn-outline-primary">Search</button>
+        </form>
+        <h6 class="mt-4">{{count}} Clients found</h6>
+    <table class="table table-bordered table-striped table-hover">
         <thead>
             <tr>
                 {% for header in headers %}
@@ -16,39 +29,55 @@
             </tr>
         </thead>
         <tbody>
+                <tr>
+                    <td></td>
+                    <td><strong>Summary</strong></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{ metrics.wp_done }} of {{ count }}</td>
+                    <td>{{ metrics.afs_done }} of {{ count }}</td>
+                    <td>{{ metrics.posting_done }} of {{ count }}</td>
+                    <td>{{ metrics.itr34c_issued }} of {{ count }}</td>
+                    <td colspan="2"></td>
+                </tr>
             {% for entry in client_financial_years %}
             <tr>
-                <form method="post" action="{% url 'update_client_financial_year' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="client_id" value="{{ entry.id }}">
-                    <td><a href="{% url 'client-detail' entry.client.id %}" class="text-decoration-none">{{entry.client.name}}</a></td>
+
+                    <td>
+                        <input type="checkbox" name="mark-complete" class="mark-complete" data-client-id="{{ entry.id }}" data-client-name="{{entry.client.name}}" {% if entry.wp_done and entry.afs_done and entry.posting_done and entry.itr34c_issued %} checked {% endif %} {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>
+                    </td>
+                    
+                    <td><a href="{% url 'client-detail' entry.client.id %}" class="text-decoration-none">{{entry.client.name}}</a>
+                    </td>
                     
                     <td>{{ entry.financial_year }}</td>
-                    <td><input type="date" name="schedule_date" value="{{ entry.schedule_date|date:'Y-m-d' }}"></td>
-                    <td><input type="date" name="finish_date" value="{{ entry.finish_date|date:'Y-m-d' }}"></td>                        
+                    
+                    <td><input type="date" name="schedule_date" value="{{ entry.schedule_date|date:'Y-m-d' }}" data-client-id="{{entry.id}}" data-client-name="{{entry.client.name}}" class="form-control date-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                    
+                    <td><input class="form-control finish-date-control" type="date" name="finish_date" data-client-id="{{entry.id}}" data-client-name="{{entry.client.name}}" value="{{ entry.finish_date|date:'Y-m-d' }}" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>                        
                     
                     <!-- Handle checkboxes -->
                     <td>
-                        <input type="hidden" name="wp_done" value="false">
-                        <input type="checkbox" name="wp_done" value="true" {% if entry.wp_done %} checked {% endif %}>
-                    </td>
-                    <td>
-                        <input type="hidden" name="afs_done" value="false">
-                        <input type="checkbox" name="afs_done" value="true" {% if entry.afs_done %} checked {% endif %}>
-                    </td>
-                    <td>
-                        <input type="hidden" name="posting_done" value="false">
-                        <input type="checkbox" name="posting_done" value="true" {% if entry.posting_done %} checked {% endif %}>
-                    </td>
-                    <td>
-                        <input type="hidden" name="itr34c_issued" value="false">
-                        <input type="checkbox" name="itr34c_issued" value="true" {% if entry.itr34c_issued %} checked {% endif %}>
+                        <input class="update-field" data-client-id="{{entry.id}}" data-client-name="{{entry.client.name}}" type="checkbox" name="wp_done" data-field="wp_done" {% if entry.wp_done %} checked {% endif %} {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>
                     </td>
                     
                     <td>
-                        <button type="submit" class="btn btn-secondary">Update</button>
+                        <input class="update-field" type="checkbox" name="afs_done" data-client-id="{{entry.id}}" data-field="afs_done" data-client-name="{{entry.client.name}}"{% if entry.afs_done %} checked {% endif %} {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>
                     </td>
-                </form>
+
+                    <td>
+                        <input type="checkbox" name="posting_done" class="update-field" data-client-id="{{entry.id}}" data-field="posting_done" data-client-name="{{entry.client.name}}"{% if entry.posting_done %} checked {% endif %} {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>
+                    </td>
+
+                    <td>
+                        <input type="checkbox" name="itr34c_issued" class="update-field" data-client-id="{{entry.id}}" data-field="itr34c_issued" data-client-name="{{entry.client.name}}"{% if entry.itr34c_issued %} checked {% endif %} {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>
+                    </td>
+                    
+                    <td>
+                        <textarea name="comment" class="form-control update-comment" data-client-id="{{ entry.id }}" data-client-name="{{ entry.client.name }}" rows="2" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>{{ entry.comment|default_if_none:'' }}</textarea>
+                        <button type="button" class="btn btn-outline-primary update-comment-button mt-2" data-client-id="{{ entry.id }}" data-client-name="{{ entry.client.name }}" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
+                    </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -58,3 +87,8 @@
 {% endif %}
 
 {% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/afs.js' %}"></script>
+{% endblock extra_js %}
+

@@ -4,17 +4,17 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-    <h2>Filter Client for yearend</h2>
+    <h6 class="h6 mt-4 mb-4">Filter Client for yearend</h6>
 
     {% if form %}
         <form method="GET">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit" class="btn btn-secondary">Filter Clients</button>
+            <button type="submit" class="btn btn-outline-primary">Filter Clients</button>
         </form>
     {% else %}
-    <h2 class="h2">Clients with {{month}} Yearend - {{count}} of {{total}}</h2>
-    <table class="table table-striped table-hover">
+    <h6 class="h6">Clients with {{month}} Yearend - {{count}} of {{total}}</h6>
+    <table class="table table-striped table-hover table-bordered">
         {% include "client/_table_headers.html" with headers=headers %}
         <tbody>
             {% for client in clients %}

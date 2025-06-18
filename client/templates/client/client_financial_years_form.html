@@ -4,12 +4,12 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<h2>Filter Client Financial Years</h2>
+<h6 class="h6 mt-4">Filter Client Financial Years</h6>
 
 <form method="POST">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn btn-secondary">Filter Clients</button>
+    <button type="submit" class="btn btn-outline-primary">Filter Clients</button>
 </form>
 {% endif %}
 {% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}View Clients due for services for month{% endblock %}
+
+{% if user.is_authenticated %}
+    {% block content %}
+    <h6 class="h6 mt-4 mb-2">View Clients due for services for month</h6>
+            <form method="GET">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-outline-primary">Filter</button>
+            </form>
+    {% if clients %}
+
+            <h6 class="mt-4">{{count}} Clients found</h6>
+        <table class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    {% for header in headers %}
+                        <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in clients %}
+                <tr>
+                        <td><a href="{% url 'client-detail' entry.id %}" class="text-decoration-none">{{entry.name}}</a>
+                        </td>
+                        <td>{{ entry.entity_reg_number }}</td>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No clients found for the selected filters.</p>
+    {% endif %}
+
+    {% endblock %}
+{% endif %}

@@ -1,3 +1,4 @@
+from django.forms.widgets import DateInput, DateTimeInput
 from django import forms
 from django.conf import settings
 from .models import ClientType, Client, ClientFinancialYear, VatSubmissionHistory, VatCategory, FinancialYear, Service, ClientService
@@ -31,8 +32,14 @@ class ClientAddForm(forms.ModelForm):
             if field_name not in ['name', 'client_type', 'month_end', 'last_day']:
                 self.fields[field_name].required = False
 
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
+        # for name, field in self.fields.items():
+        #     widget = field.widget
+        #     if isinstance(widget, (DateInput, DateTimeInput)):
+        #         widget.attrs['class'] = 'form-control'
+        #         # Important: preserve type="date"
+        #         widget.attrs.setdefault('type', 'date')
+        #     else:
+        #         widget.attrs['class'] = 'form-control'
 
 
 class ClientFinancialYearForm(forms.ModelForm):
@@ -47,8 +54,8 @@ class ClientFinancialYearForm(forms.ModelForm):
             if field_name in ["schedule_date", "finish_date", "comment"]:
                 self.fields[field_name].required = False
 
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
+        # for field in self.fields.values():
+        #     field.widget.attrs['class'] = 'form-control'
 
 
 class ClientFinancialYearGetForm(forms.ModelForm):
@@ -112,10 +119,10 @@ class CompletedAFSsForm(forms.Form):
 
 
 class MissingAFSsForm(forms.Form):
-    start_year = forms.IntegerField(min_value=settings.FIRST_FINANCIAL_YEAR, max_value=settings.LAST_FINANCIAL_YEAR,
-                                    required=True, widget=forms.NumberInput(attrs={"class": "form-control"}))
-    end_year = forms.IntegerField(min_value=settings.FIRST_FINANCIAL_YEAR, max_value=settings.LAST_FINANCIAL_YEAR,
-                                  required=True, widget=forms.NumberInput(attrs={"class": "form-control"}))
+    year = forms.IntegerField(min_value=settings.FIRST_FINANCIAL_YEAR, max_value=settings.LAST_FINANCIAL_YEAR,
+                              required=True, widget=forms.NumberInput(attrs={"class": "form-control"}))
+    # end_year = forms.IntegerField(min_value=settings.FIRST_FINANCIAL_YEAR, max_value=settings.LAST_FINANCIAL_YEAR,
+    #                               required=True, widget=forms.NumberInput(attrs={"class": "form-control"}))
     client_select = forms.ModelChoiceField(
         queryset=Client.objects.all(),
         empty_label="Select a Client",
@@ -131,6 +138,23 @@ class ClientSearchForm(forms.Form):
         widget=forms.TextInput(
             attrs={'class': 'form-control', 'placeholder': 'Search Clients...'})
     )
+
+
+class ClientFilterForm(forms.Form):
+    client_type = forms.ChoiceField(
+        choices=[], required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    query = forms.CharField(
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Search Clients...'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client_type'].choices = [("all", "ALL")] + [
+            (c.name, c.name.upper()) for c in ClientType.objects.all()
+        ]
 
 
 class UserSearchForm(forms.Form):
@@ -226,6 +250,16 @@ class VatClientsPeriodProcess(forms.Form):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
+    radio_choices = [("all", "All VAT Clients"), ("complete",
+                                                  "Show only completed VAT"), ("incomplete", "Show only incomplete VAT")]
+    radio_option = forms.ChoiceField(
+        label="VAT choices",
+        choices=radio_choices,
+        widget=forms.RadioSelect(
+            attrs={"class": "form-check"}),
+        initial="all",
+    )
+
 
 class VatSubmissionUpdateForm(forms.ModelForm):
     class Meta:
@@ -252,6 +286,20 @@ class ClientFinancialYearProcessForm(forms.Form):
         empty_label="Select a year",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+    accountant = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(job_title__title="Accountant"),
+        required=False,
+        empty_label="All Accountants",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    radio_choices = [("all", "View all Clients"), ("complete", "View with all choices complete"),
+                     ("incomplete", "View all choices not complete")]
+    radio_input = forms.ChoiceField(
+        label="Select one of the choices below",
+        choices=radio_choices,
+        widget=forms.RadioSelect(attrs={"class": "form-check"}),
+        initial="all"
+    )
 
 
 class ClientFinancialYearUpdateForm(forms.ModelForm):
@@ -264,25 +312,31 @@ class ClientFinancialYearUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["finish_date"].required = False
         self.fields["comment"].required = False
+        self.fields["schedule_date"].required = False
 
 
 class CreateandViewVATForm(forms.Form):
+    months_list = settings.MONTHS_LIST
+    choices = [("all", "ALL")] + [(month, month.upper())
+                                  for month in months_list]
 
     year = forms.ModelChoiceField(
-        queryset=FinancialYear.objects.all().order_by("-the_year"),
+        queryset=FinancialYear.objects.none(),  # placeholder
         required=True,
         empty_label="Select a year",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    months_list = settings.MONTHS_LIST
-    choices = [("all", "ALL")] + [(month, month.upper())
-                                  for month in months_list]
 
     month = forms.ChoiceField(
         choices=choices,
         required=True,
         widget=forms.Select(attrs={"class": "form-control"})
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['year'].queryset = FinancialYear.objects.all().order_by(
+            "-the_year")
 
 
 class ClientForMonthForm(forms.Form):
@@ -317,3 +371,34 @@ class ClientServiceAddForm(forms.ModelForm):
         self.fields["start_date"].required = False
         self.fields["end_date"].required = False
         self.fields["comment"].required = False
+
+
+class FilterByServiceForm(forms.Form):
+    client_type = forms.ChoiceField(choices=[])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client_type'].choices = [("all", "ALL")] + [
+            (c.name, c.name.upper()) for c in ClientType.objects.all()
+        ]
+
+    months_list = settings.MONTHS_LIST
+    choices = [("all", "ALL")] + [(month, month.upper())
+                                  for month in months_list]
+
+    services = [("vat clients", "VAT Clients"), ("financial statements clients", "Financial Statements Clients"),
+                ("provisional tax clients", "Provisional Tax Clients"), ("cipc clients", "CIPC Clients")]
+    select_a_service = forms.ChoiceField(
+        choices=services, required=True, label="Select a service to filter", widget=forms.Select(attrs={"class": "form-control"}))
+
+    month = forms.ChoiceField(
+        choices=choices,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"})
+    )
+    query = forms.CharField(
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
+    )

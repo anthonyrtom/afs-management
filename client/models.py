@@ -68,7 +68,7 @@ class Month(models.Model):
 
 
 class Client(models.Model):
-    name = models.CharField(max_length=150, null=False, unique=True)
+    name = models.CharField(max_length=150, null=False)
     client_type = models.ForeignKey(
         ClientType, on_delete=models.SET_NULL, null=True, related_name='clients')
     surname = models.CharField(max_length=150, null=True)
@@ -241,7 +241,7 @@ class Client(models.Model):
         return is_client_service
 
     @staticmethod
-    def get_afs_clients(as_of_date, month=None, client_type=None):
+    def get_afs_clients(as_of_date, month=None, client_type=None, filter_q=None):
         clients = []
         try:
             if client_type:
@@ -253,6 +253,8 @@ class Client(models.Model):
             if month:
                 clients = clients.filter(month_end=month)
             clients = clients.order_by("name")
+            if filter_q:
+                clients = clients.filter(name__icontains=filter_q)
             clients = [
                 client for client in clients if client.is_afs_client(as_of_date)]
             return clients
@@ -260,7 +262,7 @@ class Client(models.Model):
             return clients
 
     @staticmethod
-    def get_prov_tax_clients(as_of_date, month=None, client_type=None):
+    def get_prov_tax_clients(as_of_date, month=None, client_type=None, filter_q=None):
         clients = []
         try:
             if client_type:
@@ -272,6 +274,8 @@ class Client(models.Model):
             if month:
                 clients = clients.filter(month_end=month)
             clients = clients.order_by("name")
+            if filter_q:
+                clients = clients.filter(name__icontains=filter_q)
             clients = [
                 client for client in clients if client.is_prov_tax_client(as_of_date)]
 
@@ -299,7 +303,7 @@ class Client(models.Model):
         return clients
 
     @staticmethod
-    def get_vat_clients_for_month(month=None, accountant=None):
+    def get_vat_clients_for_month(month=None, accountant=None, filter_q=None):
         clients = []
 
         if not month or not isinstance(month, str):
@@ -336,7 +340,10 @@ class Client(models.Model):
 
         if accountant:
             clients = clients.filter(accountant=accountant)
-        clients = clients.order_by("name")
+        if clients:
+            clients = clients.order_by("name")
+        if filter_q:
+            clients = clients.filter(name__icontains=filter_q)
         return clients
 
     @staticmethod
@@ -351,11 +358,14 @@ class Client(models.Model):
         return Client.objects.filter(client_type=c_type).count()
 
     @staticmethod
-    def get_clients_of_type(service_name, as_of_date):
+    def get_clients_of_type(service_name, as_of_date, filter_q=None):
         all_clients = []
         try:
             service = Service.objects.get(name=service_name)
-            for client in Client.objects.all():
+            clients = Client.objects.all().order_by("name")
+            if filter_q:
+                clients = clients.filter(name__icontains=filter_q)
+            for client in clients:
                 if ClientService.is_service_offered(client.id, service.id, as_of_date):
                     all_clients.append(client)
         except Service.DoesNotExist:
