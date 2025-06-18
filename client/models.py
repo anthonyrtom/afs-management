@@ -5,8 +5,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.conf import settings
 from users.models import CustomUser
-
-
 from django.core.exceptions import ValidationError
 
 

@@ -6,7 +6,6 @@ from django.http import JsonResponse
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from django.shortcuts import render, redirect, get_object_or_404
-# from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.db.models import Q
 from django.contrib import messages
@@ -17,7 +16,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService
 from users.models import JobTitle, CustomUser
-from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, ClientSearchForm, UserSearchForm, VatCategoryForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm, ClientFinancialYearGetForm, ClientForMonthForm, FilterByServiceForm
+from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, UserSearchForm, VatCategoryForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm, ClientFinancialYearGetForm, ClientForMonthForm, FilterByServiceForm
 
 
 @login_required
