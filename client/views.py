@@ -227,12 +227,13 @@ def view_service_overview(request):
 
             clients = Client.get_clients_of_type(
                 "Cipc Returns", today, search_term)
-            clients = [client for client in clients if ClientService.is_service_offered(
-                client.id, cipc_service.id, today)]
+            # clients = [client for client in clients if ClientService.is_service_offered(
+            #     client.id, cipc_service.id, today)]
             if client_type != "all":
                 clients = [
                     client for client in clients if client.client_type.name == client_type]
             if month != "all":
+                month = settings.MONTHS_LIST.index(month) + 1
                 clients = [client for client in clients if client.get_birthday_in_year(
                     today.year) and client.get_birthday_in_year(today.year).month == month]
         count = len(clients)
