@@ -53,12 +53,12 @@ def dashboard(request):
             total_all += count
 
             cipc_count = sum(
-                1 for cipc in cipc_clients if cipc.client_type.name == client_type.name and ClientService.is_service_offered(cipc.id, cipc_service.id, today) and cipc.is_client_cipc_reg_eligible())
+                1 for cipc in cipc_clients if cipc.client_type and cipc.client_type.name == client_type.name and ClientService.is_service_offered(cipc.id, cipc_service.id, today) and cipc.is_client_cipc_reg_eligible())
             datadict["cipc_count"] = cipc_count
             total_cipc += cipc_count
 
             curr_cipc_count = sum(
-                1 for cipc in cipc_clients if cipc.client_type == client_type and ClientService.is_service_offered(cipc.id, cipc_service.id, today) and cipc.is_client_cipc_reg_eligible() and cipc.get_birthday_in_year(today.year) and (cipc.get_birthday_in_year(today.year).month == today.month))
+                1 for cipc in cipc_clients if cipc.client_type and cipc.client_type == client_type and ClientService.is_service_offered(cipc.id, cipc_service.id, today) and cipc.is_client_cipc_reg_eligible() and cipc.get_birthday_in_year(today.year) and (cipc.get_birthday_in_year(today.year).month == today.month))
 
             datadict["curr_cipc_count"] = curr_cipc_count
             total_curr_cipc += curr_cipc_count
@@ -146,7 +146,7 @@ def dashboard_list(request, filter_type, client_type):
     elif filter_type == "afs_clients":
         clients = Client.get_afs_clients(today)
         clients = [
-            client for client in clients if client.client_type.name == client_type]
+            client for client in clients if client.client_type and client.client_type.name == client_type]
 
     elif filter_type == "current_afs_clients":
         clients = Client.get_afs_clients(today, today.month, client_type)
@@ -164,13 +164,13 @@ def dashboard_list(request, filter_type, client_type):
             "Cipc Returns", today)
         # service = ClientService.objects.filter()
         clients = [
-            client for client in clients if client.client_type.name == client_type and ClientService.is_service_offered(client.id, cipc_service.id, today) and client.is_client_cipc_reg_eligible()]
+            client for client in clients if client.client_type and client.client_type.name == client_type and ClientService.is_service_offered(client.id, cipc_service.id, today) and client.is_client_cipc_reg_eligible()]
 
     elif filter_type == "current_cipc_clients":
         clients = Client.get_clients_of_type(
             "Cipc Returns", today)
         clients = [client for client in clients if ClientService.is_service_offered(client.id, cipc_service.id, today) and client.get_birthday_in_year(
-            today.year) and client.get_birthday_in_year(today.year).month == today.month and client.client_type.name == client_type]
+            today.year) and client.get_birthday_in_year(today.year).month == today.month and client.client_type and client.client_type.name == client_type]
 
     return render(request, "client/dashboard_list.html", {
         "clients": clients,

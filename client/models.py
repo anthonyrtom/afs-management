@@ -138,6 +138,8 @@ class Client(models.Model):
         return curr_date
 
     def is_client_cipc_reg_eligible(self):
+        if not self.client_type:
+            return False
         if self.client_type.name in ["Sole Proprietor", "Individual", "Trust", "Partnership", "Non Profit Organisation", "Foreign Company"]:
             return False
         if not self.entity_reg_number:
