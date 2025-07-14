@@ -141,7 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # user model pointing to
 
 AUTH_USER_MODEL = 'users.CustomUser'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_REDIRECT_URL = 'reports'
 LOGOUT_REDIRECT_URL = 'home'
 
 FIRST_FINANCIAL_YEAR = 2015

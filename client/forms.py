@@ -1,3 +1,5 @@
+# Make sure all models are imported
+from .models import ClientType, CustomUser, Service
 from django.forms.widgets import DateInput, DateTimeInput
 from django import forms
 from django.conf import settings
@@ -9,6 +11,106 @@ class ClientTypeForm(forms.ModelForm):
     class Meta:
         model = ClientType
         fields = ['name']
+
+
+class ClientFilter(forms.Form):
+    client_type = forms.ChoiceField(
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Select a client type or leave blank",
+        required=False
+    )
+    accountant = forms.ChoiceField(
+        widget=forms.Select(attrs={"class": "form-control"}),
+        required=False,
+        label="Select accountant or leave blank"
+    )
+    year_end = forms.ChoiceField(
+        widget=forms.Select(attrs={"class": "form-control"}),
+        required=False,
+        label="Select year end"
+    )
+    service_offered = forms.ChoiceField(
+        widget=forms.Select(attrs={"class": "form-control"}),
+        required=False,
+        label="Select a service or leave blank"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['client_type'].choices = [("all", "ALL")] + \
+                                             [(ct.id, ct.name) for ct in ClientType.objects.all().order_by(
+                                                 "name")]
+
+        accountant_job_title = JobTitle.objects.filter(
+            title="Accountant").first()
+
+        accountant_choices = [("all", "ALL")]
+        if accountant_job_title:
+            accountant_users = CustomUser.objects.filter(
+                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_choices.extend(
+                [(user.id, user.get_full_name() or user.email) for user in accountant_users])
+        self.fields['accountant'].choices = accountant_choices
+
+        # year_end choices
+        months_list = settings.MONTHS_LIST
+        self.fields['year_end'].choices = [("all", "ALL")] + \
+                                          [(month, month.upper())
+                                           for month in months_list]
+
+        # service_offered choices
+        self.fields['service_offered'].choices = [("all", "All services")] + \
+            [(s.id, s.name) for s in Service.objects.all().order_by("name")]
+
+
+# class ClientFilter(forms.Form):
+#     client_type = forms.ChoiceField(
+#         choices=[(-1, "-------")] + [(ct.id, ct.name)
+#                                      for ct in ClientType.objects.all().order_by("name")],
+#         widget=forms.Select(attrs={"class": "form-control"}),
+#         label="Select a client or leave blank",
+#         required=False
+#     )
+#     accountant_job_title = JobTitle.objects.filter(title="Accountant").first()
+
+#     accountant_choices = []
+#     if accountant_job_title:
+#         accountant_users = CustomUser.objects.filter(
+#             job_title=accountant_job_title).order_by('first_name', 'last_name', 'email')
+#         accountant_choices = [
+#             (user.id, user.get_full_name() or user.email) for user in accountant_users]
+
+#     accountant = forms.ChoiceField(
+#         choices=accountant_choices,
+#         required=False,
+#         widget=forms.Select(attrs={"class": "form-control"}),
+#         label="Select accountant or leave blank"
+#     )
+
+#     months_list = settings.MONTHS_LIST
+#     choices = [("all", "ALL")] + [(month, month.upper())
+#                                   for month in months_list]
+#     year_end = forms.ChoiceField(
+#         choices=choices,
+#         required=False,
+#         widget=forms.Select(attrs={"class": "form-control"}),
+#         label="Select year end"
+#     )
+#     service_offered = forms.ChoiceField(
+#         choices=[("all", "All services")] + [(s.id, s.name)
+#                                              for s in Service.objects.all().order_by("name")],
+#         required=False,
+#         widget=forms.Select(attrs={"class": "form-control"}),
+#         label="Select a service or leave blank"
+#     )
+
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.client_type = ClientType.objects.all().order_by("name")
+    #     self.accountant = JobTitle.objects.filter(title="Accountant").first()
+    #     self.year_end = FinancialYear.objects.all().order_by("the_year")
+    #     self.service_offered = Service.objects.all()
 
 
 class ClientAddForm(forms.ModelForm):
@@ -31,15 +133,6 @@ class ClientAddForm(forms.ModelForm):
         for field_name in self.fields:
             if field_name not in ['name', 'client_type', 'month_end', 'last_day']:
                 self.fields[field_name].required = False
-
-        # for name, field in self.fields.items():
-        #     widget = field.widget
-        #     if isinstance(widget, (DateInput, DateTimeInput)):
-        #         widget.attrs['class'] = 'form-control'
-        #         # Important: preserve type="date"
-        #         widget.attrs.setdefault('type', 'date')
-        #     else:
-        #         widget.attrs['class'] = 'form-control'
 
 
 class ClientFinancialYearForm(forms.ModelForm):
@@ -121,8 +214,7 @@ class CompletedAFSsForm(forms.Form):
 class MissingAFSsForm(forms.Form):
     year = forms.IntegerField(min_value=settings.FIRST_FINANCIAL_YEAR, max_value=settings.LAST_FINANCIAL_YEAR,
                               required=True, widget=forms.NumberInput(attrs={"class": "form-control"}))
-    # end_year = forms.IntegerField(min_value=settings.FIRST_FINANCIAL_YEAR, max_value=settings.LAST_FINANCIAL_YEAR,
-    #                               required=True, widget=forms.NumberInput(attrs={"class": "form-control"}))
+
     client_select = forms.ModelChoiceField(
         queryset=Client.objects.all(),
         empty_label="Select a Client",
@@ -184,20 +276,52 @@ class VatSubmissionHistoryForm(forms.ModelForm):
                 self.fields[field_name].required = False
 
 
-class VatCategoryForm(forms.Form):
-    vat_category = forms.ModelChoiceField(
-        queryset=VatCategory.objects.all(),
+class VatClientSearchForm(forms.Form):
+    client_type = forms.ChoiceField(
         required=False,
-        empty_label="Select VAT Category",
+        label="Select Client Type",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
+    vat_category = forms.ChoiceField(
+        required=False,
+        label="Select VAT Category",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-    accountant = forms.ModelChoiceField(
-        queryset=CustomUser.objects.filter(job_title__title="Accountant"),
+    months_list = settings.MONTHS_LIST
+    choices = [("all", "ALL")] + [(month, month.upper())
+                                  for month in months_list]
+
+    month = forms.ChoiceField(
+        choices=choices,
         required=False,
-        empty_label="All Accountants",
+        widget=forms.Select(attrs={"class": "form-control"})
+    )
+    accountant = forms.ChoiceField(
+        required=False,
+        label="All Accountants",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client_type'].choices = [("all", "ALL")] + \
+                                             [(ct.id, ct.name) for ct in ClientType.objects.all().order_by(
+                                                 "name")]
+        accountant_job_title = JobTitle.objects.filter(
+            title="Accountant").first()
+
+        accountant_choices = [("all", "ALL")]
+        if accountant_job_title:
+            accountant_users = CustomUser.objects.filter(
+                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_choices.extend(
+                [(user.id, user.get_full_name() or user.email) for user in accountant_users])
+        self.fields['accountant'].choices = accountant_choices
+        cat = [("all", "ALL")] + [(ct.id, ct.vat_category)
+                                  for ct in VatCategory.objects.all().order_by("vat_category")]
+        self.fields["vat_category"].choices = cat
 
 
 class VatClientsByMonthForm(forms.Form):

@@ -16,7 +16,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService
 from users.models import JobTitle, CustomUser
-from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, UserSearchForm, VatCategoryForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm, ClientFinancialYearGetForm, ClientForMonthForm, FilterByServiceForm
+from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, UserSearchForm, VatClientSearchForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm, ClientFinancialYearGetForm, ClientForMonthForm, FilterByServiceForm, ClientFilter
 
 
 @login_required
@@ -249,105 +249,127 @@ def reports(request):
 
 @login_required
 def view_all_clients(request):
-    all_clients = Client.objects.all().order_by("name")
-    headers = ["Name", "Internal ID", "Registration No.",
-               "Entity Type", "Year End",  "Accountant"]
-
-    query = request.GET.get("searchterm", "")
-    if query:
-        all_clients = all_clients.filter(Q(name__icontains=query) |
-                                         Q(surname__icontains=query) |
-                                         Q(income_tax_number__icontains=query) |
-                                         Q(paye_reg_number__icontains=query) |
-                                         Q(uif_reg_number__icontains=query) |
-                                         Q(entity_reg_number__icontains=query) |
-                                         Q(vat_reg_number__icontains=query) |
-                                         Q(internal_id_number__icontains=query))
-    count = len(all_clients)
-    return render(request, "client/all_clients.html", {"clients": all_clients, "headers": headers, "count": count})
-
-
-@login_required
-def client_filter_view(request):
-    form = ClientFilterForm(request.GET or None)
-    with_without = "without"
-
+    form = ClientFilter(request.GET or None)
     if form.is_valid():
-        field = form.cleaned_data['field']
-        null_filter = form.cleaned_data['null_filter']
+        client_type = form.cleaned_data.get("client_type", None)
+        accountant = form.cleaned_data.get("accountant", None)
+        service_offered = form.cleaned_data.get("service_offered", None)
+        year_end = form.cleaned_data.get("year_end", None)
 
-        filter_kwargs = {f"{field}__isnull": null_filter == 'null'}
-        with_without = "without" if null_filter == 'null' else "with"
+        all_clients = Client.objects.all().order_by("name")
+        if client_type and client_type != "all":
+            all_clients = all_clients.filter(
+                client_type__id=client_type)
+        if accountant and accountant != "all":
+            all_clients = all_clients.filter(
+                accountant__id=accountant)
+        if service_offered and service_offered != "all":
+            # service = Service.objects.filter(name=service_offered).first()
+            all_clients = all_clients.filter(
+                client_service__id=service_offered).distinct()
+        if year_end and year_end != "all":
+            month = settings.MONTHS_LIST.index(year_end) + 1
+            all_clients = all_clients.filter(month_end=month)
 
-        clients = Client.objects.filter(**filter_kwargs)
-        total = Client.objects.count()
-        headers = ["Client Name", "Internal ID", "Reg No.",
-                   "Client Type", "Year End", "VAT No", "Accountant"]
+        headers = ["Name", "Internal ID", "Registration No.",
+                   "Entity Type", "Year End",  "Accountant"]
 
-        search_term = request.GET.get("searchterm", "")
-        if search_term:
-            clients = clients.filter(
-                Q(name__icontains=search_term) |
-                Q(surname__icontains=search_term) |
-                Q(income_tax_number__icontains=search_term) |
-                Q(paye_reg_number__icontains=search_term) |
-                Q(uif_reg_number__icontains=search_term) |
-                Q(entity_reg_number__icontains=search_term) |
-                Q(vat_reg_number__icontains=search_term) |
-                Q(internal_id_number__icontains=search_term)
-            )
-
-        clients = clients.order_by("name")
-        count = clients.count()
-        field_display = field.replace("_", " ")
-
-        return render(request, 'client/filtered_clients.html', {
-            'form': form,
-            'clients': clients,
-            'statutory_type': field_display,
-            'with_without': with_without,
-            'headers': headers,
-            'count': count,
-            'total': total
-        })
-
-    return render(request, 'client/get_clients.html', {'form': form})
+        query = request.GET.get("searchterm", "")
+        if query:
+            all_clients = all_clients.filter(Q(name__icontains=query) |
+                                             Q(surname__icontains=query) |
+                                             Q(income_tax_number__icontains=query) |
+                                             Q(paye_reg_number__icontains=query) |
+                                             Q(uif_reg_number__icontains=query) |
+                                             Q(entity_reg_number__icontains=query) |
+                                             Q(vat_reg_number__icontains=query) |
+                                             Q(internal_id_number__icontains=query))
+        count = len(all_clients)
+        return render(request, "client/all_clients.html", {"clients": all_clients, "headers": headers, "count": count})
+    return render(request, "client/all_clients.html", {"form": form})
 
 
-@login_required
-def filter_clients_by_accountant(request):
-    form = AccountantFilterForm(request.GET or None)
-    clients = None
-    count = 0
-    headers = ["Client Name", "Client Type",
-               "Month End", "VAT No.", "Accountant"]
-    search_term = request.GET.get("search", "")
+# @login_required
+# def client_filter_view(request):
+#     form = ClientFilterForm(request.GET or None)
+#     with_without = "without"
 
-    if form.is_valid() and form.cleaned_data.get('accountant'):
-        accountant = form.cleaned_data['accountant']
-        clients = Client.objects.filter(accountant=accountant)
+#     if form.is_valid():
+#         field = form.cleaned_data['field']
+#         null_filter = form.cleaned_data['null_filter']
 
-        if search_term:
-            clients = clients.filter(
-                Q(name__icontains=search_term) |
-                Q(vat_reg_number__icontains=search_term) |
-                Q(internal_id_number__icontains=search_term) |
-                Q(entity_reg_number__icontains=search_term) |
-                Q(paye_reg_number__icontains=search_term)
-            )
+#         filter_kwargs = {f"{field}__isnull": null_filter == 'null'}
+#         with_without = "without" if null_filter == 'null' else "with"
 
-        clients = clients.order_by("name")
-        count = clients.count()
+#         clients = Client.objects.filter(**filter_kwargs)
+#         total = Client.objects.count()
+#         headers = ["Client Name", "Internal ID", "Reg No.",
+#                    "Client Type", "Year End", "VAT No", "Accountant"]
 
-    has_accountants = CustomUser.objects.filter(clients__isnull=False).exists()
+#         search_term = request.GET.get("searchterm", "")
+#         if search_term:
+#             clients = clients.filter(
+#                 Q(name__icontains=search_term) |
+#                 Q(surname__icontains=search_term) |
+#                 Q(income_tax_number__icontains=search_term) |
+#                 Q(paye_reg_number__icontains=search_term) |
+#                 Q(uif_reg_number__icontains=search_term) |
+#                 Q(entity_reg_number__icontains=search_term) |
+#                 Q(vat_reg_number__icontains=search_term) |
+#                 Q(internal_id_number__icontains=search_term)
+#             )
 
-    return render(request, 'client/accountant_clients.html', {
-        'form': form if has_accountants else None,
-        'clients': clients,
-        'headers': headers,
-        'count': count,
-        'search_term': search_term
-    })
+#         clients = clients.order_by("name")
+#         count = clients.count()
+#         field_display = field.replace("_", " ")
+
+#         return render(request, 'client/filtered_clients.html', {
+#             'form': form,
+#             'clients': clients,
+#             'statutory_type': field_display,
+#             'with_without': with_without,
+#             'headers': headers,
+#             'count': count,
+#             'total': total
+#         })
+
+#     return render(request, 'client/get_clients.html', {'form': form})
+
+
+# @login_required
+# def filter_clients_by_accountant(request):
+#     form = AccountantFilterForm(request.GET or None)
+#     clients = None
+#     count = 0
+#     headers = ["Client Name", "Client Type",
+#                "Month End", "VAT No.", "Accountant"]
+#     search_term = request.GET.get("search", "")
+
+#     if form.is_valid() and form.cleaned_data.get('accountant'):
+#         accountant = form.cleaned_data['accountant']
+#         clients = Client.objects.filter(accountant=accountant)
+
+#         if search_term:
+#             clients = clients.filter(
+#                 Q(name__icontains=search_term) |
+#                 Q(vat_reg_number__icontains=search_term) |
+#                 Q(internal_id_number__icontains=search_term) |
+#                 Q(entity_reg_number__icontains=search_term) |
+#                 Q(paye_reg_number__icontains=search_term)
+#             )
+
+#         clients = clients.order_by("name")
+#         count = clients.count()
+
+#     has_accountants = CustomUser.objects.filter(clients__isnull=False).exists()
+
+#     return render(request, 'client/accountant_clients.html', {
+#         'form': form if has_accountants else None,
+#         'clients': clients,
+#         'headers': headers,
+#         'count': count,
+#         'search_term': search_term
+#     })
 
 
 @login_required
@@ -547,32 +569,32 @@ def search_users(request):
     return render(request, "client/search_users.html", {"form": form, "users": users, "count": count})
 
 
+# @login_required
+# def search_clients(request):
+#     form = ClientFilterForm(request.GET or None)
+#     clients = Client.objects.all().order_by("name")
+#     count = len(clients)
+
+#     if form.is_valid():
+#         query = form.cleaned_data.get("query", "")
+
+#         if query:
+#             clients = clients.filter(
+#                 Q(name__icontains=query)
+#             )
+#         client_type = form.cleaned_data.get("client_type", "")
+#         if client_type != "all":
+#             clients = clients.filter(client_type__name=client_type)
+
+#         headers = ["Name", "Internal No.", "Reg Number", "Type", "Year End"]
+#         count = len(clients)
+#         return render(request, "client/found_clients.html", {"form": form, "clients": clients, "count": count, "headers": headers})
+#     return render(request, "client/found_clients.html", {"form": form, "clients": clients, "count": count})
+
+
 @login_required
-def search_clients(request):
-    form = ClientFilterForm(request.GET or None)
-    clients = Client.objects.all().order_by("name")
-    count = len(clients)
-
-    if form.is_valid():
-        query = form.cleaned_data.get("query", "")
-
-        if query:
-            clients = clients.filter(
-                Q(name__icontains=query)
-            )
-        client_type = form.cleaned_data.get("client_type", "")
-        if client_type != "all":
-            clients = clients.filter(client_type__name=client_type)
-
-        headers = ["Name", "Internal No.", "Reg Number", "Type", "Year End"]
-        count = len(clients)
-        return render(request, "client/found_clients.html", {"form": form, "clients": clients, "count": count, "headers": headers})
-    return render(request, "client/found_clients.html", {"form": form, "clients": clients, "count": count})
-
-
-@login_required
-def get_clients_for_category(request):
-    form = VatCategoryForm(request.GET or None)
+def search_vat_clients(request):
+    form = VatClientSearchForm(request.GET or None)
     clients = None
     count = 0
     headers = ["Client Name", "Client Type",
@@ -582,23 +604,54 @@ def get_clients_for_category(request):
     if form.is_valid():
         selected_category = form.cleaned_data["vat_category"]
         selected_accountant = form.cleaned_data["accountant"]
+        month = form.cleaned_data["month"]
+        client_type = form.cleaned_data["client_type"]
 
-        clients = Client.get_vat_clients_for_category(
-            selected_category.vat_category if selected_category else None,
-            selected_accountant if selected_accountant else None
-        ).order_by("name")
+        clients = Client.objects.filter(
+            vat_category__isnull=False).order_by("name")
+        if selected_accountant and selected_accountant != "all":
+            clients = clients.filter(accountant=selected_accountant)
 
         if searchterm:
             clients = clients.filter(
                 Q(name__icontains=searchterm) |
                 Q(surname__icontains=searchterm) |
-                Q(income_tax_number__icontains=searchterm) |
                 Q(vat_reg_number__icontains=searchterm)
             )
+        if client_type and client_type != "all":
+            clients = clients.filter(client_type=client_type)
+
+        if selected_category and selected_category != "all":
+            vat_cat = VatCategory.objects.get(id=selected_category)
+            clients = clients.filter(vat_category=vat_cat)
+
+        if month and month != "all":
+            index = settings.MONTHS_LIST.index(month) + 1
+            if month in ["january", "march", "may", "july", "september", "november"]:
+                clients = clients.filter(
+                    Q(vat_category__vat_category="A") |
+                    Q(vat_category__vat_category="C") |
+                    Q(vat_category__vat_category="E", month_end=index)
+                )
+
+            elif month in ["february", "august"]:
+                clients = clients.filter(
+                    Q(vat_category__vat_category="B") |
+                    Q(vat_category__vat_category="C") |
+                    Q(vat_category__vat_category="D") |
+                    Q(vat_category__vat_category="E", month_end=index)
+                )
+
+            elif month in ["april", "june", "october", "december"]:
+                clients = clients.filter(
+                    Q(vat_category__vat_category="B") |
+                    Q(vat_category__vat_category="C") |
+                    Q(vat_category__vat_category="E", month_end=index)
+                )
 
         count = clients.count()
 
-        return render(request, "client/vat_client_for_category.html", {
+        return render(request, "client/search_vat_client.html", {
             "form": form,
             "clients": clients,
             "headers": headers,
@@ -608,47 +661,47 @@ def get_clients_for_category(request):
             "count": count
         })
 
-    return render(request, "client/vat_client_for_category.html", {"form": form})
+    return render(request, "client/search_vat_client.html", {"form": form})
 
 
-@login_required
-def get_clients_for_month(request):
-    form = VatClientsByMonthForm(request.GET or None)
-    clients = None
-    count = 0
-    headers = ["Client Name", "Client Type",
-               "Month End", "VAT No", "Accountant", "Category"]
-    searchterm = request.GET.get("searchterm", "")
+# @login_required
+# def get_clients_for_month(request):
+#     form = VatClientsByMonthForm(request.GET or None)
+#     clients = None
+#     count = 0
+#     headers = ["Client Name", "Client Type",
+#                "Month End", "VAT No", "Accountant", "Category"]
+#     searchterm = request.GET.get("searchterm", "")
 
-    if form.is_valid():
-        month = form.cleaned_data["month"]
-        selected_accountant = form.cleaned_data["accountant"]
+#     if form.is_valid():
+#         month = form.cleaned_data["month"]
+#         selected_accountant = form.cleaned_data["accountant"]
 
-        clients = Client.get_vat_clients_for_month(
-            month=month,
-            accountant=selected_accountant if selected_accountant else None
-        )
+#         clients = Client.get_vat_clients_for_month(
+#             month=month,
+#             accountant=selected_accountant if selected_accountant else None
+#         )
 
-        if searchterm:
-            clients = clients.filter(
-                Q(name__icontains=searchterm) |
-                Q(surname__icontains=searchterm) |
-                Q(income_tax_number__icontains=searchterm) |
-                Q(vat_reg_number__icontains=searchterm)
-            )
+#         if searchterm:
+#             clients = clients.filter(
+#                 Q(name__icontains=searchterm) |
+#                 Q(surname__icontains=searchterm) |
+#                 Q(income_tax_number__icontains=searchterm) |
+#                 Q(vat_reg_number__icontains=searchterm)
+#             )
 
-        count = clients.count()
-        return render(request, "client/vat_clients_for_month.html", {
-            "form": form,
-            "clients": clients,
-            "month": month.title() if month else "All",
-            "selected_accountant": selected_accountant,
-            "headers": headers,
-            "count": count,
-            "searchterm": searchterm
-        })
+#         count = clients.count()
+#         return render(request, "client/vat_clients_for_month.html", {
+#             "form": form,
+#             "clients": clients,
+#             "month": month.title() if month else "All",
+#             "selected_accountant": selected_accountant,
+#             "headers": headers,
+#             "count": count,
+#             "searchterm": searchterm
+#         })
 
-    return render(request, "client/vat_clients_for_month.html", {"form": form})
+#     return render(request, "client/vat_clients_for_month.html", {"form": form})
 
 
 @login_required
@@ -1005,23 +1058,23 @@ class ClientDetailView(LoginRequiredMixin, DetailView):
         return get_object_or_404(Client, id=self.kwargs["id"])
 
 
-@login_required
-def get_clients_with_certain_month_end(request):
-    form = ClientForMonthForm(request.GET or None)
-    if form.is_valid():
-        month = form.cleaned_data["month"].lower()
-        clients = []
-        if month == "all":
-            clients = Client.objects.all().order_by("name")
-        else:
-            month_index = settings.MONTHS_LIST.index(month) + 1
-            clients = Client.objects.filter(
-                month_end=month_index).order_by("name")
-        headers = ["Client Name", "Client Type",
-                   "Month End", "VAT No", "Accountant"]
-        count = len(clients)
-        return render(request, "client/clients_with_monthend.html", {"clients": clients, "headers": headers, "count": count, "total": len(Client.objects.all()), "month": month.title()})
-    return render(request, "client/clients_with_monthend.html", {"form": form})
+# @login_required
+# def get_clients_with_certain_month_end(request):
+#     form = ClientForMonthForm(request.GET or None)
+#     if form.is_valid():
+#         month = form.cleaned_data["month"].lower()
+#         clients = []
+#         if month == "all":
+#             clients = Client.objects.all().order_by("name")
+#         else:
+#             month_index = settings.MONTHS_LIST.index(month) + 1
+#             clients = Client.objects.filter(
+#                 month_end=month_index).order_by("name")
+#         headers = ["Client Name", "Client Type",
+#                    "Month End", "VAT No", "Accountant"]
+#         count = len(clients)
+#         return render(request, "client/clients_with_monthend.html", {"clients": clients, "headers": headers, "count": count, "total": len(Client.objects.all()), "month": month.title()})
+#     return render(request, "client/clients_with_monthend.html", {"form": form})
 
 
 class ClientServiceListView(LoginRequiredMixin, View):

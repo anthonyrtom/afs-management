@@ -15,23 +15,13 @@
                     <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action list-group-item-primary">Dashboard</a>
                 </li> 
                     <li class="list-group-item">
-                        <a href="{% url 'all-clients' %}" class="list-group-item list-group-item-action list-group-item-primary">View All Clients</a>
+                        <a href="{% url 'all-clients' %}" class="list-group-item list-group-item-action list-group-item-primary">Filter Clients</a>
                     </li> 
+
                     <li class="list-group-item">
-                        <a href="{% url 'statutory-clients' %}" class="list-group-item list-group-item-action list-group-item-primary">Filter Clients</a>
+                        <a href="{% url 'search-vat-clients' %}" class="list-group-item list-group-item-action list-group-item-primary">Search VAT clients</a>
                     </li> 
-                    <li class="list-group-item">
-                        <a href="{% url 'get-accountants' %}" class="list-group-item list-group-item-action list-group-item-primary">View All Accountants</a>
-                    </li> 
-                    <li class="list-group-item">
-                        <a href="{% url 'get_accountant_clients' %}" class="list-group-item list-group-item-action list-group-item-primary">Filter By Accountant</a>
-                    </li> 
-                    <li class="list-group-item">
-                        <a href="{% url 'get-clients-for-category' %}" class="list-group-item list-group-item-action list-group-item-primary">Get VAT clients for a category</a>
-                    </li> 
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'get-clients-for-month' %}" class="list-group-item list-group-item-action list-group-item-primary">Get VAT clients for a specified month</a>
-                    </li> 
+
                     <li class="list-group-item d-flex justify-content-between">
                         <a href="{% url 'view-service-overview' %}" class="list-group-item list-group-item-action list-group-item-primary">View Client with specified service due in a month</a>
                     </li> 
@@ -54,9 +44,6 @@
                     <a href="{% url 'unfinished-financials' %}" class="list-group-item list-group-item-action list-group-item-primary">View Unfinished Financials specific year</a>
                 </li> 
                 <li class="list-group-item">
-                    <a href="{% url 'client-with-monthend' %}" class="list-group-item list-group-item-action list-group-item-primary">Get Clients with a certain monthend</a>
-                </li> 
-                <li class="list-group-item">
                     <a href="{% url 'client_services' %}" class="list-group-item list-group-item-action list-group-item-primary">See clients offered a certain service </a>
                 </li> 
                
@@ -70,8 +57,9 @@
                     <a href="{% url 'search-users'%}" class="list-group-item list-group-item-action list-group-item-primary">Search Users</a>
                 </li>  
                 <li class="list-group-item">
-                    <a href="{% url 'search-clients'%}" class="list-group-item list-group-item-action list-group-item-primary">Search Clients By Type</a>
-                </li>  
+                        <a href="{% url 'get-accountants' %}" class="list-group-item list-group-item-action list-group-item-primary">View All Accountants</a>
+                </li> 
+
             </ul>
         </div>
     </div>

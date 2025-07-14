@@ -112,6 +112,19 @@ class Client(models.Model):
     def __str__(self):
         return self.name
 
+    def get_month_end_as_string(self):
+        if not self.month_end:
+            return None
+        index = self.month_end - 1
+        return settings.MONTHS_LIST[index].title()
+
+    def get_client_full_name(self):
+        if not self.client_type:
+            return self.name
+        if self.name and self.surname:
+            return self.name + " " + self.surname
+        return self.name
+
     def get_birthday_in_year(self, year):
         curr_date = None
         if not self.is_client_cipc_reg_eligible():

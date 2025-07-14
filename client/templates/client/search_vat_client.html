@@ -6,33 +6,38 @@
 <div class="container mt-3">
     <h6 class="h6 mt-2">Filter VAT Clients</h6>
 
-    <form method="GET" class="row g-3 mb-4">
-        <div class="col-md-4">
-            {{ form.vat_category.label_tag }}
-            {{ form.vat_category }}
+       <form method="GET">
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                {{ form.client_type.label_tag }}
+                {{ form.client_type }}
+            </div>
+            <div class="col-md-6">
+                {{ form.vat_category.label_tag }}
+                {{ form.vat_category }}
+            </div>
+            
+            <div class="col-md-6">
+                {{ form.month.label_tag }}
+                {{ form.month }}
+            </div>
+            <div class="col-md-6">
+                {{ form.accountant.label_tag }}
+                {{ form.accountant }}
+            </div>
+
+            <div class="col-md-6">
+                    <input type="text" name="searchterm" class="form-control"
+                       placeholder="Search by name or VAT No." >
+            </div>
+            <div class="col-md-6 mt-3"> 
+                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+            </div>
         </div>
-        <div class="col-md-4">
-            {{ form.accountant.label_tag }}
-            {{ form.accountant }}
-        </div>
-        <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
-        </div>
-    </form>
+        
+        </form>
 
     {% if clients %}
-        <form method="get" class="row mb-3">
-            <!-- Keep filter selections -->
-            <input type="hidden" name="vat_category" value="{{ form.vat_category.value }}">
-            <input type="hidden" name="accountant" value="{{ form.accountant.value }}">
-            <div class="col-md-6">
-                <input type="text" name="searchterm" class="form-control"
-                       placeholder="Search clients..." value="{{ searchterm }}">
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-outline-primary w-100">Search</button>
-            </div>
-        </form>
 
         <h6 class="h6">{{count}} Found:</h6>
         <table class="table table-hover table-bordered table-striped">

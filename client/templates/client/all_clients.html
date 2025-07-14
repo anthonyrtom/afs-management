@@ -4,8 +4,11 @@
 {% block content %} 
     {% if user.is_authenticated %}
     <div class="container mt-2">
-            <form method="get" onchange="this.form.submit()" class="mt-2">
+
+            <form method="get"  class="mt-2">
+                {{form.as_p}}
                 <input type="text" class="form-control" placeholder="Search by Name, tax number, VAT number, PAYE number, UIF Reg number or internal ID number" name="searchterm">
+                <button type="submit" class="btn btn-primary mt-2">Get Clients</button>
             </form>   
       
     <h6 class="h6 mt-2">{{count}} clients found in the system</h6>
@@ -15,11 +18,11 @@
         <tbody>
             {% for client in clients %}
                 <tr>
-                    <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.name}}</a></td>
+                    <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.get_client_full_name}}</a></td>
                     <td>{{client.internal_id_number}}</td>
                     <td>{{client.entity_reg_number}}</td>
                     <td>{{client.client_type.name}}</td>
-                    <td>{{client.month_end}}</td>
+                    <td>{{client.get_month_end_as_string}}</td>
                     <td>{{client.accountant.first_name}} {{client.accountant.last_name}}</td>
                 </tr>
             {% endfor %}
