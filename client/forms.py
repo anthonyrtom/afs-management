@@ -64,55 +64,6 @@ class ClientFilter(forms.Form):
             [(s.id, s.name) for s in Service.objects.all().order_by("name")]
 
 
-# class ClientFilter(forms.Form):
-#     client_type = forms.ChoiceField(
-#         choices=[(-1, "-------")] + [(ct.id, ct.name)
-#                                      for ct in ClientType.objects.all().order_by("name")],
-#         widget=forms.Select(attrs={"class": "form-control"}),
-#         label="Select a client or leave blank",
-#         required=False
-#     )
-#     accountant_job_title = JobTitle.objects.filter(title="Accountant").first()
-
-#     accountant_choices = []
-#     if accountant_job_title:
-#         accountant_users = CustomUser.objects.filter(
-#             job_title=accountant_job_title).order_by('first_name', 'last_name', 'email')
-#         accountant_choices = [
-#             (user.id, user.get_full_name() or user.email) for user in accountant_users]
-
-#     accountant = forms.ChoiceField(
-#         choices=accountant_choices,
-#         required=False,
-#         widget=forms.Select(attrs={"class": "form-control"}),
-#         label="Select accountant or leave blank"
-#     )
-
-#     months_list = settings.MONTHS_LIST
-#     choices = [("all", "ALL")] + [(month, month.upper())
-#                                   for month in months_list]
-#     year_end = forms.ChoiceField(
-#         choices=choices,
-#         required=False,
-#         widget=forms.Select(attrs={"class": "form-control"}),
-#         label="Select year end"
-#     )
-#     service_offered = forms.ChoiceField(
-#         choices=[("all", "All services")] + [(s.id, s.name)
-#                                              for s in Service.objects.all().order_by("name")],
-#         required=False,
-#         widget=forms.Select(attrs={"class": "form-control"}),
-#         label="Select a service or leave blank"
-#     )
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     self.client_type = ClientType.objects.all().order_by("name")
-    #     self.accountant = JobTitle.objects.filter(title="Accountant").first()
-    #     self.year_end = FinancialYear.objects.all().order_by("the_year")
-    #     self.service_offered = Service.objects.all()
-
-
 class ClientAddForm(forms.ModelForm):
     class Meta:
         model = Client
@@ -146,9 +97,6 @@ class ClientFinancialYearForm(forms.ModelForm):
         for field_name in self.fields:
             if field_name in ["schedule_date", "finish_date", "comment"]:
                 self.fields[field_name].required = False
-
-        # for field in self.fields.values():
-        #     field.widget.attrs['class'] = 'form-control'
 
 
 class ClientFinancialYearGetForm(forms.ModelForm):
@@ -296,7 +244,8 @@ class VatClientSearchForm(forms.Form):
     month = forms.ChoiceField(
         choices=choices,
         required=False,
-        widget=forms.Select(attrs={"class": "form-control"})
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="VAT Period"
     )
     accountant = forms.ChoiceField(
         required=False,
@@ -374,13 +323,13 @@ class VatClientsPeriodProcess(forms.Form):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-    radio_choices = [("all", "All VAT Clients"), ("complete",
-                                                  "Show only completed VAT"), ("incomplete", "Show only incomplete VAT")]
+    radio_choices = [("all", "All"), ("complete",
+                                      "Completed"), ("incomplete", "Incomplete")]
     radio_option = forms.ChoiceField(
-        label="VAT choices",
+        label="Select",
         choices=radio_choices,
         widget=forms.RadioSelect(
-            attrs={"class": "form-check"}),
+            attrs={"class": "form-check-inline"}),
         initial="all",
     )
 
@@ -498,13 +447,22 @@ class ClientServiceAddForm(forms.ModelForm):
 
 
 class FilterByServiceForm(forms.Form):
-    client_type = forms.ChoiceField(choices=[])
+    client_type = forms.ChoiceField(
+        choices=[], widget=forms.Select(attrs={"class": "form-control"}))
+
+    # select_a_service = forms.ChoiceField(
+    #     widget=forms.Select(attrs={"class": "form-control"}),
+    #     required=False,
+    #     label="Select a service or leave blank"
+    # )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client_type'].choices = [("all", "ALL")] + [
             (c.name, c.name.upper()) for c in ClientType.objects.all()
         ]
+        # self.fields["select_a_service"].choices = [
+        #     ("all", "All services")] + [(s.id, s.name) for s in Service.objects.all().order_by("name")]
 
     months_list = settings.MONTHS_LIST
     choices = [("all", "ALL")] + [(month, month.upper())
@@ -523,6 +481,7 @@ class FilterByServiceForm(forms.Form):
     query = forms.CharField(
         max_length=150,
         required=False,
+        label="Search",
         widget=forms.TextInput(
             attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
     )

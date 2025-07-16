@@ -13,15 +13,45 @@
     <h6 class="h6 mt-4">VAT Clients</h6>
 
     {% if vat_clients %}
-        <h6 class="mt-4 h6">{{ count }} VAT Submission History</h6>
+        
         <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <input type="text" class="form-control" placeholder="Search by client name" name="search">
-            <button type="submit" class="mt-2 btn btn-outline-primary">Search</button>
+              {% csrf_token %}
+         <div class="row g-3 mt-2">
+                <div class="col-md-4 mt-2">
+                    {{form.client.label_tag}}
+                    {{form.client}}
+                </div>
+                <div class="col-md-4 mt-2">
+                    {{form.year.label_tag}}
+                    {{form.year}}
+                </div>
+                <div class="col-md-4 mt-2">
+                    {{form.month.label_tag}}
+                    {{form.month}}
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-4 mt-2">
+                    {{form.accountant.label_tag}}
+                    {{form.accountant}}
+                </div>
+                <div class="col-md-4 mt-2">
+                    
+                    {{form.radio_option}}
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-6 mt-2">
+                    <input type="text" class="form-control" placeholder="Search by client name" name="search">
+                </div>
+                <div class="col-md-6 mt-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+                </div>
+            </div>
         </form>
 
-        <table class="mt-4 table table-bordered table-striped table-hover">
+        <h6 class="mt-4 h6">{{ count }} VAT Submission History</h6>
+        <table class="mt-2 table table-bordered table-striped table-hover">
             <thead>
                 <tr>
                     

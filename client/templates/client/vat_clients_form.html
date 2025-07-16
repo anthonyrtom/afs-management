@@ -5,10 +5,41 @@
 {% block content %}
 {% if user.is_authenticated %}
     <h6 class="h6 mt-4">Process VAT Clients by Month or Accountant</h6>
-    <form method="POST">
+
+    <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-outline-primary">Get Clients</button>
+        <div class="row g-3 mt-2">
+                <div class="col-md-4 mt-2">
+                    {{form.client.label_tag}}
+                    {{form.client}}
+                </div>
+                <div class="col-md-4 mt-2">
+                    {{form.year.label_tag}}
+                    {{form.year}}
+                </div>
+                <div class="col-md-4 mt-2">
+                    {{form.month.label_tag}}
+                    {{form.month}}
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-4 mt-2">
+                    {{form.accountant.label_tag}}
+                    {{form.accountant}}
+                </div>
+                <div class="col-md-4 mt-2">
+                    
+                    {{form.radio_option}}
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-6 mt-2">
+                    <input type="text" class="form-control" placeholder="Search by client name" name="search">
+                </div>
+                <div class="col-md-6 mt-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+                </div>
+            </div>
     </form>
 {% endif %}
 {% endblock %}
