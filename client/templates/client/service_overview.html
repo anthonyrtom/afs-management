@@ -6,8 +6,24 @@
     {% block content %}
     <h6 class="h6 mt-4 mb-2">View Clients due for services for month</h6>
             <form method="GET">
-                {% csrf_token %}
-                {{ form.as_p }}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        {{form.client_type.label_tag}}
+                        {{form.client_type}}
+                    </div>
+                    <div class="col-md-6">
+                        {{form.select_a_service.label_tag}}
+                        {{form.select_a_service}}
+                    </div>
+                    <div class="col-md-6">
+                        {{form.month.label_tag}}
+                        {{form.month}}
+                    </div>
+                    <div class="col-md-6">
+                        {{form.query.label_tag}}
+                        {{form.query}}
+                    </div>
+                </div>
                 <button type="submit" class="btn btn-outline-primary">Filter</button>
             </form>
     {% if clients %}
@@ -24,7 +40,7 @@
             <tbody>
                 {% for entry in clients %}
                 <tr>
-                        <td><a href="{% url 'client-detail' entry.id %}" class="text-decoration-none">{{entry.name}}</a>
+                        <td><a href="{% url 'client-detail' entry.id %}" class="text-decoration-none">{{entry.get_client_full_name}}</a>
                         </td>
                         <td>{{ entry.entity_reg_number }}</td>
                 {% endfor %}
