@@ -313,7 +313,8 @@ class VatClientsPeriodProcess(forms.Form):
     month = forms.ChoiceField(
         choices=choices,
         required=False,
-        widget=forms.Select(attrs={"class": "form-control"})
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="VAT Period"
     )
 
     accountant = forms.ModelChoiceField(
@@ -476,7 +477,8 @@ class FilterByServiceForm(forms.Form):
     month = forms.ChoiceField(
         choices=choices,
         required=True,
-        widget=forms.Select(attrs={"class": "form-control"})
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Period",
     )
     query = forms.CharField(
         max_length=150,
