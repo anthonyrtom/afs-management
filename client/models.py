@@ -453,13 +453,13 @@ class VatSubmissionHistory(models.Model):
     paid = models.BooleanField(default=False)
     client_notified = models.BooleanField(default=False)
     comment = models.TextField(null=True)
-    marked_submitted_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_submitted")
-    date_marked_submitted = models.DateTimeField(null=True)
-    marked_paid_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_paid")
-    marked_notified_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_notified")
+    # marked_submitted_by = models.ForeignKey(
+    #     CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_submitted")
+    # date_marked_submitted = models.DateTimeField(null=True)
+    # marked_paid_by = models.ForeignKey(
+    #     CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_paid")
+    # marked_notified_by = models.ForeignKey(
+    #     CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_notified")
 
     class Meta:
         unique_together = ['client', 'year', 'month']
