@@ -15,7 +15,7 @@ media
 afs_master_audit.xlsx
 Deploying_Djangoapp_on_render.txt
 master_file.csv
-
+import_users.py
  *import_afs.py
 client/management/*
 # If your build process includes running collectstatic, then you probably don't need or want to include staticfiles/

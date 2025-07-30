@@ -1,39 +1,65 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block title %} Scheduled Clients{% endblock title %}
 
 {% block content %}
     {% if user.is_authenticated %}
-        {% if form %}
-            <form method="post" class="mt-4 mb-4">
-                {% csrf_token %}
-                <div class="form-group mt-2 mb-2">
-                    {{ form.financial_year.label_tag }}  
-                    {{ form.financial_year }}  
-                </div>
-                {% if data %}
-                    <div class="mb-4 mt-4">
-                        <label for="q" class="form-label">Search Clients</label>
-                        <input type="text" name="q" id="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search by client name" />
-                    </div>
-                {% endif %}
-                <button type="submit" class="btn btn-outline-primary">Submit</button>
-            </form>
-        {% else %}
-            <h6 class="h6 mt-4">{{count}} Financials of {{total}} found</h6>
-            <table class="table table-striped table-hover table-bordered">
-                {% include "client/_table_headers.html" with headers=headers %}
-                <tbody>
-                    {% for record in scheduled %}
+        <h6 class="h6 mt-4">Check Scheduled Financial Statements Status</h6>     
+            {% include "client/_form.html" with form=form %}
+            {% if data %}
+                <h6 class="h6 mt-4">Total found: {{count}}</h6>
+                <table class="table table-striped table-hover table-bordered">
+                    {% include "client/_table_headers.html" with headers=headers %}
+                    <tbody>
+                    <tr>
+                        <td></td> <!-- Name -->
+                        <td></td> <!-- Fin Year -->
+                        <td></td> <!-- Schedule Date -->
+                        <td>
+                            <select id="filter-afs" class="form-select form-select-sm">
+                                <option value="all">All</option>
+                                <option value="completed">Completed</option>
+                                <option value="incomplete">Incomplete</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select id="filter-itr14" class="form-select form-select-sm">
+                                <option value="all">All</option>
+                                <option value="completed">Completed</option>
+                                <option value="incomplete">Incomplete</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select id="filter-invoice" class="form-select form-select-sm">
+                                <option value="all">All</option>
+                                <option value="invoiced">Invoiced</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                    </tr>
                         <tr>
-                            <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{record.client.name}}</a></td>
-                            <td>{{record.financial_year}}</td>
-                            <td>{{record.schedule_date}}</td>
-                            <td>{{record.finish_date|default:"Not Finished"}}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>{{afs_complete}} completed</td>
+                            <td>{{itr14_complete}} completed</td>
+                            <td>{{invoiced}} invoiced</td>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
+                        {% for record in scheduled %}
+                            <tr>
+                                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{record.client.name}}</a></td>
+                                <td>{{record.financial_year}}</td>
+                                <td>{{record.schedule_date}}</td>
+                                <td> <button {% if record.finish_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.finish_date %} Completed {% else %}Incomplete {% endif %}</button></td>
+                                <td> <button {% if record.itr14_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.itr14_date %} Completed {% else %}Incomplete {% endif %}</button></td>
+                                <td> <button {% if record.invoice_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.invoice_date %} Invoiced {% else %}Pending {% endif %}</button></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
     {% endif %}
 {% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/filters.js' %}"></script>
+{% endblock extra_js %}

@@ -16,7 +16,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService
 from users.models import JobTitle, CustomUser
-from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, UserSearchForm, VatClientSearchForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm, ClientFinancialYearGetForm, ClientForMonthForm, FilterByServiceForm, ClientFilter
+from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, UserSearchForm, VatClientSearchForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm, ClientFinancialYearGetForm, ClientForMonthForm, FilterByServiceForm, ClientFilter, FilterFinancialClient
 
 
 @login_required
@@ -290,62 +290,40 @@ def view_all_clients(request):
 
 
 @login_required
-def get_finished_or_scheduled_afs(request):
-    form = ClientFinancialYearGetForm(request.GET or None)
-    data = False
-    query = request.GET.get("q", "").strip()
-    if form.is_valid():
-        data = True
-        financial_year = form.cleaned_data["financial_year"]
-        afs_done = form.cleaned_data.get("afs_done", False)
-        itr34c_issued = form.cleaned_data.get("itr34c_issued", False)
-        wp_done = form.cleaned_data.get("wp_done", False)
-        posting_done = form.cleaned_data.get("posting_done", False)
-        client_invoiced = form.cleaned_data.get("client_invoiced", False)
-
-        financials = ClientFinancialYear.objects.filter(
-            financial_year=financial_year).order_by("client__name")
-
-        if afs_done:
-            financials = financials.filter(afs_done=True)
-        if itr34c_issued:
-            financials = financials.filter(itr34c_issued=True)
-        if wp_done:
-            financials = financials.filter(wp_done=True)
-        if posting_done:
-            financials = financials.filter(posting_done=True)
-        if client_invoiced:
-            financials = financials.filter(client_invoiced=True)
-
-        if query:
-            financials = financials.filter(client__name__icontains=query)
-        today = date.today()
-        all_afs_eligible_clients = Client.get_afs_clients(today)
-        total = len(all_afs_eligible_clients)
-        count = len(financials)
-
-        headers = ["Name", "Fin Year", "Schedule Date", "Finish Date"]
-        return render(request, "client/filtered_financials.html", {"financials": financials, "count": count, "total": total, "headers": headers, "form": form, "data": data})
-    return render(request, "client/filtered_financials.html", {"form": form, "data": data})
-
-
-@login_required
 def scheduled_financials(request):
-    form = ClientFinancialYearGetForm(request.POST or None)
+    form = FilterFinancialClient(request.GET or None)
     data = False
     if form.is_valid():
-        query = request.GET.get("q", "").strip()
+        client_type = form.cleaned_data["client_type"]
+        query = form.cleaned_data["query"]
         data = True
-        financial_year = form.cleaned_data["financial_year"]
-        scheduled = ClientFinancialYear.objects.filter(
-            schedule_date__isnull=False, finish_date__isnull=True, financial_year=financial_year).order_by("client__name")
+        year = form.cleaned_data["year"]
+        accountant = form.cleaned_data["accountant"]
+        start_date = form.cleaned_data["start_date"]
+        end_date = form.cleaned_data["end_date"]
+        scheduled = []
+        if year != "all":
+            scheduled = ClientFinancialYear.objects.filter(
+                schedule_date__range=(start_date, end_date),  financial_year=year).order_by("client__name")
+        else:
+            scheduled = ClientFinancialYear.objects.filter(
+                schedule_date__range=(start_date, end_date)).order_by("client__name")
         if query:
             scheduled = scheduled.filter(client__name__icontains=query)
+        if accountant != "all":
+            scheduled = scheduled.filter(client__accountant=accountant)
+        if client_type != "all":
+            scheduled = scheduled.filter(client__client_type=client_type)
         count = len(scheduled)
         today = date.today()
-        total = len(Client.get_afs_clients(today))
-        headers = ["Name", "Fin Year", "Schedule Date", "Finish Date"]
-        return render(request, "client/scheduled_financials.html", {"scheduled": scheduled, "count": count, "total": total, "headers": headers, "data": data})
+        afs_complete = len(scheduled.filter(finish_date__isnull=False))
+        itr14_complete = len(scheduled.filter(itr14_date__isnull=False))
+        invoiced = len(scheduled.filter(invoice_date__isnull=False))
+        if not count:
+            data = False
+        headers = ["Name", "Fin Year", "Schedule Date",
+                   "Financials Status", "ITR14 Status", "Invoicing Status"]
+        return render(request, "client/scheduled_financials.html", {"scheduled": scheduled, "count": count, "afs_complete": afs_complete, "headers": headers, "data": data, "itr14_complete": itr14_complete, "invoiced": invoiced, "form": form})
 
     return render(request, "client/scheduled_financials.html", {"form": form, "data": data})
 
@@ -377,62 +355,6 @@ def completed_financials_month(request):
         "count": count,
         "form": form,
         "query": query,
-    })
-
-
-@login_required
-def get_unfinished_financials(request):
-    form = MissingAFSsForm(request.GET or None)
-    data = False
-    first_time = True
-    query = request.GET.get("q", "").strip()
-
-    if form.is_valid():
-        data = True
-        first_time = False
-        client = form.cleaned_data.get("client_select", None)
-        year = int(form.cleaned_data["year"])
-        client_data = []
-        today = datetime.now()
-
-        clients = Client.objects.all().order_by("name")
-        if client:
-            clients = clients.filter(id=client.id)
-        elif query:
-            clients = clients.filter(name__icontains=query)
-
-        counter = 0
-        for curr_client in clients:
-            if curr_client.is_afs_client(today) and curr_client.is_year_after_afs_first(year, today):
-                counter += 1
-                financial_year = FinancialYear.objects.filter(
-                    the_year=year).first()
-                has_record = ClientFinancialYear.objects.filter(
-                    client=curr_client,
-                    financial_year=financial_year,
-                    afs_done=True
-                ).exists()
-                if not has_record:
-                    client_data.append({
-                        "client": curr_client,
-                        "status": "NO"
-                    })
-
-        count = len(client_data)
-        return render(request, "client/unfinished_financials.html", {
-            "client_data": client_data,
-            "year": year,
-            "data": data,
-            "first_time": first_time,
-            "count": count,
-            "counter": counter,
-            "form": form,
-            "query": query
-        })
-
-    return render(request, "client/unfinished_financials.html", {
-        "form": form,
-        "first_time": first_time,
     })
 
 
@@ -564,7 +486,7 @@ def process_dashboard(request):
 
 
 @login_required
-@permission_required("client.can_change", raise_exception=True)
+@permission_required("client.change_vatsubmissionhistory", raise_exception=True)
 def create_or_update_vat(request):
     form = CreateandViewVATForm(request.POST or None)
     if form.is_valid():
@@ -898,3 +820,16 @@ class ClientDetailView(LoginRequiredMixin, DetailView):
 
     def get_object(self):
         return get_object_or_404(Client, id=self.kwargs["id"])
+
+
+@login_required
+@permission_required("client.view_clientfinancialyear", raise_exception=True)
+def filter_financial_statements(request):
+    form = FilterFinancialClient(request.GET or None)
+    if form.is_valid():
+        client_type = form.cleaned_data["client_type"]
+        year = form.cleaned_data["year"]
+        start_date = form.cleaned_data["start_date"]
+        end_date = form.cleaned_data["end_date"]
+        accountant = form.cleaned_data["accountant"]
+        search_term = form.cleaned_data.get("query", "")

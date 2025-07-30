@@ -404,7 +404,8 @@ class CreateandViewVATForm(forms.Form):
     month = forms.ChoiceField(
         choices=choices,
         required=True,
-        widget=forms.Select(attrs={"class": "form-control"})
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="VAT Period"
     )
 
     def __init__(self, *args, **kwargs):
@@ -487,3 +488,42 @@ class FilterByServiceForm(forms.Form):
         widget=forms.TextInput(
             attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
     )
+
+
+class FilterFinancialClient(forms.Form):
+    client_type = forms.ChoiceField(choices=[], label="Select Client Type",
+                                    required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    year = forms.ChoiceField(choices=[], label="Select Financial year",
+                             required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    start_date = forms.DateField(label="Select start date", required=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
+        attrs={"type": "date", "class": "form-control", "id": "start-date"},))
+    end_date = forms.DateField(label="Select end date", required=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
+        attrs={"type": "date", "class": "form-control", "id": "end-date"}))
+    accountant = forms.ChoiceField(choices=[], label="Select Accountant",
+                                   required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    query = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Search",
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client_type'].choices = [("all", "ALL")] + [
+            (c.name, c.name.upper()) for c in ClientType.objects.all()
+        ]
+        self.fields['year'].choices = [("all", "ALL")] + [(cy.id, cy.the_year) for cy in FinancialYear.objects.all().order_by(
+            "-the_year")]
+
+        accountant_job_title = JobTitle.objects.filter(
+            title="Accountant").first()
+
+        accountant_choices = [("all", "ALL")]
+        if accountant_job_title:
+            accountant_users = CustomUser.objects.filter(
+                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_choices.extend(
+                [(user.id, user.get_full_name() or user.email) for user in accountant_users])
+            self.fields['accountant'].choices = accountant_choices

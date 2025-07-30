@@ -51,7 +51,7 @@
             <tbody>
                 {% for client in clients %}
                     <tr>
-                        <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.name}}</a></td>
+                        <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.get_client_full_name}}</a></td>
                         <td>{{ client.client_type }}</td>
                         <td>{{ client.month_end }}</td>
                         <td>{{ client.vat_reg_number }}</td>

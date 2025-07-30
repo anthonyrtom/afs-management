@@ -391,6 +391,8 @@ class ClientFinancialYear(models.Model):
     financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE)
     schedule_date = models.DateField(null=True)
     finish_date = models.DateField(null=True)
+    invoice_date = models.DateField(null=True)
+    itr14_date = models.DateField(null=True)
     wp_done = models.BooleanField(default=False)
     afs_done = models.BooleanField(default=False)
     posting_done = models.BooleanField(default=False)
