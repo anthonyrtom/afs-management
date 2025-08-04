@@ -99,76 +99,9 @@ class ClientFinancialYearForm(forms.ModelForm):
                 self.fields[field_name].required = False
 
 
-class ClientFinancialYearGetForm(forms.ModelForm):
-    class Meta:
-        model = ClientFinancialYear
-        fields = ["financial_year", "afs_done", "itr34c_issued",
-                  "wp_done", "posting_done", "client_invoiced"]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field_name in self.fields:
-            if field_name in ["afs_done", "itr34c_issued", "wp_done", "posting_done", "client_invoiced"]:
-                self.fields[field_name].required = False
-
-        for field_name, field in self.fields.items():
-            if isinstance(field.widget, forms.CheckboxInput):
-                # Use 'form-check-input' for checkboxes
-                field.widget.attrs['class'] = 'form-check-input'
-            else:
-                field.widget.attrs['class'] = 'form-control'
-
-        if 'financial_year' in self.fields:
-            self.fields['financial_year'].queryset = FinancialYear.objects.all().order_by(
-                '-the_year')
-
-
-class ClientFilterForm(forms.Form):
-    NULLABLE_FIELDS = [
-        ('income_tax_number', 'Income Tax Number'),
-        ('paye_reg_number', 'PAYE Registration Number'),
-        ('uif_reg_number', 'UIF Registration Number'),
-        ('entity_reg_number', 'CIPC Registration Number'),
-        ('vat_reg_number', 'VAT Registration Number'),
-        ('vat_category', 'VAT Category'),
-        ('registered_address', 'Registered Address'),
-        ('coida_reg_number', 'COIDA Registration Number'),
-        ('internal_id_number', 'Internal ID Number'),
-        ('uif_dept_reg_number', 'UIF Department Registration Number'),
-        ('accountant', 'Accountant'),
-        ("first_financial_year", "First Financial Year"),
-    ]
-
-    field = forms.ChoiceField(choices=NULLABLE_FIELDS,
-                              required=True, label="Select Field", widget=forms.Select(attrs={'class': 'form-control m-2'}))
-    null_filter = forms.ChoiceField(choices=[('null', 'Null'), ('not_null', 'Not Null')], required=True,
-                                    label='Select null if you want the field selected above to show not registered for the tax type or other selected above else select Not Null', widget=forms.Select(attrs={'class': 'form-control m-2'}))
-
-
-class AccountantFilterForm(forms.Form):
-    accountant = forms.ModelChoiceField(
-        queryset=CustomUser.objects.filter(clients__isnull=False).distinct(),
-        empty_label="Select an Accountant",
-        required=True,
-        widget=forms.Select(attrs={"class": "form-control"})
-    )
-
-
 class CompletedAFSsForm(forms.Form):
     month = forms.IntegerField(max_value=12, min_value=1, required=True, widget=forms.NumberInput(
         attrs={'class': 'form-control'}))
-
-
-class MissingAFSsForm(forms.Form):
-    year = forms.IntegerField(min_value=settings.FIRST_FINANCIAL_YEAR, max_value=settings.LAST_FINANCIAL_YEAR,
-                              required=True, widget=forms.NumberInput(attrs={"class": "form-control"}))
-
-    client_select = forms.ModelChoiceField(
-        queryset=Client.objects.all(),
-        empty_label="Select a Client",
-        required=False,
-        widget=forms.Select(attrs={"class": "form-control"})
-    )
 
 
 class ClientSearchForm(forms.Form):
@@ -273,25 +206,6 @@ class VatClientSearchForm(forms.Form):
         self.fields["vat_category"].choices = cat
 
 
-class VatClientsByMonthForm(forms.Form):
-    months_list = settings.MONTHS_LIST
-    choices = [("all", "ALL")] + [(month, month.upper())
-                                  for month in months_list]
-
-    month = forms.ChoiceField(
-        choices=choices,
-        required=False,
-        widget=forms.Select(attrs={"class": "form-control"})
-    )
-
-    accountant = forms.ModelChoiceField(
-        queryset=CustomUser.objects.filter(job_title__title="Accountant"),
-        required=False,
-        empty_label="All Accountants",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-
-
 class VatClientsPeriodProcess(forms.Form):
     client = forms.ModelChoiceField(
         queryset=Client.objects.filter(
@@ -348,15 +262,15 @@ class VatSubmissionUpdateForm(forms.ModelForm):
 
 
 class ClientFinancialYearProcessForm(forms.Form):
-    client = forms.ModelChoiceField(
-        queryset=Client.objects.all().order_by("name"),
+    client_type = forms.ModelChoiceField(
+        queryset=ClientType.objects.all().order_by("name"),
         required=False,
         empty_label="All Clients",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     financial_year = forms.ModelChoiceField(
         queryset=FinancialYear.objects.all().order_by("-the_year"),
-        required=True,
+        required=False,
         empty_label="Select a year",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
@@ -366,13 +280,22 @@ class ClientFinancialYearProcessForm(forms.Form):
         empty_label="All Accountants",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    radio_choices = [("all", "View all Clients"), ("complete", "View with all choices complete"),
-                     ("incomplete", "View all choices not complete")]
-    radio_input = forms.ChoiceField(
-        label="Select one of the choices below",
-        choices=radio_choices,
-        widget=forms.RadioSelect(attrs={"class": "form-check"}),
-        initial="all"
+    months_list = settings.MONTHS_LIST
+    choices = [("all", "ALL")] + [(month, month.upper())
+                                  for month in months_list]
+
+    month_ending = forms.ChoiceField(
+        choices=choices,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Year End",
+    )
+    query = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Search",
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
     )
 
 
@@ -414,18 +337,6 @@ class CreateandViewVATForm(forms.Form):
             "-the_year")
 
 
-class ClientForMonthForm(forms.Form):
-    months_list = settings.MONTHS_LIST
-    choices = [("all", "ALL")] + [(month, month.upper())
-                                  for month in months_list]
-
-    month = forms.ChoiceField(
-        choices=choices,
-        required=True,
-        widget=forms.Select(attrs={"class": "form-control"})
-    )
-
-
 class ServiceAddForm(forms.ModelForm):
     class Meta:
         model = Service
@@ -452,19 +363,11 @@ class FilterByServiceForm(forms.Form):
     client_type = forms.ChoiceField(
         choices=[], widget=forms.Select(attrs={"class": "form-control"}))
 
-    # select_a_service = forms.ChoiceField(
-    #     widget=forms.Select(attrs={"class": "form-control"}),
-    #     required=False,
-    #     label="Select a service or leave blank"
-    # )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client_type'].choices = [("all", "ALL")] + [
             (c.name, c.name.upper()) for c in ClientType.objects.all()
         ]
-        # self.fields["select_a_service"].choices = [
-        #     ("all", "All services")] + [(s.id, s.name) for s in Service.objects.all().order_by("name")]
 
     months_list = settings.MONTHS_LIST
     choices = [("all", "ALL")] + [(month, month.upper())
@@ -488,6 +391,96 @@ class FilterByServiceForm(forms.Form):
         widget=forms.TextInput(
             attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
     )
+
+
+class FilterFinancialClient(forms.Form):
+    client_type = forms.ChoiceField(choices=[], label="Select Client Type",
+                                    required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    year = forms.ChoiceField(choices=[], label="Select Financial year",
+                             required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    start_date = forms.DateField(label="Select start date", required=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
+        attrs={"type": "date", "class": "form-control", "id": "start-date"},))
+    end_date = forms.DateField(label="Select end date", required=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
+        attrs={"type": "date", "class": "form-control", "id": "end-date"}))
+    accountant = forms.ChoiceField(choices=[], label="Select Accountant",
+                                   required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    query = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Search",
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client_type'].choices = [("all", "ALL")] + [
+            (c.name, c.name.upper()) for c in ClientType.objects.all()
+        ]
+        self.fields['year'].choices = [("all", "ALL")] + [(cy.id, cy.the_year) for cy in FinancialYear.objects.all().order_by(
+            "-the_year")]
+
+        accountant_job_title = JobTitle.objects.filter(
+            title="Accountant").first()
+
+        accountant_choices = [("all", "ALL")]
+        if accountant_job_title:
+            accountant_users = CustomUser.objects.filter(
+                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_choices.extend(
+                [(user.id, user.get_full_name() or user.email) for user in accountant_users])
+            self.fields['accountant'].choices = accountant_choices
+
+
+class FilterAllFinancialClient(forms.Form):
+    client_type = forms.ChoiceField(choices=[], label="Select Client Type",
+                                    required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    from_year = forms.ChoiceField(choices=[], label="Starting which year",
+                                  required=True, widget=forms.Select(attrs={"class": "form-control"}))
+    to_year = forms.ChoiceField(choices=[], label="Ending which year",
+                                required=True, widget=forms.Select(attrs={"class": "form-control"}))
+
+    accountant = forms.ChoiceField(choices=[], label="Select Accountant",
+                                   required=True, widget=forms.Select(attrs={"class": "form-control"}))
+
+    months_list = settings.MONTHS_LIST
+    choices = [("all", "ALL")] + [(month, month.upper())
+                                  for month in months_list]
+
+    month = forms.ChoiceField(
+        choices=choices,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Year Ending",
+    )
+    query = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Search",
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client_type'].choices = [("all", "ALL")] + [
+            (c.name, c.name.upper()) for c in ClientType.objects.all()
+        ]
+        self.fields['from_year'].choices = [("all", "ALL")] + [(cy.id, cy.the_year) for cy in FinancialYear.objects.all().order_by(
+            "-the_year")]
+        self.fields['to_year'].choices = [("all", "ALL")] + [(cy.id, cy.the_year) for cy in FinancialYear.objects.all().order_by(
+            "-the_year")]
+
+        accountant_job_title = JobTitle.objects.filter(
+            title="Accountant").first()
+
+        accountant_choices = [("all", "ALL")]
+        if accountant_job_title:
+            accountant_users = CustomUser.objects.filter(
+                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_choices.extend(
+                [(user.id, user.get_full_name() or user.email) for user in accountant_users])
+            self.fields['accountant'].choices = accountant_choices
 
 
 class FilterFinancialClient(forms.Form):

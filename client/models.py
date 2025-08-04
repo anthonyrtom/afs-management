@@ -402,6 +402,7 @@ class ClientFinancialYear(models.Model):
 
     class Meta:
         unique_together = ('client', 'financial_year')
+        permissions = [("change_invoice_date", "Can edit the invoice date")]
 
     def __str__(self):
         return self.client.name
@@ -455,13 +456,13 @@ class VatSubmissionHistory(models.Model):
     paid = models.BooleanField(default=False)
     client_notified = models.BooleanField(default=False)
     comment = models.TextField(null=True)
-    # marked_submitted_by = models.ForeignKey(
-    #     CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_submitted")
-    # date_marked_submitted = models.DateTimeField(null=True)
-    # marked_paid_by = models.ForeignKey(
-    #     CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_paid")
-    # marked_notified_by = models.ForeignKey(
-    #     CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_notified")
+    marked_submitted_by = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_submitted")
+    date_marked_submitted = models.DateTimeField(null=True)
+    marked_paid_by = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_paid")
+    marked_notified_by = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_notified")
 
     class Meta:
         unique_together = ['client', 'year', 'month']
@@ -540,3 +541,35 @@ class ClientService(models.Model):
             return False
 
         return True
+
+
+class ClientProvisionalTax(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE)
+    finish_date = models.DateField(null=True)
+    invoice_date = models.DateField(null=True)
+    prov_tax_numb = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(3)])
+    comment = models.TextField(null=True)
+
+    class Meta:
+        unique_together = ('client', 'financial_year', 'prov_tax_numb')
+        permissions = [("change_invoice_date", "Can edit the invoice date")]
+
+    def __str__(self):
+        return self.client.name
+
+
+class ClientCipcReturnHistory(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE)
+    finish_date = models.DateField(null=True)
+    invoice_date = models.DateField(null=True)
+    comment = models.TextField(null=True)
+
+    class Meta:
+        unique_together = ('client', 'financial_year')
+        permissions = [("change_invoice_date", "Can edit the invoice date")]
+
+    def __str__(self):
+        return self.client.name

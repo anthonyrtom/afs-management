@@ -1,6 +1,6 @@
 from .models import ClientFinancialYear
-import json
-from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseForbidden
+import csv
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from datetime import datetime, date
@@ -14,9 +14,10 @@ from django.conf import settings
 from django.views.generic import DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
+from django.http import HttpResponse
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService
 from users.models import JobTitle, CustomUser
-from . forms import ClientFilterForm, AccountantFilterForm, ClientFinancialYear, CompletedAFSsForm, MissingAFSsForm, UserSearchForm, VatClientSearchForm, VatClientsByMonthForm, VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm, ClientFinancialYearGetForm, ClientForMonthForm, FilterByServiceForm, ClientFilter, FilterFinancialClient
+from . forms import ClientFinancialYear, CompletedAFSsForm, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient
 
 
 @login_required
@@ -321,11 +322,112 @@ def scheduled_financials(request):
         invoiced = len(scheduled.filter(invoice_date__isnull=False))
         if not count:
             data = False
+        unique_years = sorted(
+            {obj.financial_year.the_year for obj in scheduled if obj.financial_year},
+            reverse=True
+        )
+
         headers = ["Name", "Fin Year", "Schedule Date",
                    "Financials Status", "ITR14 Status", "Invoicing Status"]
-        return render(request, "client/scheduled_financials.html", {"scheduled": scheduled, "count": count, "afs_complete": afs_complete, "headers": headers, "data": data, "itr14_complete": itr14_complete, "invoiced": invoiced, "form": form})
+        return render(request, "client/scheduled_financials.html", {"scheduled": scheduled, "count": count, "afs_complete": afs_complete, "headers": headers, "data": data, "itr14_complete": itr14_complete, "invoiced": invoiced, "form": form, "unique_years": unique_years, })
 
     return render(request, "client/scheduled_financials.html", {"form": form, "data": data})
+
+
+@login_required
+def financials_progress(request):
+    form = FilterAllFinancialClient(request.GET or None)
+    data = []
+    headers = ["Client Name", "Year",
+               "Scheduled Date", "AFS", "ITR14", "Invoice"]
+    unique_years = set()
+    afs_complete = itr14_complete = invoiced = 0
+    is_valid = False
+    if form.is_valid():
+        from_year_id = form.cleaned_data["from_year"]
+        to_year_id = form.cleaned_data["to_year"]
+        accountant = form.cleaned_data["accountant"]
+        searchterm = form.cleaned_data.get("query", "")
+        month = form.cleaned_data["month"]
+        if month != "all":
+            month = settings.MONTHS_LIST.index(month) + 1
+        is_valid = True
+        today = datetime.now().date()
+        if from_year_id == "all" or to_year_id == "all":
+            financial_years = FinancialYear.objects.all()
+        else:
+            from_year = FinancialYear.objects.get(pk=from_year_id)
+            to_year = FinancialYear.objects.get(pk=to_year_id)
+            financial_years = FinancialYear.objects.filter(
+                the_year__gte=from_year.the_year, the_year__lte=to_year.the_year)
+
+        if financial_years.count() > 15:
+            # Export CSV
+            response = HttpResponse(content_type="text/csv")
+            response["Content-Disposition"] = "attachment; filename=financials_progress.csv"
+            writer = csv.writer(response)
+            writer.writerow(headers)
+
+            for client in Client.objects.all():
+                if client.is_afs_client(today):
+                    records = []
+                    if month == "all":
+                        records = ClientFinancialYear.objects.filter(
+                            client=client, financial_year__in=financial_years)
+                    else:
+                        records = ClientFinancialYear.objects.filter(
+                            client=client, financial_year__in=financial_years, client__month_end=month)
+                    if accountant != "all":
+                        records = records.filter(
+                            client__accountant__id=accountant)
+                    if searchterm:
+                        records = records.filter(
+                            client__name__icontains=searchterm)
+                    for record in records:
+                        writer.writerow([
+                            client.name,
+                            record.financial_year.the_year,
+                            record.schedule_date,
+                            "Completed" if record.finish_date else "Incomplete",
+                            "Completed" if record.itr14_date else "Incomplete",
+                            "Invoiced" if record.invoice_date else "Pending"
+                        ])
+            return response
+
+        else:
+            if month == "all":
+                valid_clients = [
+                    c for c in Client.objects.all() if c.is_afs_client(today)]
+            else:
+                valid_clients = [
+                    c for c in Client.objects.all() if c.is_afs_client(today) and c.month_end == month]
+
+            data = ClientFinancialYear.objects.filter(
+                client__in=valid_clients, financial_year__in=financial_years)
+            if accountant != "all":
+                data = data.filter(client__accountant__id=accountant)
+            if searchterm:
+                data = data.filter(
+                    client__name__icontains=searchterm)
+            unique_years = sorted(
+                set(r.financial_year.the_year for r in data), reverse=True)
+
+            afs_complete = sum(1 for r in data if r.finish_date)
+            itr14_complete = sum(1 for r in data if r.itr14_date)
+            invoiced = sum(1 for r in data if r.invoice_date)
+
+    return render(request, "client/financials_progress.html", {
+        "form": form,
+        "data": data,
+        "scheduled": data,
+        "count": len(data),
+        "headers": headers,
+        "unique_years": unique_years,
+        "afs_complete": afs_complete,
+        "itr14_complete": itr14_complete,
+        "invoiced": invoiced,
+        "is_valid": is_valid
+    })
 
 
 @login_required
@@ -642,162 +744,189 @@ def update_vat_client_status(request):
 def process_client_financial_years(request):
     """Handles the form selection and renders the results."""
     form = ClientFinancialYearProcessForm(request.POST or None)
-
+    client_financial_years = ClientFinancialYear.objects.select_related(
+        "client", "financial_year").order_by("client__name")
+    is_valid = False
     if form.is_valid():
-        client = form.cleaned_data['client']
-        financial_year = form.cleaned_data['financial_year']
-        accountant = form.cleaned_data['accountant']
-        radio_input = form.cleaned_data["radio_input"]
+        client_type = form.cleaned_data.get("client_type")
+        financial_year = form.cleaned_data.get("financial_year")
+        accountant = form.cleaned_data.get("accountant")
+        month_ending = form.cleaned_data.get("month_ending")
+        query = form.cleaned_data.get("query")
+        is_valid = True
+        if client_type:
+            client_financial_years = client_financial_years.filter(
+                client__client_type=client_type)
 
-        financial_clients = []
-        if radio_input == "complete":
-            financial_clients = ClientFinancialYear.objects.filter(
-                financial_year=financial_year, wp_done=True, afs_done=True, posting_done=True, itr34c_issued=True).order_by("client__name")
-        elif radio_input == "incomplete":
-            financial_clients = ClientFinancialYear.objects.filter(
-                financial_year=financial_year, wp_done=False, afs_done=False, posting_done=False, itr34c_issued=False).order_by("client__name")
-        else:
-            financial_clients = ClientFinancialYear.objects.filter(
-                financial_year=financial_year).order_by("client__name")
-
-        if client and client != "all":
-            financial_clients = financial_clients.filter(client=client)
+        if financial_year:
+            client_financial_years = client_financial_years.filter(
+                financial_year=financial_year)
 
         if accountant:
-            financial_clients = financial_clients.filter(
+            client_financial_years = client_financial_years.filter(
                 client__accountant=accountant)
-        metrics = {}
-        metrics["wp_done"] = len(financial_clients.filter(wp_done=True))
-        metrics["afs_done"] = len(financial_clients.filter(afs_done=True))
-        metrics["posting_done"] = len(
-            financial_clients.filter(posting_done=True))
-        metrics["itr34c_issued"] = len(
-            financial_clients.filter(itr34c_issued=True))
-        metrics["client_invoiced"] = len(
-            financial_clients.filter(client_invoiced=True))
 
-        headers = ["Mark Complete", "Client Name", "Financial Year", "Schedule Date",
-                   "Finish Date", "WP Done", "AFS Done", "Posting Done", "ITR14", "Update"]
-        search_query = request.POST.get("search")
-        if search_query:
-            financial_clients = financial_clients.filter(
-                client__name__icontains=search_query)
+        if month_ending != "all":
+            client_financial_years = client_financial_years.filter(
+                client__month_end=month_ending)
 
-        count = len(financial_clients)
+        if query:
+            client_financial_years = client_financial_years.filter(
+                client__name__icontains=query)
+    unique_years = set([fy.financial_year for fy in client_financial_years])
+    unique_years = list(unique_years)
+    count = client_financial_years.count()
+    headers = ["Client", "Financial Year", "Year End", "Financials",
+               "ITR14", "Invoice", "Save"]
+    metrics = {
+        "afs_done": client_financial_years.filter(finish_date__isnull=False).count(),
+        "invoice_done": client_financial_years.filter(invoice_date__isnull=False).count(),
+        "itr14_done": client_financial_years.filter(itr14_date__isnull=False).count(),
+    }
 
-        return render(request, "client/client_financial_years_list.html", {
-            "client_financial_years": financial_clients,
-            "headers": headers, "count": count,
-            "metrics": metrics,
-            "form": form,
-        })
+    context = {
+        "form": form,
+        "client_financial_years": client_financial_years,
+        "count": count,
+        "headers": headers,
+        "metrics": metrics,
+        "is_valid": is_valid,
+        "unique_years": unique_years
+    }
+    return render(request, "client/update_financials.html", context)
 
-    return render(request, "client/client_financial_years_form.html", {"form": form})
 
-
+@login_required
 @require_POST
-@login_required
-def ajax_update_afs_status(request):
-    if request.method == "POST":
-        client_id = request.POST.get("client_id")
-        try:
-            instance = ClientFinancialYear.objects.get(id=client_id)
+def update_client_financial(request, financial_year_id):
+    try:
+        financial_year = ClientFinancialYear.objects.get(id=financial_year_id)
 
-            if 'field' in request.POST:
-                # Single field update
-                field = request.POST.get("field")
-                value = request.POST.get("value") == "true"
-                if hasattr(instance, field):
-                    setattr(instance, field, value)
-                else:
-                    return JsonResponse({"success": False, "error": f"Invalid field: {field}"})
-            else:
-                # Bulk update for "mark-complete"
-                for field in ['wp_done', 'afs_done', 'posting_done', 'itr34c_issued']:
-                    val = request.POST.get(field)
-                    if val is not None:
-                        setattr(instance, field, val == "true")
+        # Update fields if they exist in POST data
+        if 'finish_date' in request.POST:
+            finish_date = request.POST['finish_date']
+            financial_year.finish_date = finish_date if finish_date else None
 
-            instance.save()
-            return JsonResponse({"success": True})
+        if 'itr14_date' in request.POST:
+            itr14_date = request.POST['itr14_date']
+            financial_year.itr14_date = itr14_date if itr14_date else None
 
-        except ClientFinancialYear.DoesNotExist:
-            return JsonResponse({"success": False, "error": "Client not found"})
-        except Exception as e:
-            return JsonResponse({"success": False, "error": str(e)})
+        if 'invoice_date' in request.POST:
+            invoice_date = request.POST['invoice_date']
+            financial_year.invoice_date = invoice_date if invoice_date else None
 
-    return JsonResponse({"success": False, "error": "Invalid request method"})
+        financial_year.save()
+
+        return JsonResponse({'success': True})
+    except ClientFinancialYear.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Record not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-@require_POST
-@login_required
-def ajax_update_afs_comment(request):
-    if request.method == "POST":
-        client_id = request.POST.get("client_id")
-        comment = request.POST.get("comment", "").strip()
-        schedule_date_str = request.POST.get(
-            "scheduleDate", None)
-        finish_date_str = request.POST.get(
-            "finishDate", None)
-        schedule_date_obj = None
-        finish_date_obj = None
+# @require_POST
+# @login_required
+# def ajax_update_afs_status(request):
+#     if request.method == "POST":
+#         client_id = request.POST.get("client_id")
+#         try:
+#             instance = ClientFinancialYear.objects.get(id=client_id)
 
-        if schedule_date_str:
-            try:
+#             if 'field' in request.POST:
+#                 # Single field update
+#                 field = request.POST.get("field")
+#                 value = request.POST.get("value") == "true"
+#                 if hasattr(instance, field):
+#                     setattr(instance, field, value)
+#                 else:
+#                     return JsonResponse({"success": False, "error": f"Invalid field: {field}"})
+#             else:
+#                 # Bulk update for "mark-complete"
+#                 for field in ['wp_done', 'afs_done', 'posting_done', 'itr34c_issued']:
+#                     val = request.POST.get(field)
+#                     if val is not None:
+#                         setattr(instance, field, val == "true")
 
-                schedule_date_obj = datetime.strptime(
-                    schedule_date_str, "%Y-%m-%d").date()
+#             instance.save()
+#             return JsonResponse({"success": True})
 
-            except ValueError:
-                # Handle cases where the date string might not be in the expected format
-                return JsonResponse({"success": False, "error": "Invalid date format. Expected YYYY-MM-DD."})
-        if finish_date_str:
-            try:
-                finish_date_obj = datetime.strptime(
-                    finish_date_str, "%Y-%m-%d").date()
-            except ValueError:
-                return JsonResponse({"success": False, "error": "Invalid date format. Expected YYYY-MM-DD."})
-        try:
-            instance = ClientFinancialYear.objects.get(id=client_id)
-            instance.comment = comment
-            if (finish_date_obj and schedule_date_obj) and (finish_date_obj < schedule_date_obj):
-                return JsonResponse({"success": False, "error": "Finish date ca not be before start date, nothing saved"})
-            instance.schedule_date = schedule_date_obj
-            instance.finish_date = finish_date_obj
-            instance.save()
-            return JsonResponse({"success": True})
+#         except ClientFinancialYear.DoesNotExist:
+#             return JsonResponse({"success": False, "error": "Client not found"})
+#         except Exception as e:
+#             return JsonResponse({"success": False, "error": str(e)})
 
-        except ClientFinancialYear.DoesNotExist:  # More specific error for not found
-            return JsonResponse({"success": False, "error": "ClientFinancialYear instance not found."})
-        except Exception as e:
-            # Catch other potential errors during save or database interaction
-            return JsonResponse({"success": False, "error": str(e)})
-
-    # Use a more specific error message
-    return JsonResponse({"success": False, "error": "Invalid request method."})
+#     return JsonResponse({"success": False, "error": "Invalid request method"})
 
 
-@login_required
-def update_client_financial_year(request):
-    """Handles updating the financial year entry."""
-    if request.method == "POST" and 'client_id' in request.POST:
-        client_id = request.POST.get('client_id')
-        client_instance = get_object_or_404(ClientFinancialYear, id=client_id)
+# @require_POST
+# @login_required
+# def ajax_update_afs_comment(request):
+#     if request.method == "POST":
+#         client_id = request.POST.get("client_id")
+#         comment = request.POST.get("comment", "").strip()
+#         schedule_date_str = request.POST.get(
+#             "scheduleDate", None)
+#         finish_date_str = request.POST.get(
+#             "finishDate", None)
+#         schedule_date_obj = None
+#         finish_date_obj = None
 
-        update_form = ClientFinancialYearUpdateForm(
-            request.POST, instance=client_instance)
-        # print("POST data keys:", request.POST.keys())
-        if update_form.is_valid():
-            update_form.save()
-            messages.success(
-                request, "Client financial year updated successfully!")
-        else:
-            messages.error(
-                request, "Failed to update client data. Please try again.")
+#         if schedule_date_str:
+#             try:
 
-        return redirect(reverse('process_client_financial_years'))
+#                 schedule_date_obj = datetime.strptime(
+#                     schedule_date_str, "%Y-%m-%d").date()
 
-    return redirect(reverse('process_client_financial_years'))
+#             except ValueError:
+#                 # Handle cases where the date string might not be in the expected format
+#                 return JsonResponse({"success": False, "error": "Invalid date format. Expected YYYY-MM-DD."})
+#         if finish_date_str:
+#             try:
+#                 finish_date_obj = datetime.strptime(
+#                     finish_date_str, "%Y-%m-%d").date()
+#             except ValueError:
+#                 return JsonResponse({"success": False, "error": "Invalid date format. Expected YYYY-MM-DD."})
+#         try:
+#             instance = ClientFinancialYear.objects.get(id=client_id)
+#             instance.comment = comment
+#             if (finish_date_obj and schedule_date_obj) and (finish_date_obj < schedule_date_obj):
+#                 return JsonResponse({"success": False, "error": "Finish date ca not be before start date, nothing saved"})
+#             instance.schedule_date = schedule_date_obj
+#             instance.finish_date = finish_date_obj
+#             instance.save()
+#             return JsonResponse({"success": True})
+
+#         except ClientFinancialYear.DoesNotExist:  # More specific error for not found
+#             return JsonResponse({"success": False, "error": "ClientFinancialYear instance not found."})
+#         except Exception as e:
+#             # Catch other potential errors during save or database interaction
+#             return JsonResponse({"success": False, "error": str(e)})
+
+#     # Use a more specific error message
+#     return JsonResponse({"success": False, "error": "Invalid request method."})
+
+
+# @login_required
+# def update_client_financial_year(request):
+#     """Handles updating the financial year entry."""
+#     if request.method == "POST" and 'client_id' in request.POST:
+#         client_id = request.POST.get('client_id')
+#         client_instance = get_object_or_404(ClientFinancialYear, id=client_id)
+
+#         update_form = ClientFinancialYearUpdateForm(
+#             request.POST, instance=client_instance)
+#         # print("POST data keys:", request.POST.keys())
+#         if update_form.is_valid():
+#             update_form.save()
+#             messages.success(
+#                 request, "Client financial year updated successfully!")
+#         else:
+#             messages.error(
+#                 request, "Failed to update client data. Please try again.")
+
+#         return redirect(reverse('process_client_financial_years'))
+
+#     return redirect(reverse('process_client_financial_years'))
 
 
 @login_required
@@ -810,7 +939,7 @@ def create_clients_for_financial_year(request):
         messages.success(
             request, f"{len(created_clients)} created or returned")
         return redirect(reverse("process"))
-    return render(request, "client/financial_years_form.html", {"form": form})
+    return render(request, "client/created_financial_years_form.html", {"form": form})
 
 
 class ClientDetailView(LoginRequiredMixin, DetailView):

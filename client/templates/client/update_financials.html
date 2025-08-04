@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Update Clients{% endblock title %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<h6 class="h6 mt-4">Update Scheduled Financial Statements Status</h6>      
+
+<form method="post" class="mt-2 mb-4">
+    {% csrf_token %}
+    <div class="row g-3 mt-2">
+        <div class="form-group col-md-4 mt-2">
+            {{ form.client_type.label_tag }}  
+            {{ form.client_type }}  
+        </div>
+        <div class="form-group col-md-4 mt-2">
+            {{ form.financial_year.label_tag }}  
+            {{ form.financial_year }}  
+        </div>
+        <div class="form-group col-md-4 mt-2">
+            {{ form.accountant.label_tag }}  
+            {{ form.accountant }}  
+        </div>
+    </div>
+    <div class="row g-3 mt-2">
+        <div class="form-group col-md-4 mt-2">
+            {{ form.month_ending.label_tag }}  
+            {{ form.month_ending }}  
+        </div>
+        <div class="form-group col-md-4 mt-2">
+            {{ form.query.label_tag }}  
+            {{ form.query }}  
+        </div>
+        <div class="form-group col-md-4 mt-2">
+            <label>&nbsp;</label>
+            <button id="id_submit_btn" type="submit" class="btn btn-outline-primary w-100">Submit</button>
+        </div>
+    </div>
+</form>
+
+{% if is_valid %}
+<h6 class="h6 mt-4">Total found: {{ count }}</h6>
+
+<table class="table table-striped table-hover table-bordered">
+    {% include "client/_table_headers.html" with headers=headers %}
+    <thead>
+        <tr>
+            <td><input type="text" id="filter-name" class="form-control form-control-sm" placeholder="Search name"></td>
+            <td>
+                <select id="filter-year" class="form-select form-select-sm">
+                    <option value="all">All</option>
+                    {% for year in unique_years %}
+                        <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td></td> <td></td> <td></td> <td></td>
+        </tr>
+        <tr class="summary-row">
+            <td></td><td></td><td></td>
+            <td>{{ metrics.afs_done }} completed</td>
+            <td>{{ metrics.itr14_done }} completed</td>
+            <td>{{ metrics.invoice_done }} invoiced</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in client_financial_years %}
+        <tr class="data-row" data-id="{{ record.id }}" data-url="{% url 'update-client-financial' record.id %}">
+            <td>
+                <a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">
+                    {{ record.client.get_client_full_name }}
+                </a>
+            </td>
+            <td>{{ record.financial_year }}</td>
+            <td>{{ record.client.get_month_end_as_string|default:"None" }}</td>
+            <td><input name="finish_date" type="date" value="{{ record.finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+            <td><input name="itr14_date" type="date" value="{{ record.itr14_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+            <td><input name="invoice_date" type="date" value="{{ record.invoice_date|date:'Y-m-d' }}" class="form-control"></td>
+            <td>
+                <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
+                <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/update_financials.js' %}"></script>
+{% endblock extra_js %}

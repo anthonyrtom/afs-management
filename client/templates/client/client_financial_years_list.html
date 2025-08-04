@@ -11,14 +11,13 @@
      data-update-comment-url="{% url 'ajax_update_afs_comment' %}">
 </div>
 
-{% if client_financial_years %}
-    
         <form method="POST">
             {% csrf_token %}
             {{ form.as_p }}
             <input type="text" class="form-control" placeholder="Search by client name" name="search">
             <button type="submit" class="mt-2 btn btn-outline-primary">Search</button>
         </form>
+    {% if client_financial_years %}
         <h6 class="mt-4">{{count}} Clients found</h6>
     <table class="table table-bordered table-striped table-hover">
         <thead>
@@ -87,8 +86,8 @@
 {% endif %}
 
 {% endblock %}
-
 {% block extra_js %}
 <script src="{% static 'js/afs.js' %}"></script>
 {% endblock extra_js %}
+
 

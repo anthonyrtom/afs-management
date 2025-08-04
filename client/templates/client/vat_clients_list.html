@@ -93,7 +93,7 @@
                             <textarea class="form-control update-comment" data-client-id="{{ client.id }}" data-client-name="{{ client.client.name }}" rows="2">{{ client.comment|default_if_none:'' }}</textarea>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-outline-primary update-comment-button" data-client-id="{{ client.id }}" {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>Save</button>
+                            <button type="button" class="btn btn-outline-primary update-comment-button" data-client-id="{{ client.id }}" {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>Save Comment</button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -106,5 +106,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/custom.js' %}"></script>
+<script src="{% static 'js/vat_update.js' %}"></script>
 {% endblock extra_js %}
