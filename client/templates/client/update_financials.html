@@ -75,7 +75,7 @@
             <td>{{ record.client.get_month_end_as_string|default:"None" }}</td>
             <td><input name="finish_date" type="date" value="{{ record.finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
             <td><input name="itr14_date" type="date" value="{{ record.itr14_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
-            <td><input name="invoice_date" type="date" value="{{ record.invoice_date|date:'Y-m-d' }}" class="form-control"></td>
+            <td><input name="invoice_date" type="date" value="{{ record.invoice_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_invoice_date %} disabled {% endif %}></td>
             <td>
                 <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
                 <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
