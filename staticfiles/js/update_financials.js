@@ -3,6 +3,16 @@ document.addEventListener("DOMContentLoaded", function () {
     setupSaveButtons();
 });
 
+function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+}
+
 function setupFiltering() {
     const nameInput = document.getElementById("filter-name");
     const yearFilter = document.getElementById("filter-year");
@@ -22,9 +32,11 @@ function setupFiltering() {
         });
     }
 
-    nameInput?.addEventListener("input", applyFilters);
+    // Debounced input filtering for better performance
+    nameInput?.addEventListener("input", debounce(applyFilters, 300));
     yearFilter?.addEventListener("change", applyFilters);
-    applyFilters();
+
+    applyFilters();  // Initial filtering on load
 }
 
 function setupSaveButtons() {
@@ -49,12 +61,12 @@ function setupSaveButtons() {
             const url = row.dataset.url;
 
             fetch(url, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": csrfToken,
-                "X-Requested-With": "XMLHttpRequest"
-            },
-            body: formData
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: formData
             })
             .then(response => response.json())
             .then(data => {

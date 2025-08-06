@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.querySelector("table.table tbody");
-    if (!tableBody) {
-        return;
-    }
+    if (!tableBody) return;
 
     const nameInput = document.getElementById("filter-name");
     const yearFilter = document.getElementById("filter-year");
@@ -18,6 +16,14 @@ document.addEventListener("DOMContentLoaded", function () {
         invoice: "all"
     };
 
+    function debounce(func, delay) {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+
     function updateFilters() {
         if (nameInput) filters.name = nameInput.value.toLowerCase().trim();
         if (yearFilter) filters.year = yearFilter.value;
@@ -28,8 +34,11 @@ document.addEventListener("DOMContentLoaded", function () {
         applyFilters();
     }
 
+    const debouncedUpdateFilters = debounce(updateFilters, 300);
+
     function applyFilters() {
         const rows = document.querySelectorAll("tbody tr");
+
         rows.forEach(row => {
             if (row.classList.contains("summary-row")) {
                 row.style.display = "";
@@ -57,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    if (nameInput) nameInput.addEventListener("input", updateFilters);
+    if (nameInput) nameInput.addEventListener("input", debouncedUpdateFilters);
     if (yearFilter) yearFilter.addEventListener("change", updateFilters);
     if (afsFilter) afsFilter.addEventListener("change", updateFilters);
     if (itr14Filter) itr14Filter.addEventListener("change", updateFilters);
