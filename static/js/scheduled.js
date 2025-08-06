@@ -49,15 +49,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const matchName = filters.name === "" || name.includes(filters.name);
             const matchYear = filters.year === "all" || year === filters.year;
-            const matchAFS = filters.afs === "all" || (filters.afs === "completed" && afsStatus === "completed") || (filters.afs === "incomplete" && afsStatus === "incomplete");
-            const matchITR = filters.itr14 === "all" || (filters.itr14 === "completed" && itr14Status === "completed") || (filters.itr14 === "incomplete" && itr14Status === "incomplete");
-            const matchINV = filters.invoice === "all" || (filters.invoice === "invoiced" && invoiceStatus === "invoiced") || (filters.invoice === "pending" && invoiceStatus === "pending");
+            const matchAFS = filters.afs === "all" || 
+                (filters.afs === "completed" && afsStatus === "completed") || 
+                (filters.afs === "incomplete" && afsStatus === "incomplete");
+            const matchITR = filters.itr14 === "all" || 
+                (filters.itr14 === "completed" && itr14Status === "completed") || 
+                (filters.itr14 === "incomplete" && itr14Status === "incomplete");
+            const matchINV = filters.invoice === "all" || 
+                (filters.invoice === "invoiced" && invoiceStatus === "invoiced") || 
+                (filters.invoice === "pending" && invoiceStatus === "pending");
 
             row.style.display = (matchName && matchYear && matchAFS && matchITR && matchINV) ? "" : "none";
         });
     }
 
-    if (nameInput) nameInput.addEventListener("input", updateFilters);
+    // Debounce helper
+    function debounce(fn, delay) {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+
+    // Attach listeners
+    if (nameInput) nameInput.addEventListener("input", debounce(updateFilters, 300));
     if (yearFilter) yearFilter.addEventListener("change", updateFilters);
     if (afsFilter) afsFilter.addEventListener("change", updateFilters);
     if (itr14Filter) itr14Filter.addEventListener("change", updateFilters);
