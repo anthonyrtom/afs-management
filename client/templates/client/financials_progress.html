@@ -22,21 +22,20 @@
              </div>
             <div class="row g-3 mt-2">
                 <div class="form-group col-md-4 mt-2">
-                    {{ form.from_year.label_tag }}  
-                    {{ form.from_year }}  
+                    {{ form.years.label_tag }}  
+                    {{ form.years }}  
                 </div>
-                    <div class="form-group col-md-4 mt-2">
-                        {{ form.to_year.label_tag }}  
-                        {{ form.to_year }}  
-                    </div>
+
                     <div class="form-group col-md-4 mt-2">
                         {{ form.query.label_tag }}  
                         {{ form.query }}  
                     </div>
+                    <div class="form-group col-md-4 mt-2">
+                    <input type="hidden" class="form-label">&nbsp;</input> 
+                    <button id="id_submit_btn" type="submit" class="btn btn-outline-primary w-100">Submit</button>
+                    
+                    </div>
             </div>
-                <div class="row g-3 mt-2">
-                    <button id="id_submit_btn" type="submit" class="mt-2 btn btn-outline-primary w-100">Submit</button>
-                </div>
             </form>
     {% if is_valid %}
     <h6 class="h6 mt-4">Total found: {{count}}</h6>

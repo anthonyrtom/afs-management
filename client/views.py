@@ -1,3 +1,4 @@
+from django.db.models import Q, Prefetch
 from .models import ClientFinancialYear
 from django.http import HttpResponseForbidden
 import csv
@@ -17,7 +18,7 @@ from django.views import View
 from django.http import HttpResponse
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService
 from users.models import JobTitle, CustomUser
-from . forms import ClientFinancialYear, CompletedAFSsForm, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, VatSubmissionUpdateForm, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient
+from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, ClientFinancialYearUpdateForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient
 
 
 @login_required
@@ -182,6 +183,8 @@ def dashboard_list(request, filter_type, client_type):
     })
 
 
+# view clients that we offer a certain Service
+# this you can serch by client name, the main services are AFSs, Prov tac, CIPC
 @login_required
 def view_service_overview(request):
     form = FilterByServiceForm(request.GET or None)
@@ -228,8 +231,7 @@ def view_service_overview(request):
 
             clients = Client.get_clients_of_type(
                 "Cipc Returns", today, search_term)
-            # clients = [client for client in clients if ClientService.is_service_offered(
-            #     client.id, cipc_service.id, today)]
+
             if client_type != "all":
                 clients = [
                     client for client in clients if client.client_type.name == client_type]
@@ -265,7 +267,6 @@ def view_all_clients(request):
             all_clients = all_clients.filter(
                 accountant__id=accountant)
         if service_offered and service_offered != "all":
-            # service = Service.objects.filter(name=service_offered).first()
             all_clients = all_clients.filter(
                 client_service__id=service_offered).distinct()
         if year_end and year_end != "all":
@@ -333,6 +334,122 @@ def scheduled_financials(request):
 
     return render(request, "client/scheduled_financials.html", {"form": form, "data": data})
 
+# this needs to change to get the result
+# @login_required
+# def financials_progress(request):
+#     form = FilterAllFinancialClient(request.GET or None)
+
+#     headers = ["Client Name", "Year",
+#                "Scheduled Date", "AFS", "ITR14", "Invoice"]
+
+#     scheduled_clients = []
+#     unique_years = set()
+#     afs_complete = itr14_complete = invoiced = 0
+#     is_valid = False
+
+#     if form.is_valid():
+#         # --- 1. Get data and convert to correct types ---
+#         # Form data from MultipleChoiceFields are always lists of strings
+#         selected_year_ids_str = form.cleaned_data.get("years", [])
+#         accountant_ids_str = form.cleaned_data.get("accountant", [])
+#         searchterm = form.cleaned_data.get("query", "")
+#         selected_months_str = form.cleaned_data.get("month", [])
+#         client_type_ids_str = form.cleaned_data.get("client_type", [])
+
+#         is_valid = True
+#         today = datetime.now().date()
+
+#         # Convert string lists to integer lists, handling "None" values
+#         selected_year_ids = [int(y)
+#                              for y in selected_year_ids_str if y != "None"]
+#         selected_months = [int(m) for m in selected_months_str if m != "None"]
+#         client_type_ids = [int(c) for c in client_type_ids_str if c != "None"]
+
+#         # --- 2. Build the FinancialYear queryset
+#         if not selected_year_ids:
+#             financial_years_queryset = FinancialYear.objects.all()
+#         else:
+#             financial_years_queryset = FinancialYear.objects.filter(
+#                 id__in=selected_year_ids)
+
+#         # --- 3. Build the initial Client queryset and apply all filters
+#         clients_queryset = Client.objects.all()
+
+#         # Filter by client type
+#         if client_type_ids:
+#             clients_queryset = clients_queryset.filter(
+#                 client_type__id__in=client_type_ids)
+
+#         # Filter by month
+#         if selected_months:
+#             clients_queryset = clients_queryset.filter(
+#                 month_end__in=selected_months)
+
+#         # Filter by search term
+#         if searchterm:
+#             clients_queryset = clients_queryset.filter(
+#                 name__icontains=searchterm)
+
+#         # Filter by accountant, handling "ALL" (None) and specific IDs
+#         accountant_filter_q = Q()
+#         accountant_ids = []
+#         if "None" in accountant_ids_str:
+#             accountant_filter_q |= Q(accountant__isnull=True)
+#             accountant_ids = [int(aid)
+#                               for aid in accountant_ids_str if aid != "None"]
+#         else:
+#             accountant_ids = [int(aid) for aid in accountant_ids_str]
+
+#         if accountant_ids:
+#             accountant_filter_q |= Q(accountant__id__in=accountant_ids)
+
+#         if accountant_ids_str:  # Apply filter if any accountant option was selected
+#             clients_queryset = clients_queryset.filter(accountant_filter_q)
+
+#         # Filter for AFS clients using the `is_afs_client` method
+#         afs_clients_ids = [
+#             c.id for c in clients_queryset if c.is_afs_client(today)]
+#         clients_queryset = clients_queryset.filter(id__in=afs_clients_ids)
+
+#         # --- 4. Prefetch related ClientFinancialYear objects
+#         scheduled_clients = clients_queryset.prefetch_related(
+#             Prefetch(
+#                 'clientfinancialyear_set',
+#                 queryset=ClientFinancialYear.objects.filter(
+#                     financial_year__in=financial_years_queryset),
+#                 to_attr='scheduled_years'
+#             )
+#         )
+
+#         # --- 5. Calculate summary metrics and unique years
+#         count = len(scheduled_clients)
+#         if count > 15:
+#             # Your existing logic for exporting to CSV can go here
+#             pass
+#         else:
+#             for client in scheduled_clients:
+#                 if client.scheduled_years:
+#                     for record in client.scheduled_years:
+#                         unique_years.add(record.financial_year.the_year)
+#                         if record.finish_date:
+#                             afs_complete += 1
+#                         if record.itr14_date:
+#                             itr14_complete += 1
+#                         if record.invoice_date:
+#                             invoiced += 1
+
+#     return render(request, "client/financials_progress2.html", {
+#         "form": form,
+#         "scheduled": scheduled_clients,
+#         "count": len(scheduled_clients),
+#         "headers": headers,
+#         "unique_years": sorted(list(unique_years), reverse=True),
+#         "afs_complete": afs_complete,
+#         "itr14_complete": itr14_complete,
+#         "invoiced": invoiced,
+#         "is_valid": is_valid
+#     })
+
 
 @login_required
 def financials_progress(request):
@@ -344,77 +461,46 @@ def financials_progress(request):
     afs_complete = itr14_complete = invoiced = 0
     is_valid = False
     if form.is_valid():
-        from_year_id = form.cleaned_data["from_year"]
-        to_year_id = form.cleaned_data["to_year"]
-        accountant = form.cleaned_data["accountant"]
+        selected_year_ids = form.cleaned_data.get("years", [])
+        accountants = form.cleaned_data.get("accountant", [])
         searchterm = form.cleaned_data.get("query", "")
-        month = form.cleaned_data["month"]
-        if month != "all":
-            month = settings.MONTHS_LIST.index(month) + 1
+        month = form.cleaned_data.get("month", [])
+        client_type = form.cleaned_data.get("client_type", [])
+
+        month = list(map(int, month))
+
+        client_type = list(map(int, client_type))
         is_valid = True
         today = datetime.now().date()
-        if from_year_id == "all" or to_year_id == "all":
-            financial_years = FinancialYear.objects.all()
+
+        selected_year_ids = list(map(int, selected_year_ids))
+        financial_years = FinancialYear.objects.filter(
+            id__in=selected_year_ids)
+
+        valid_clients = [
+            c for c in Client.objects.all() if c.is_afs_client(today) and c.month_end in month]
+
+        data = ClientFinancialYear.objects.filter(
+            client__in=valid_clients, financial_year__in=financial_years, client__client_type__id__in=client_type)
+        if "None" in accountants:
+            accountant_ids_list = [int(aid)
+                                   for aid in accountants if aid != 'None']
+            data = data.filter(
+                Q(client__accountant__isnull=True) | Q(
+                    client__accountant__id__in=accountant_ids_list)
+            )
         else:
-            from_year = FinancialYear.objects.get(pk=from_year_id)
-            to_year = FinancialYear.objects.get(pk=to_year_id)
-            financial_years = FinancialYear.objects.filter(
-                the_year__gte=from_year.the_year, the_year__lte=to_year.the_year)
+            accountant_ids_list = [int(aid) for aid in accountants]
+            data = data.filter(client__accountant__id__in=accountant_ids_list)
+        if searchterm:
+            data = data.filter(
+                client__name__icontains=searchterm)
+        unique_years = sorted(
+            set(r.financial_year.the_year for r in data), reverse=True)
 
-        if financial_years.count() > 15:
-            # Export CSV
-            response = HttpResponse(content_type="text/csv")
-            response["Content-Disposition"] = "attachment; filename=financials_progress.csv"
-            writer = csv.writer(response)
-            writer.writerow(headers)
-
-            for client in Client.objects.all():
-                if client.is_afs_client(today):
-                    records = []
-                    if month == "all":
-                        records = ClientFinancialYear.objects.filter(
-                            client=client, financial_year__in=financial_years)
-                    else:
-                        records = ClientFinancialYear.objects.filter(
-                            client=client, financial_year__in=financial_years, client__month_end=month)
-                    if accountant != "all":
-                        records = records.filter(
-                            client__accountant__id=accountant)
-                    if searchterm:
-                        records = records.filter(
-                            client__name__icontains=searchterm)
-                    for record in records:
-                        writer.writerow([
-                            client.name,
-                            record.financial_year.the_year,
-                            record.schedule_date,
-                            "Completed" if record.finish_date else "Incomplete",
-                            "Completed" if record.itr14_date else "Incomplete",
-                            "Invoiced" if record.invoice_date else "Pending"
-                        ])
-            return response
-
-        else:
-            if month == "all":
-                valid_clients = [
-                    c for c in Client.objects.all() if c.is_afs_client(today)]
-            else:
-                valid_clients = [
-                    c for c in Client.objects.all() if c.is_afs_client(today) and c.month_end == month]
-
-            data = ClientFinancialYear.objects.filter(
-                client__in=valid_clients, financial_year__in=financial_years)
-            if accountant != "all":
-                data = data.filter(client__accountant__id=accountant)
-            if searchterm:
-                data = data.filter(
-                    client__name__icontains=searchterm)
-            unique_years = sorted(
-                set(r.financial_year.the_year for r in data), reverse=True)
-
-            afs_complete = sum(1 for r in data if r.finish_date)
-            itr14_complete = sum(1 for r in data if r.itr14_date)
-            invoiced = sum(1 for r in data if r.invoice_date)
+        afs_complete = sum(1 for r in data if r.finish_date)
+        itr14_complete = sum(1 for r in data if r.itr14_date)
+        invoiced = sum(1 for r in data if r.invoice_date)
 
     return render(request, "client/financials_progress.html", {
         "form": form,
@@ -431,66 +517,9 @@ def financials_progress(request):
 
 
 @login_required
-def completed_financials_month(request):
-    form = CompletedAFSsForm(request.GET or None)
-    finished_afs = []
-    count = 0
-    month = request.GET.get("month")
-    query = request.GET.get("q", "").strip()
-    headers = ["Client Name", "Financial Year", "Start Date", "Finish Date"]
-
-    if form.is_valid():
-        month = int(form.cleaned_data["month"])
-        finished_afs = ClientFinancialYear.objects.filter(
-            finish_date__month=month
-        ).order_by("client__name")
-
-        if query:
-            finished_afs = finished_afs.filter(client__name__icontains=query)
-
-        count = finished_afs.count()
-
-    return render(request, "client/finished_financials_month.html", {
-        "finished_afs": finished_afs,
-        "month": month,
-        "headers": headers,
-        "count": count,
-        "form": form,
-        "query": query,
-    })
-
-
-@login_required
-def get_all_accountants(request):
-    accountant_title = JobTitle.objects.filter(title="Accountant").first()
-    accountants = CustomUser.objects.none()
-    count = 0
-    query = request.GET.get("search", "")
-
-    if accountant_title:
-        accountants = CustomUser.objects.filter(job_title=accountant_title)
-
-        if query:
-            accountants = accountants.filter(
-                Q(first_name__icontains=query) |
-                Q(last_name__icontains=query) |
-                Q(email__icontains=query)
-            )
-
-        accountants = accountants.order_by("email")
-        count = accountants.count()
-
-    return render(request, "client/accountants.html", {
-        "accountants": accountants,
-        "count": count,
-        "query": query
-    })
-
-
-@login_required
 def search_users(request):
     form = UserSearchForm(request.GET or None)
-    users = CustomUser.objects.all().order_by("email")  # Default to all users
+    users = CustomUser.objects.all().order_by("email")
     count = 0
 
     if form.is_valid():
@@ -718,29 +747,6 @@ def ajax_update_vat_status(request):
 
 
 @login_required
-def update_vat_client_status(request):
-    """Handles updating VAT client status and comments."""
-    if request.method == "POST" and 'client_id' in request.POST:
-        client_id = request.POST.get('client_id')
-        client_instance = get_object_or_404(VatSubmissionHistory, id=client_id)
-
-        update_form = VatSubmissionUpdateForm(
-            request.POST, instance=client_instance)
-
-        if update_form.is_valid():
-            update_form.save()
-            messages.success(
-                request, "Client VAT status and comment updated successfully!")
-        else:
-            messages.error(
-                request, "Failed to update client data. Please try again.")
-
-        return redirect('process_vat_clients_for_period')
-
-    return redirect('process_vat_clients_for_period')
-
-
-@login_required
 def process_client_financial_years(request):
     """Handles the form selection and renders the results."""
     form = ClientFinancialYearProcessForm(request.POST or None)
@@ -824,111 +830,6 @@ def update_client_financial(request, financial_year_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-# @require_POST
-# @login_required
-# def ajax_update_afs_status(request):
-#     if request.method == "POST":
-#         client_id = request.POST.get("client_id")
-#         try:
-#             instance = ClientFinancialYear.objects.get(id=client_id)
-
-#             if 'field' in request.POST:
-#                 # Single field update
-#                 field = request.POST.get("field")
-#                 value = request.POST.get("value") == "true"
-#                 if hasattr(instance, field):
-#                     setattr(instance, field, value)
-#                 else:
-#                     return JsonResponse({"success": False, "error": f"Invalid field: {field}"})
-#             else:
-#                 # Bulk update for "mark-complete"
-#                 for field in ['wp_done', 'afs_done', 'posting_done', 'itr34c_issued']:
-#                     val = request.POST.get(field)
-#                     if val is not None:
-#                         setattr(instance, field, val == "true")
-
-#             instance.save()
-#             return JsonResponse({"success": True})
-
-#         except ClientFinancialYear.DoesNotExist:
-#             return JsonResponse({"success": False, "error": "Client not found"})
-#         except Exception as e:
-#             return JsonResponse({"success": False, "error": str(e)})
-
-#     return JsonResponse({"success": False, "error": "Invalid request method"})
-
-
-# @require_POST
-# @login_required
-# def ajax_update_afs_comment(request):
-#     if request.method == "POST":
-#         client_id = request.POST.get("client_id")
-#         comment = request.POST.get("comment", "").strip()
-#         schedule_date_str = request.POST.get(
-#             "scheduleDate", None)
-#         finish_date_str = request.POST.get(
-#             "finishDate", None)
-#         schedule_date_obj = None
-#         finish_date_obj = None
-
-#         if schedule_date_str:
-#             try:
-
-#                 schedule_date_obj = datetime.strptime(
-#                     schedule_date_str, "%Y-%m-%d").date()
-
-#             except ValueError:
-#                 # Handle cases where the date string might not be in the expected format
-#                 return JsonResponse({"success": False, "error": "Invalid date format. Expected YYYY-MM-DD."})
-#         if finish_date_str:
-#             try:
-#                 finish_date_obj = datetime.strptime(
-#                     finish_date_str, "%Y-%m-%d").date()
-#             except ValueError:
-#                 return JsonResponse({"success": False, "error": "Invalid date format. Expected YYYY-MM-DD."})
-#         try:
-#             instance = ClientFinancialYear.objects.get(id=client_id)
-#             instance.comment = comment
-#             if (finish_date_obj and schedule_date_obj) and (finish_date_obj < schedule_date_obj):
-#                 return JsonResponse({"success": False, "error": "Finish date ca not be before start date, nothing saved"})
-#             instance.schedule_date = schedule_date_obj
-#             instance.finish_date = finish_date_obj
-#             instance.save()
-#             return JsonResponse({"success": True})
-
-#         except ClientFinancialYear.DoesNotExist:  # More specific error for not found
-#             return JsonResponse({"success": False, "error": "ClientFinancialYear instance not found."})
-#         except Exception as e:
-#             # Catch other potential errors during save or database interaction
-#             return JsonResponse({"success": False, "error": str(e)})
-
-#     # Use a more specific error message
-#     return JsonResponse({"success": False, "error": "Invalid request method."})
-
-
-# @login_required
-# def update_client_financial_year(request):
-#     """Handles updating the financial year entry."""
-#     if request.method == "POST" and 'client_id' in request.POST:
-#         client_id = request.POST.get('client_id')
-#         client_instance = get_object_or_404(ClientFinancialYear, id=client_id)
-
-#         update_form = ClientFinancialYearUpdateForm(
-#             request.POST, instance=client_instance)
-#         # print("POST data keys:", request.POST.keys())
-#         if update_form.is_valid():
-#             update_form.save()
-#             messages.success(
-#                 request, "Client financial year updated successfully!")
-#         else:
-#             messages.error(
-#                 request, "Failed to update client data. Please try again.")
-
-#         return redirect(reverse('process_client_financial_years'))
-
-#     return redirect(reverse('process_client_financial_years'))
-
-
 @login_required
 def create_clients_for_financial_year(request):
     form = ClientFinancialYearProcessForm(request.POST or None)
@@ -949,16 +850,3 @@ class ClientDetailView(LoginRequiredMixin, DetailView):
 
     def get_object(self):
         return get_object_or_404(Client, id=self.kwargs["id"])
-
-
-@login_required
-@permission_required("client.view_clientfinancialyear", raise_exception=True)
-def filter_financial_statements(request):
-    form = FilterFinancialClient(request.GET or None)
-    if form.is_valid():
-        client_type = form.cleaned_data["client_type"]
-        year = form.cleaned_data["year"]
-        start_date = form.cleaned_data["start_date"]
-        end_date = form.cleaned_data["end_date"]
-        accountant = form.cleaned_data["accountant"]
-        search_term = form.cleaned_data.get("query", "")

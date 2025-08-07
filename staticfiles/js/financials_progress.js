@@ -1,12 +1,17 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const tableBody = document.querySelector("table.table tbody");
-    if (!tableBody) return;
+// Wait for both DOM and jQuery to be ready
+$(document).ready(function() {
+    // Initialize Bootstrap Select Picker first
+    $('.selectpicker').selectpicker();
+    
+    // Then set up your table filtering
+    const tableBody = $("table.table tbody");
+    if (!tableBody.length) return;
 
-    const nameInput = document.getElementById("filter-name");
-    const yearFilter = document.getElementById("filter-year");
-    const afsFilter = document.getElementById("filter-afs");
-    const itr14Filter = document.getElementById("filter-itr14");
-    const invoiceFilter = document.getElementById("filter-invoice");
+    const nameInput = $("#filter-name");
+    const yearFilter = $("#filter-year");
+    const afsFilter = $("#filter-afs");
+    const itr14Filter = $("#filter-itr14");
+    const invoiceFilter = $("#filter-invoice");
 
     const filters = {
         name: "",
@@ -25,11 +30,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateFilters() {
-        if (nameInput) filters.name = nameInput.value.toLowerCase().trim();
-        if (yearFilter) filters.year = yearFilter.value;
-        if (afsFilter) filters.afs = afsFilter.value;
-        if (itr14Filter) filters.itr14 = itr14Filter.value;
-        if (invoiceFilter) filters.invoice = invoiceFilter.value;
+        filters.name = nameInput.val().toLowerCase().trim();
+        filters.year = yearFilter.val();
+        filters.afs = afsFilter.val();
+        filters.itr14 = itr14Filter.val();
+        filters.invoice = invoiceFilter.val();
 
         applyFilters();
     }
@@ -37,24 +42,26 @@ document.addEventListener("DOMContentLoaded", function () {
     const debouncedUpdateFilters = debounce(updateFilters, 300);
 
     function applyFilters() {
-        const rows = document.querySelectorAll("tbody tr");
+        const rows = $("tbody tr");
 
-        rows.forEach(row => {
-            if (row.classList.contains("summary-row")) {
-                row.style.display = "";
+        rows.each(function() {
+            const row = $(this);
+            
+            if (row.hasClass("summary-row")) {
+                row.css("display", "");
                 return;
             }
 
-            if (row.children.length < 6) {
-                row.style.display = "none";
+            if (row.children().length < 6) {
+                row.css("display", "none");
                 return;
             }
 
-            const name = row.children[0].innerText.toLowerCase().trim();
-            const year = row.children[1].innerText.trim();
-            const afsStatus = row.children[3].querySelector('button').innerText.toLowerCase().trim();
-            const itr14Status = row.children[4].querySelector('button').innerText.toLowerCase().trim();
-            const invoiceStatus = row.children[5].querySelector('button').innerText.toLowerCase().trim();
+            const name = row.find("td:eq(0)").text().toLowerCase().trim();
+            const year = row.find("td:eq(1)").text().trim();
+            const afsStatus = row.find("td:eq(3) button").text().toLowerCase().trim();
+            const itr14Status = row.find("td:eq(4) button").text().toLowerCase().trim();
+            const invoiceStatus = row.find("td:eq(5) button").text().toLowerCase().trim();
 
             const matchName = filters.name === "" || name.includes(filters.name);
             const matchYear = filters.year === "all" || year === filters.year;
@@ -62,15 +69,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const matchITR = filters.itr14 === "all" || (filters.itr14 === "completed" && itr14Status === "completed") || (filters.itr14 === "incomplete" && itr14Status === "incomplete");
             const matchINV = filters.invoice === "all" || (filters.invoice === "invoiced" && invoiceStatus === "invoiced") || (filters.invoice === "pending" && invoiceStatus === "pending");
 
-            row.style.display = (matchName && matchYear && matchAFS && matchITR && matchINV) ? "" : "none";
+            row.css("display", (matchName && matchYear && matchAFS && matchITR && matchINV) ? "" : "none");
         });
     }
 
-    if (nameInput) nameInput.addEventListener("input", debouncedUpdateFilters);
-    if (yearFilter) yearFilter.addEventListener("change", updateFilters);
-    if (afsFilter) afsFilter.addEventListener("change", updateFilters);
-    if (itr14Filter) itr14Filter.addEventListener("change", updateFilters);
-    if (invoiceFilter) invoiceFilter.addEventListener("change", updateFilters);
+    nameInput.on("input", debouncedUpdateFilters);
+    yearFilter.on("change", updateFilters);
+    afsFilter.on("change", updateFilters);
+    itr14Filter.on("change", updateFilters);
+    invoiceFilter.on("change", updateFilters);
 
-    applyFilters();
+    // Apply filters initially
+    updateFilters();
 });
