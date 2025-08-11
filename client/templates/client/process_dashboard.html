@@ -11,12 +11,15 @@
             <div class="col-md-6">
                 <h6 class="h6">Process Accounting</h6>
                 <ul class="list-group">
-                    <li class="list-group-item">
-                        <a href="{% url 'process_client_financial_years'%}" class="list-group-item list-group-item-action list-group-item-primary">Update Financials progress for a period</a>
-                    </li> 
+
                     {% if perms.client.change_clientfinancialyear %}
                     <li class="list-group-item">
                         <a href="{% url 'create_client_financial_year'%}" class="list-group-item list-group-item-action list-group-item-primary">Create Financials for a year</a>
+                    </li> 
+                    {% endif %}
+                    {% if perms.client.change_clientfinancialyear %}
+                    <li class="list-group-item">
+                        <a href="{% url 'book-service'%}" class="list-group-item list-group-item-action list-group-item-primary">Update Financials Target Dates</a>
                     </li> 
                     {% endif %}
                 </ul>

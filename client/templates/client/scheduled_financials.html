@@ -7,13 +7,13 @@
         <h6 class="h6 mt-4">Check Scheduled Financial Statements Status</h6>     
             {% include "client/_form.html" with form=form %}
             {% if data %}
-                <h6 class="h6 mt-4">Total found: {{count}}</h6>
-                <table class="table table-striped table-hover table-bordered">
+        <h6 class="h6 mt-4">Total found: {{count}}</h6>
+    <table class="table table-striped table-hover table-bordered">
     {% include "client/_table_headers.html" with headers=headers %}
     <thead>
         <tr>
             <td>
-                <input type="text" id="filter-name" class="form-control form-control-sm" placeholder="Search name">
+                <!-- <input type="text" id="filter-name" class="form-control form-control-sm" placeholder="Search name"> -->
             </td>
             <td>
                 <select id="filter-year" class="form-select form-select-sm">
@@ -74,4 +74,5 @@
 
 {% block extra_js %}
 <script src="{% static 'js/scheduled.js' %}"></script>
+<script src="{% static 'js/searchClient.js' %}"></script>
 {% endblock extra_js %}

@@ -392,6 +392,9 @@ class ClientFinancialYear(models.Model):
     schedule_date = models.DateField(null=True)
     finish_date = models.DateField(null=True)
     invoice_date = models.DateField(null=True)
+    secretarial_start_date = models.DateField(null=True)
+    secretarial_finish_date = models.DateField(null=True)
+    itr14_start_date = models.DateField(null=True)
     itr14_date = models.DateField(null=True)
     wp_done = models.BooleanField(default=False)
     afs_done = models.BooleanField(default=False)
@@ -399,6 +402,9 @@ class ClientFinancialYear(models.Model):
     itr34c_issued = models.BooleanField(default=False)
     client_invoiced = models.BooleanField(default=False)
     comment = models.TextField(null=True)
+    tax_comment = models.TextField(null=True)
+    sec_comment = models.TextField(null=True)
+    inv_comment = models.TextField(null=True)
 
     class Meta:
         unique_together = ('client', 'financial_year')

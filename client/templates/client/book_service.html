@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Update Financial Progress{% endblock title %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        <h6 class="h6 mt-4">Update {{update_type}} </h6>     
+        <form method="post" class="mt-2 mb-4">
+            {% csrf_token %}
+            <div class="row g-3 mt-2">
+                <div class="form-group col-md-4 mt-2">
+                    {{ form.client_type.label_tag }}  
+                    {{ form.client_type }} 
+                </div>
+                <div class="form-group col-md-4 mt-2">
+                    {{ form.month.label_tag }}  
+                    {{ form.month }}  
+                </div>
+                <div class="form-group col-md-4 mt-2">
+                    {{ form.accountant.label_tag }}  
+                    {{ form.accountant }} 
+                </div>
+             </div>
+            <div class="row g-3 mt-2">
+                <div class="form-group col-md-4 mt-2">
+                    {{ form.years.label_tag }}  
+                    {{ form.years }}  
+                </div>
+
+                    <div class="form-group col-md-4 mt-2">
+                        {{ form.service.label_tag }}  
+                        {{ form.service }}  
+                    </div>
+                    <div class="form-group col-md-4 mt-2">
+                    <input type="hidden" class="form-label">&nbsp;</input> 
+                    <button id="id_submit_btn" type="submit" class="btn btn-outline-primary w-100">Fetch</button>
+                    
+                    </div>
+            </div>
+            </form>
+    {% if is_valid %}
+    <h6 class="h6 mt-4">Total found: {{count}}</h6>
+    <table class="table table-striped table-hover table-bordered">
+    {% include "client/_table_headers.html" with headers=headers %}
+    <thead>
+        <tr>
+            <td>
+                <input type="text" id="filter-name" class="form-control form-control-sm" placeholder="Search name">
+            </td>
+            <td>
+                <select id="filter-year" class="form-select form-select-sm">
+                    <option value="all">All</option>
+                    {% for year in unique_years %}
+                        <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
+
+        {% for record in scheduled %}
+            <tr class="data-row" data-id="{{ record.id }}" data-url="{% url 'progress-update-financials' record.id %}">
+                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.name }}</a></td>
+                 <td>{{ record.financial_year }}</td>
+                
+                    {% if update_type == "Accounting" %}
+                        <td><input name="start_date" type="date" value="{{ record.schedule_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        
+                        <td><input name="finish_date" type="date" value="{{ record.finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        
+                        <td>
+                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
+                        <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
+                        </td>
+                    {% elif update_type == "Taxation" %}
+                        <td><input name="start_date" type="date" value="{{ record.itr14_start_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        
+                        <td><input name="finish_date" type="date" value="{{ record.itr14_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        <td>
+                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
+                        <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
+                        </td>
+                    {% else %}
+                        <td><input name="start_date" type="date" value="{{ record.secretarial_start_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        
+                        <td><input name="finish_date" type="date" value="{{ record.secretarial_finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        <td>
+                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
+                        <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
+                        </td>
+                    {% endif %}
+
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    {% endif %}        
+    {% endif %}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/book_service.js' %}"></script>
+<script src="{% static 'js/update_afs_progress.js' %}"></script>
+{% endblock extra_js %}

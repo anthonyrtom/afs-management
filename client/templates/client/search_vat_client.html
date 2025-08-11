@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}VAT Clients by Category and Accountant{% endblock %}
 
 {% block content %}
@@ -67,3 +68,6 @@
 </div>
 {% endif %}
 {% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/searchClient.js' %}"></script>
+{% endblock extra_js %}

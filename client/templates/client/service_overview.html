@@ -20,8 +20,8 @@
                         {{form.month}}
                     </div>
                     <div class="col-md-6">
-                        {{form.query.label_tag}}
-                        {{form.query}}
+                        {{form.searchterm.label_tag}}
+                        {{form.searchterm}}
                     </div>
                 </div>
                 <button type="submit" class="btn btn-outline-primary">Filter</button>
@@ -52,3 +52,6 @@
 
     {% endblock %}
 {% endif %}
+{% block extra_js %}
+<script src="{% static 'js/searchClient.js' %}"></script>
+{% endblock extra_js %}

@@ -18,8 +18,7 @@ urlpatterns = [
          name="search-vat-clients"),
     path('get-clients-for-month-or-accountant/', views.process_vat_clients_for_period,
          name="process_vat_clients_for_period"),
-    path('process-clients-for-financial-years/', views.process_client_financial_years,
-         name="process_client_financial_years"),
+
     path('update-financial-year/<int:financial_year_id>/', views.update_client_financial,
          name='update-client-financial'),
     path('create-or-update-vat/', views.create_or_update_vat,
@@ -33,4 +32,10 @@ urlpatterns = [
          name="ajax_update_comment"),
     path("overview/",
          views.view_service_overview, name="view-service-overview"),
+    path("book-service/",
+         views.book_service_dates, name="book-service"),
+    path("progress-update-financial-dates/<int:client_id>/",
+         views.progress_update_financials, name="progress-update-financials"),
+    path("financials-productivity-monitor/",
+         views.financials_productivity_monitor, name="financials-productivity-monitor"),
 ]

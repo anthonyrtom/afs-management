@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block title %}Search Users{% endblock %}
 
 {% block content %}
@@ -9,7 +9,7 @@
     <form method="GET">
         <div class="row">
             <div class="col-md-6">
-                {{ form.query.label_tag }} {{ form.query }}
+                {{ form.searchterm.label_tag }} {{ form.searchterm }}
             </div>
             <div class="col-md-4">
                 {{ form.job_title.label_tag }} {{ form.job_title }}
@@ -45,3 +45,6 @@
     {% endif %}
 {% endif %}
 {% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/searchUsers.js' %}"></script>
+{% endblock extra_js %}

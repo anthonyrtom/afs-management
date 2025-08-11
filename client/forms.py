@@ -136,7 +136,7 @@ class ClientFilterForm(forms.Form):
 
 
 class UserSearchForm(forms.Form):
-    query = forms.CharField(
+    searchterm = forms.CharField(
         max_length=150,
         required=False,
         widget=forms.TextInput(
@@ -377,7 +377,7 @@ class FilterByServiceForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-control"}),
         label="Period",
     )
-    query = forms.CharField(
+    searchterm = forms.CharField(
         max_length=150,
         required=False,
         label="Search",
@@ -386,18 +386,54 @@ class FilterByServiceForm(forms.Form):
     )
 
 
-class FilterFinancialClient(forms.Form):
-    client_type = forms.ChoiceField(choices=[], label="Select Client Type",
-                                    required=True, widget=forms.Select(attrs={"class": "form-control"}))
-    year = forms.ChoiceField(choices=[], label="Select Financial year",
-                             required=True, widget=forms.Select(attrs={"class": "form-control"}))
-    start_date = forms.DateField(label="Select start date", required=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
-        attrs={"type": "date", "class": "form-control", "id": "start-date"},))
-    end_date = forms.DateField(label="Select end date", required=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
-        attrs={"type": "date", "class": "form-control", "id": "end-date"}))
-    accountant = forms.ChoiceField(choices=[], label="Select Accountant",
-                                   required=True, widget=forms.Select(attrs={"class": "form-control"}))
-    query = forms.CharField(
+class FilterAllFinancialClient(forms.Form):
+    client_type = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Client Type(s)",
+        required=True, widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Client Type(s), you can select multiple"}))
+
+    years = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Financial Year(s)",
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select financial year(s), you can select multiple"
+        })
+    )
+
+    accountant = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Accountant(s)",
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Accountant(s), you can select multiple"}))
+
+    months_list = settings.MONTHS_LIST
+    months_indexes_of = get_month_as_index(months_list)
+    choices = [(i, month.upper())
+               for month, i in zip(months_list, months_indexes_of)]
+
+    month = forms.MultipleChoiceField(
+        choices=choices,
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Year end, you can select multiple"}),
+        label="Year Ending",
+    )
+    searchterm = forms.CharField(
         max_length=150,
         required=False,
         label="Search",
@@ -407,16 +443,16 @@ class FilterFinancialClient(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['client_type'].choices = [("all", "ALL")] + [
-            (c.name, c.name.upper()) for c in ClientType.objects.all()
+        self.fields['client_type'].choices = [
+            (c.id, c.name.upper()) for c in ClientType.objects.all()
         ]
-        self.fields['year'].choices = [("all", "ALL")] + [(cy.id, cy.the_year) for cy in FinancialYear.objects.all().order_by(
+        self.fields['years'].choices = [(cy.id, cy.the_year) for cy in FinancialYear.objects.all().order_by(
             "-the_year")]
 
         accountant_job_title = JobTitle.objects.filter(
             title="Accountant").first()
 
-        accountant_choices = [("all", "ALL")]
+        accountant_choices = [("None", "Not Assigned")]
         if accountant_job_title:
             accountant_users = CustomUser.objects.filter(
                 job_title=accountant_job_title).order_by('first_name', 'last_name')
@@ -425,13 +461,17 @@ class FilterFinancialClient(forms.Form):
             self.fields['accountant'].choices = accountant_choices
 
 
-class FilterAllFinancialClient(forms.Form):
-    client_type = forms.MultipleChoiceField(choices=[], label="Select Client Type",
-                                            required=True, widget=forms.SelectMultiple(attrs={
-                                                "class": "form-control selectpicker",
-                                                "data-live-search": "true",
-                                                "data-actions-box": "true",
-                                                "title": "Select Years"}))
+class BookServiceForm(forms.Form):
+    client_type = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Client Type",
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Years"}))
+
     years = forms.MultipleChoiceField(
         choices=[],
         label="Select Years",
@@ -444,11 +484,15 @@ class FilterAllFinancialClient(forms.Form):
         })
     )
 
-    accountant = forms.MultipleChoiceField(choices=[], label="Select Accountant",
-                                           required=True, widget=forms.SelectMultiple(attrs={"class": "form-control selectpicker",
-                                                                                             "data-live-search": "true",
-                                                                                             "data-actions-box": "true",
-                                                                                             "title": "Select Years"}))
+    accountant = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Accountant",
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Years"}))
 
     months_list = settings.MONTHS_LIST
     months_indexes_of = get_month_as_index(months_list)
@@ -458,19 +502,23 @@ class FilterAllFinancialClient(forms.Form):
     month = forms.MultipleChoiceField(
         choices=choices,
         required=True,
-        widget=forms.SelectMultiple(attrs={"class": "form-control selectpicker",
-                                           "data-live-search": "true",
-                                           "data-actions-box": "true",
-                                           "title": "Select Years"}),
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Years"}),
         label="Year Ending",
     )
-    query = forms.CharField(
-        max_length=150,
-        required=False,
-        label="Search",
-        widget=forms.TextInput(
-            attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
-    )
+
+    service = forms.ChoiceField(
+        choices=[("accounting", "Accounting"), ("secretarial",
+                                                "Secretarial"), ("taxation", "Taxation")],
+        required=True,
+        label="Department",
+        widget=forms.Select(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "title": "Select a service"}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -503,7 +551,7 @@ class FilterFinancialClient(forms.Form):
         attrs={"type": "date", "class": "form-control", "id": "end-date"}))
     accountant = forms.ChoiceField(choices=[], label="Select Accountant",
                                    required=True, widget=forms.Select(attrs={"class": "form-control"}))
-    query = forms.CharField(
+    searchterm = forms.CharField(
         max_length=150,
         required=False,
         label="Search",
@@ -523,6 +571,82 @@ class FilterFinancialClient(forms.Form):
             title="Accountant").first()
 
         accountant_choices = [("all", "ALL")]
+        if accountant_job_title:
+            accountant_users = CustomUser.objects.filter(
+                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_choices.extend(
+                [(user.id, user.get_full_name() or user.email) for user in accountant_users])
+            self.fields['accountant'].choices = accountant_choices
+
+
+class FinancialProductivityForm(forms.Form):
+    client_type = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Client Type(s)",
+        required=True,
+        widget=forms.SelectMultiple(
+            attrs={
+                "class": "form-control selectpicker",
+                "data-live-search": "true",
+                "data-actions-box": "true",
+                "title": "Select Client type(s), you can select multiple"}))
+    years = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Financial Year(s)",
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Financial Year(s), you can select multiple"
+        })
+    )
+
+    accountant = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Accountant(s)",
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Accountant(s), you can select multiple"}))
+
+    months_list = settings.MONTHS_LIST
+    months_indexes_of = get_month_as_index(months_list)
+    choices = [(i, month.upper())
+               for month, i in zip(months_list, months_indexes_of)]
+
+    month = forms.MultipleChoiceField(
+        choices=choices,
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select year end, you can select multiple"}),
+        label="Year Ending",
+    )
+    searchterm = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Search",
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client_type'].choices = [
+            (c.id, c.name.upper()) for c in ClientType.objects.all()
+        ]
+        self.fields['years'].choices = [(cy.id, cy.the_year) for cy in FinancialYear.objects.all().order_by(
+            "-the_year")]
+
+        accountant_job_title = JobTitle.objects.filter(
+            title="Accountant").first()
+
+        accountant_choices = [("None", "Not Assigned")]
         if accountant_job_title:
             accountant_users = CustomUser.objects.filter(
                 job_title=accountant_job_title).order_by('first_name', 'last_name')

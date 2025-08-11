@@ -4,14 +4,14 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
-    const nameInput = document.getElementById("filter-name");
+    // const nameInput = document.getElementById("filter-name");
     const yearFilter = document.getElementById("filter-year");
     const afsFilter = document.getElementById("filter-afs");
     const itr14Filter = document.getElementById("filter-itr14");
     const invoiceFilter = document.getElementById("filter-invoice");
 
     const filters = {
-        name: "",
+        // name: "",
         year: "all",
         afs: "all",
         itr14: "all",
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     function updateFilters() {
-        if (nameInput) filters.name = nameInput.value.toLowerCase().trim();
+        // if (nameInput) filters.name = nameInput.value.toLowerCase().trim();
         if (yearFilter) filters.year = yearFilter.value;
         if (afsFilter) filters.afs = afsFilter.value;
         if (itr14Filter) filters.itr14 = itr14Filter.value;
@@ -41,13 +41,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            const name = row.children[0].innerText.toLowerCase().trim();
+            // const name = row.children[0].innerText.toLowerCase().trim();
             const year = row.children[1].innerText.trim();
             const afsStatus = row.children[3].querySelector('button').innerText.toLowerCase().trim();
             const itr14Status = row.children[4].querySelector('button').innerText.toLowerCase().trim();
             const invoiceStatus = row.children[5].querySelector('button').innerText.toLowerCase().trim();
 
-            const matchName = filters.name === "" || name.includes(filters.name);
+            // const matchName = filters.name === "" || name.includes(filters.name);
             const matchYear = filters.year === "all" || year === filters.year;
             const matchAFS = filters.afs === "all" || 
                 (filters.afs === "completed" && afsStatus === "completed") || 
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 (filters.invoice === "invoiced" && invoiceStatus === "invoiced") || 
                 (filters.invoice === "pending" && invoiceStatus === "pending");
 
-            row.style.display = (matchName && matchYear && matchAFS && matchITR && matchINV) ? "" : "none";
+            row.style.display = ( matchYear && matchAFS && matchITR && matchINV) ? "" : "none";
         });
     }
 
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Attach listeners
-    if (nameInput) nameInput.addEventListener("input", debounce(updateFilters, 300));
+    // if (nameInput) nameInput.addEventListener("input", debounce(updateFilters, 300));
     if (yearFilter) yearFilter.addEventListener("change", updateFilters);
     if (afsFilter) afsFilter.addEventListener("change", updateFilters);
     if (itr14Filter) itr14Filter.addEventListener("change", updateFilters);

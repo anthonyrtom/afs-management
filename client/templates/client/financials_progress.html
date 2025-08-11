@@ -27,8 +27,8 @@
                 </div>
 
                     <div class="form-group col-md-4 mt-2">
-                        {{ form.query.label_tag }}  
-                        {{ form.query }}  
+                        {{ form.searchterm.label_tag }}  
+                        {{ form.searchterm }}  
                     </div>
                     <div class="form-group col-md-4 mt-2">
                     <input type="hidden" class="form-label">&nbsp;</input> 
@@ -44,7 +44,7 @@
     <thead>
         <tr>
             <td>
-                <input type="text" id="filter-name" class="form-control form-control-sm" placeholder="Search name">
+                <!-- <input type="text" id="filter-name" class="form-control form-control-sm" placeholder="Search name"> -->
             </td>
             <td>
                 <select id="filter-year" class="form-select form-select-sm">
@@ -105,4 +105,5 @@
 {% endblock %}
 {% block extra_js %}
 <script src="{% static 'js/financials_progress.js' %}"></script>
+<script src="{% static 'js/searchClient.js' %}"></script>
 {% endblock extra_js %}

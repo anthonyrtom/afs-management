@@ -5,11 +5,40 @@
 {% block content %}
 {% if user.is_authenticated %}
 <h6 class="mt-4 h6">Create Client Financial Years</h6>
-
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-outline-primary">Return Clients</button>
-</form>
+<div class="container">
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6 mt-2 form-group">
+                {{form.client_type.label_tag}}
+                {{form.client_type}}
+            </div>
+            <div class="col-md-6 mt-2 form-group">
+                {{form.financial_year.label_tag}}
+                {{form.financial_year}}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mt-2 form-group">
+                {{form.accountant.label_tag}}
+                {{form.accountant}}
+            </div>
+            <div class="col-md-6 mt-2 form-group">
+                {{form.month_ending.label_tag}}
+                {{form.month_ending}}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mt-2 form-group">
+                {{form.query.label_tag}}
+                {{form.query}}
+            </div>
+            <div class="col-md-6 mt-2 form-group">
+                <input type="hidden" class="form-label">&nbsp;</input> 
+                <button type="submit" class="btn btn-outline-primary w-100">Return Clients</button>   
+            </div>
+        </div>
+    </form>
+</div>
 {% endif %}
 {% endblock %}

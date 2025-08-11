@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %} All Clients{% endblock title %}
 
 {% block content %} 
@@ -56,3 +57,7 @@
     
     {% endif %}
 {% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'js/searchClient.js' %}"></script>
+{% endblock extra_js %}
