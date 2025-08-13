@@ -39,7 +39,7 @@
             </div>
             </form>
     {% if is_valid %}
-    <h6 class="h6 mt-4">Total found: {{count}}</h6>
+    <h6 class="h6 mt-4" id="filtered-row-count"></h6>
     <table class="table table-striped table-hover table-bordered">
     {% include "client/_table_headers.html" with headers=headers %}
     <thead>
@@ -55,7 +55,16 @@
                     {% endfor %}
                 </select>
             </td>
-            <td></td>
+            <td >
+                <!-- <div class="form-group col-md-4 mt-2">
+                    <label for="filter-date-validity">Date Status</label>
+                    <select id="filter-date-validity" class="form-control">
+                    <option value="all">All Dates</option>
+                    <option value="valid">Valid Dates Only</option>
+                    <option value="invalid">Placeholder Dates Only</option>
+                    </select>
+                </div> -->
+            </td> 
             <td></td>
             <td></td>
         </tr>

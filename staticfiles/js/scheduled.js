@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function applyFilters() {
         const rows = document.querySelectorAll("tbody tr");
+        let countDisplay = 0;
         rows.forEach(row => {
             if (row.classList.contains("summary-row")) {
                 row.style.display = "";
@@ -58,9 +59,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const matchINV = filters.invoice === "all" || 
                 (filters.invoice === "invoiced" && invoiceStatus === "invoiced") || 
                 (filters.invoice === "pending" && invoiceStatus === "pending");
-
-            row.style.display = ( matchYear && matchAFS && matchITR && matchINV) ? "" : "none";
+            const visibleRow = matchYear && matchAFS && matchITR && matchINV;
+            row.style.display = (visibleRow ) ? "" : "none";
+            if(visibleRow)
+            countDisplay++;
         });
+        updateRowCount(countDisplay, rows.length);
     }
 
     // Debounce helper
@@ -81,3 +85,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     applyFilters();
 });
+
+    function updateRowCount(visible, total) {
+        
+        let countDisplay = document.getElementById("filtered-row-count");
+
+        countDisplay.textContent = `Showing ${visible} of ${total} records`;
+        countDisplay.style.margin = "10px 0";
+        countDisplay.style.fontWeight = "bold";
+        countDisplay.style.backgroundColor = '#f8f9fa';
+        countDisplay.style.padding = '8px 15px';
+        countDisplay.style.borderRadius = '4px';
+        countDisplay.style.margin = '10px 0';
+        countDisplay.style.fontWeight = 'bold';
+        countDisplay.style.borderLeft = '4px solid #0d6efd';
+    }

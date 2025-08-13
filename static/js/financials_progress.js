@@ -1,4 +1,3 @@
-
 $(document).ready(function() {
     
     $('.selectpicker').selectpicker();
@@ -39,7 +38,7 @@ $(document).ready(function() {
 
     function applyFilters() {
         const rows = $("tbody tr");
-
+        let countFiltered = 0;
         rows.each(function() {
             const row = $(this);
             
@@ -62,9 +61,11 @@ $(document).ready(function() {
             const matchAFS = filters.afs === "all" || (filters.afs === "completed" && afsStatus === "completed") || (filters.afs === "incomplete" && afsStatus === "incomplete");
             const matchITR = filters.itr14 === "all" || (filters.itr14 === "completed" && itr14Status === "completed") || (filters.itr14 === "incomplete" && itr14Status === "incomplete");
             const matchINV = filters.invoice === "all" || (filters.invoice === "invoiced" && invoiceStatus === "invoiced") || (filters.invoice === "pending" && invoiceStatus === "pending");
-
-            row.css("display", (matchYear && matchAFS && matchITR && matchINV) ? "" : "none");
+            const allMatch = matchYear && matchAFS && matchITR && matchINV;
+            row.css("display", (allMatch) ? "" : "none");
+            if(allMatch) countFiltered++;
         });
+        updateRowCount(countFiltered, rows.length)
     }
 
    
@@ -76,3 +77,18 @@ $(document).ready(function() {
     // Apply filters initially
     updateFilters();
 });
+
+    function updateRowCount(visible, total) {
+        
+        let countDisplay = document.getElementById("filtered-row-count");
+
+        countDisplay.textContent = `Showing ${visible} of ${total} records`;
+        countDisplay.style.margin = "10px 0";
+        countDisplay.style.fontWeight = "bold";
+        countDisplay.style.backgroundColor = '#f8f9fa';
+        countDisplay.style.padding = '8px 15px';
+        countDisplay.style.borderRadius = '4px';
+        countDisplay.style.margin = '10px 0';
+        countDisplay.style.fontWeight = 'bold';
+        countDisplay.style.borderLeft = '4px solid #0d6efd';
+    }

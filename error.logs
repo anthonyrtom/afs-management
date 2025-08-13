@@ -1,0 +1,100 @@
+2025-08-13T14:46:11.588808543Z     response = get_response(request)
+2025-08-13T14:46:11.588810143Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/utils/deprecation.py", line 129, in __call__
+2025-08-13T14:46:11.588811823Z     response = response or self.get_response(request)
+2025-08-13T14:46:11.588813433Z                            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588815063Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588816743Z     response = get_response(request)
+2025-08-13T14:46:11.588818393Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/whitenoise/middleware.py", line 123, in __call__
+2025-08-13T14:46:11.588820033Z     return self.get_response(request)
+2025-08-13T14:46:11.588821653Z            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588823333Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588824983Z     response = get_response(request)
+2025-08-13T14:46:11.588829083Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/utils/deprecation.py", line 129, in __call__
+2025-08-13T14:46:11.588830833Z     response = response or self.get_response(request)
+2025-08-13T14:46:11.588832473Z                            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588834203Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588835883Z     response = get_response(request)
+2025-08-13T14:46:11.588837533Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/utils/deprecation.py", line 129, in __call__
+2025-08-13T14:46:11.588839173Z     response = response or self.get_response(request)
+2025-08-13T14:46:11.588844824Z                            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588846893Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588848564Z     response = get_response(request)
+2025-08-13T14:46:11.588850254Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/utils/deprecation.py", line 129, in __call__
+2025-08-13T14:46:11.588851934Z     response = response or self.get_response(request)
+2025-08-13T14:46:11.588854304Z                            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588867394Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588870624Z     response = get_response(request)
+2025-08-13T14:46:11.588873464Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/utils/deprecation.py", line 129, in __call__
+2025-08-13T14:46:11.588875964Z     response = response or self.get_response(request)
+2025-08-13T14:46:11.588878644Z                            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588881254Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588883794Z     response = get_response(request)
+2025-08-13T14:46:11.588886365Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/utils/deprecation.py", line 129, in __call__
+2025-08-13T14:46:11.588889075Z     response = response or self.get_response(request)
+2025-08-13T14:46:11.588891525Z                            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588893865Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588896435Z     response = get_response(request)
+2025-08-13T14:46:11.588898855Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/utils/deprecation.py", line 129, in __call__
+2025-08-13T14:46:11.588901335Z     response = response or self.get_response(request)
+2025-08-13T14:46:11.588903975Z                            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588906785Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588909675Z     response = get_response(request)
+2025-08-13T14:46:11.588913415Z   File "/opt/render/project/src/middleware/idle_timeout.py", line 24, in __call__
+2025-08-13T14:46:11.588916095Z     return self.get_response(request)
+2025-08-13T14:46:11.588918825Z            ~~~~~~~~~~~~~~~~~^^^^^^^^^
+2025-08-13T14:46:11.588918975Z 10.214.1.151 - - [13/Aug/2025:14:46:11 +0000] "GET /financials-productivity-monitor/?client_type=1&client_type=2&client_type=3&client_type=4&client_type=5&client_type=6&client_type=7&client_type=8&client_type=9&client_type=10&client_type=11&month=1&month=2&month=3&month=4&month=5&month=6&month=7&month=8&month=9&month=10&month=11&month=12&accountant=None&accountant=32&accountant=27&accountant=18&accountant=24&accountant=34&accountant=29&accountant=26&accountant=8&accountant=25&accountant=7&accountant=16&accountant=30&accountant=21&accountant=23&accountant=33&accountant=35&accountant=17&accountant=9&accountant=10&accountant=31&accountant=3&years=11&years=10&years=9&years=8&years=7&years=6&years=5&years=4&years=3&years=2&years=1&searchterm= HTTP/1.1" 500 0 "-" "-"
+2025-08-13T14:46:11.588921826Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-08-13T14:46:11.588931876Z     response = get_response(request)
+2025-08-13T14:46:11.588934806Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-08-13T14:46:11.588945946Z     response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-08-13T14:46:11.588948546Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 60, in _view_wrapper
+2025-08-13T14:46:11.588950646Z     return view_func(request, *args, **kwargs)
+2025-08-13T14:46:11.588953256Z   File "/opt/render/project/src/client/views.py", line 824, in financials_productivity_monitor
+2025-08-13T14:46:11.588956106Z     c.is_afs_client(today) and c.month_end in month]
+2025-08-13T14:46:11.588958816Z     ~~~~~~~~~~~~~~~^^^^^^^
+2025-08-13T14:46:11.588960986Z   File "/opt/render/project/src/client/models.py", line 170, in is_afs_client
+2025-08-13T14:46:11.588963476Z     if self.client_type and self.client_type.name in ["Individual", "Foreign Company", "Partnership"]:
+2025-08-13T14:46:11.588966556Z        ^^^^^^^^^^^^^^^^
+2025-08-13T14:46:11.588968977Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/models/fields/related_descriptors.py", line 257, in __get__
+2025-08-13T14:46:11.588971057Z     rel_obj = self.get_object(instance)
+2025-08-13T14:46:11.588973157Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/models/fields/related_descriptors.py", line 220, in get_object
+2025-08-13T14:46:11.588975317Z     return qs.get(self.field.get_reverse_related_filter(instance))
+2025-08-13T14:46:11.588977537Z            ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-08-13T14:46:11.588979657Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/models/query.py", line 645, in get
+2025-08-13T14:46:11.588981717Z     num = len(clone)
+2025-08-13T14:46:11.588983867Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/models/query.py", line 382, in __len__
+2025-08-13T14:46:11.588986067Z     self._fetch_all()
+2025-08-13T14:46:11.588988477Z     ~~~~~~~~~~~~~~~^^
+2025-08-13T14:46:11.588993667Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+2025-08-13T14:46:11.588996627Z     self._result_cache = list(self._iterable_class(self))
+2025-08-13T14:46:11.588999227Z                          ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-08-13T14:46:11.589001507Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/models/query.py", line 91, in __iter__
+2025-08-13T14:46:11.589003677Z     results = compiler.execute_sql(
+2025-08-13T14:46:11.589005797Z         chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size
+2025-08-13T14:46:11.589008068Z     )
+2025-08-13T14:46:11.589010218Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+2025-08-13T14:46:11.589012318Z     cursor.execute(sql, params)
+2025-08-13T14:46:11.589014298Z     ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+2025-08-13T14:46:11.589016418Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 79, in execute
+2025-08-13T14:46:11.589018438Z     return self._execute_with_wrappers(
+2025-08-13T14:46:11.589020548Z            ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+2025-08-13T14:46:11.589022748Z         sql, params, many=False, executor=self._execute
+2025-08-13T14:46:11.589024808Z         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-08-13T14:46:11.589038578Z     )
+2025-08-13T14:46:11.589041358Z     ^
+2025-08-13T14:46:11.589043638Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+2025-08-13T14:46:11.589051319Z     return executor(sql, params, many, context)
+2025-08-13T14:46:11.589054159Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-08-13T14:46:11.589056929Z     return self.cursor.execute(sql, params)
+2025-08-13T14:46:11.589059099Z            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+2025-08-13T14:46:11.589061609Z   File "/usr/local/lib/python3.13/encodings/utf_8.py", line 15, in decode
+2025-08-13T14:46:11.589063689Z     def decode(input, errors='strict'):
+2025-08-13T14:46:11.589065739Z     
+2025-08-13T14:46:11.589067899Z   File "/opt/render/project/src/.venv/lib/python3.13/site-packages/gunicorn/workers/base.py", line 204, in handle_abort
+2025-08-13T14:46:11.589070119Z     sys.exit(1)
+2025-08-13T14:46:11.589072209Z     ~~~~~~~~^^^
+2025-08-13T14:46:11.589074239Z SystemExit: 1
+2025-08-13T14:46:11.589172482Z [2025-08-13 14:46:11 +0000] [69] [INFO] Worker exiting (pid: 69)
+2025-08-13T14:46:11.824830118Z [2025-08-13 14:46:11 +0000] [70] [INFO] Booting worker with pid: 70
+2025-08-13T14:46:31.073930475Z 10.214.1.151 - - [13/Aug/2025:14:46:31 +0000] "GET /process/ HTTP/1.1" 200 4985 "https://e-practice.onrender.com/financials-productivity-monitor/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
+2025-08-13T14:46:31.439019539Z 10.214.30.88 - - [13/Aug/2025:14:46:31 +0000] "GET /static/css/style.css HTTP/1.1" 304 0 "https://e-practice.onrender.com/process/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"
