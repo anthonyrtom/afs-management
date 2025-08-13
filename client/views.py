@@ -14,7 +14,7 @@ from django.views.generic import DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService
-from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict
+from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict
 from users.models import CustomUser
 from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm
 
@@ -798,7 +798,8 @@ def financials_productivity_monitor(request):
     headers = ["Client Name", "Year", "Fin Days",
                "AFSs Completed", "Sec Days", "Sec Completed", "Tax Days", "Tax Completed", "Invoicing Days", "Invoicing Completed"]
     count = 0
-    max_fin_days = 0
+
+    max_dict = {}
     if form.is_valid():
         selected_year_ids = form.cleaned_data.get("years", [])
         accountants = form.cleaned_data.get("accountant", [])
@@ -852,6 +853,7 @@ def financials_productivity_monitor(request):
             "tax_days", returned_data)
         unique_inv_days = calculate_unique_days_from_dict(
             "invoicing_days", returned_data)
+        max_dict = calculate_max_days_from_dict(returned_data)
     context = {
         "form": form,
         "is_valid": is_valid,
@@ -863,6 +865,6 @@ def financials_productivity_monitor(request):
         "unique_tax_days": unique_tax_days,
         "unique_inv_days": unique_inv_days,
         "count": count,
-        "max_fin_days": max_fin_days
+        "max_dict": max_dict
     }
     return render(request, "client/financials_accountability.html", context)

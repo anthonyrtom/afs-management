@@ -96,3 +96,30 @@ def calculate_unique_days_from_dict(key_type, client_fy_dict):
             unique_days.add(client_data[key_type])
     sorted_days = sorted(unique_days, reverse=True)
     return sorted_days
+
+
+def calculate_max_days_from_dict(client_fy_dict):
+    """
+    Returns a max of day values for the specified key_type from the dictionary.
+
+    Args:
+        key_type (str): The day field to extract ("fin_days", "sec_days", etc.)
+        client_fy_dict (dict): Dictionary from construct_client_dict
+
+    Returns:
+        list: an int
+    """
+    if not client_fy_dict:
+        raise TypeError("client_fy_dict cannot be None")
+    if not isinstance(client_fy_dict, dict):
+        raise TypeError("client_fy_dict should be a dict")
+
+    valid_keys = {"fin_days", "sec_days", "tax_days", "invoicing_days"}
+    final_dict = {}
+
+    for key_type in valid_keys:
+        all_values = [client_data[key_type]
+                      for client_data in client_fy_dict.values()]
+        final_dict[key_type] = max(all_values) if all_values else 0
+
+    return final_dict

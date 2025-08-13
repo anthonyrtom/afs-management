@@ -38,7 +38,7 @@
             </div>
             </form>
     {% if is_valid %}
-    <h6 class="h6 mt-4">Total found: {{count}}</h6>
+    <h6 class="h6 mt-4" id="filtered-row-count">Total found: {{count}}</h6>
     <table class="table table-striped table-hover table-bordered">
     {% include "client/_table_headers.html" with headers=headers %}
     <thead>
