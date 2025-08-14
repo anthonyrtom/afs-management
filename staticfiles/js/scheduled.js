@@ -64,20 +64,10 @@ document.addEventListener("DOMContentLoaded", function () {
             if(visibleRow)
             countDisplay++;
         });
-        updateRowCount(countDisplay, rows.length);
+        const numbRows = rows.length - 2;
+        updateRowCount(countDisplay, numbRows);
     }
 
-    // Debounce helper
-    function debounce(fn, delay) {
-        let timeoutId;
-        return function (...args) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => fn.apply(this, args), delay);
-        };
-    }
-
-    // Attach listeners
-    // if (nameInput) nameInput.addEventListener("input", debounce(updateFilters, 300));
     if (yearFilter) yearFilter.addEventListener("change", updateFilters);
     if (afsFilter) afsFilter.addEventListener("change", updateFilters);
     if (itr14Filter) itr14Filter.addEventListener("change", updateFilters);

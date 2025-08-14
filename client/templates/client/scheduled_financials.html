@@ -56,7 +56,7 @@
         <td>{{ itr14_complete }} completed</td>
         <td>{{ invoiced }} invoiced</td>
     </tr>
-        {% for record in scheduled %}
+        {% for record in clients %}
             <tr>
                 <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.name }}</a></td>
                 <td>{{ record.financial_year }}</td>

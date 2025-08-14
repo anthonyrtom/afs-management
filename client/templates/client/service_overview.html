@@ -24,11 +24,13 @@
                         {{form.searchterm}}
                     </div>
                 </div>
-                <button type="submit" class="btn btn-outline-primary">Filter</button>
+                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
             </form>
     {% if clients %}
 
-            <h6 class="mt-4">{{count}} Clients found</h6>
+
+            <h6 class="mt-4" id="filtered-row-count">{{count}} Clients found</h6>
+                
         <table class="table table-bordered table-striped table-hover">
             <thead>
                 <tr>
@@ -53,5 +55,6 @@
     {% endblock %}
 {% endif %}
 {% block extra_js %}
+<script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/searchClient.js' %}"></script>
 {% endblock extra_js %}

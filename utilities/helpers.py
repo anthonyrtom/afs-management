@@ -1,3 +1,5 @@
+import csv
+from django.http import HttpResponse
 from datetime import datetime
 
 
@@ -123,3 +125,38 @@ def calculate_max_days_from_dict(client_fy_dict):
         final_dict[key_type] = max(all_values) if all_values else 0
 
     return final_dict
+
+
+def get_client_model_fields():
+    """
+    Helper function to get the field list of the Client model in a list
+    Args:
+    None
+    Returns:
+        A list of all the fields except ManyToMany fields
+    """
+    all_list = ["name", "surname", "email", "cell_number", "contact_person", "contact_person_cell", "month_end", "is_active", "is_sa_resident", "last_day", "income_tax_number", "paye_reg_number",
+                "first_month_for_paye_sub", "uif_reg_number", "entity_reg_number", "birthday_of_entity", "vat_reg_number", "first_month_for_vat_sub", "vat_category", "registered_address", "coida_reg_number", "first_month_for_coida_sub", "internal_id_number", "uif_dept_reg_number", "accountant", "first_financial_year", "client_type"]
+
+    return all_list
+
+
+def export_to_csv(filename, headers, rows):
+    """
+    Exports data to a CSV file.
+
+    :param filename: The CSV file name (string)
+    :param headers: A list of column names
+    :param rows: A list of lists/tuples containing row data
+    :return: HttpResponse with CSV content
+    """
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(headers)
+
+    for row in rows:
+        writer.writerow(row)
+
+    return response

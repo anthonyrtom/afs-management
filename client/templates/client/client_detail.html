@@ -6,6 +6,7 @@
 {% if user.is_authenticated %}
     <div class="container mt-5">
         <h2>Client Details: {{ client.name }}</h2>
+        <h6><a href="{% url 'edit_client' client.id %}">Edit</a></h6>
 
         <table class="table table-bordered mt-3">
             <tr>

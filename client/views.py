@@ -5,16 +5,17 @@ from django.http import JsonResponse
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.db.models import Q
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.conf import settings
 from django.views.generic import DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic.edit import UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService
-from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict
+from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv
 from users.models import CustomUser
 from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm
 
@@ -171,6 +172,13 @@ def dashboard_list(request, filter_type, client_type):
             "Cipc Returns", today)
         clients = [client for client in clients if ClientService.is_service_offered(client.id, cipc_service.id, today) and client.get_birthday_in_year(
             today.year) and client.get_birthday_in_year(today.year).month == today.month and client.client_type and client.client_type.name == client_type]
+    if request.GET.get("export") == "csv":
+        headers = ["Name", "Registration Number", "Internal ID"]
+        rows = [
+            [c.get_client_full_name(), c.entity_reg_number, c.internal_id_number]
+            for c in clients
+        ]
+        return export_to_csv("dashboard_export.csv", headers, rows)
 
     return render(request, "client/dashboard_list.html", {
         "clients": clients,
@@ -235,6 +243,15 @@ def view_service_overview(request):
                 month = settings.MONTHS_LIST.index(month) + 1
                 clients = [client for client in clients if client.get_birthday_in_year(
                     today.year) and client.get_birthday_in_year(today.year).month == month]
+        if request.GET.get("export") == "csv":
+            headers = ["Name", "Registration Number", "Internal ID"]
+            rows = [
+                [c.get_client_full_name(), c.entity_reg_number,
+                 c.internal_id_number]
+                for c in clients
+            ]
+            return export_to_csv("clients_export.csv", headers, rows)
+
         count = len(clients)
         headers = ["Name", "Registration Number"]
         return render(request, "client/service_overview.html", {"form": form, "clients": clients, "is_form_bound": is_form_bound, "count": count, "headers": headers})
@@ -282,6 +299,15 @@ def view_all_clients(request):
                                              Q(entity_reg_number__icontains=query) |
                                              Q(vat_reg_number__icontains=query) |
                                              Q(internal_id_number__icontains=query))
+        if request.GET.get("export") == "csv":
+            headers = ["Name", "Registration Number", "Internal ID"]
+            rows = [
+                [c.get_client_full_name(), c.entity_reg_number,
+                 c.internal_id_number]
+                for c in all_clients
+            ]
+            return export_to_csv("all_clients_export.csv", headers, rows)
+
         count = len(all_clients)
         return render(request, "client/all_clients.html", {"clients": all_clients, "headers": headers, "count": count, "form": form})
     return render(request, "client/all_clients.html", {"form": form})
@@ -323,10 +349,19 @@ def scheduled_financials(request):
             {obj.financial_year.the_year for obj in scheduled if obj.financial_year},
             reverse=True
         )
+        if request.GET.get("export") == "csv":
+            headers = ["Name", "Registration Number", "Internal ID",
+                       "Year", "Schedule Date", "AFSs Finish Date", "Sec Start Date", "Sec Finish Date", "ITR14 Start Date", "ITR14 Finish Date", "Invoice Date"]
+            rows = [
+                [c.client.get_client_full_name(), c.client.entity_reg_number,
+                 c.client.internal_id_number, c.financial_year.the_year, c.schedule_date, c.finish_date, c.secretarial_start_date, c.secretarial_finish_date, c.itr14_start_date, c.itr14_date, c.invoice_date]
+                for c in scheduled
+            ]
+            return export_to_csv("scheduled_export.csv", headers, rows)
 
         headers = ["Name", "Fin Year", "Schedule Date",
                    "Financials Status", "ITR14 Status", "Invoicing Status"]
-        return render(request, "client/scheduled_financials.html", {"scheduled": scheduled, "count": count, "afs_complete": afs_complete, "headers": headers, "data": data, "itr14_complete": itr14_complete, "invoiced": invoiced, "form": form, "unique_years": unique_years, })
+        return render(request, "client/scheduled_financials.html", {"clients": scheduled, "count": count, "afs_complete": afs_complete, "headers": headers, "data": data, "itr14_complete": itr14_complete, "invoiced": invoiced, "form": form, "unique_years": unique_years, })
 
     return render(request, "client/scheduled_financials.html", {"form": form, "data": data})
 
@@ -382,9 +417,19 @@ def financials_progress(request):
         itr14_complete = sum(1 for r in data if r.itr14_date)
         invoiced = sum(1 for r in data if r.invoice_date)
 
+        if request.GET.get("export") == "csv":
+            headers = ["Name", "Registration Number", "Internal ID",
+                       "Year", "Schedule Date", "AFSs Finish Date", "Sec Start Date", "Sec Finish Date", "ITR14 Start Date", "ITR14 Finish Date", "Invoice Date"]
+            rows = [
+                [c.client.get_client_full_name(), c.client.entity_reg_number,
+                 c.client.internal_id_number, c.financial_year.the_year, c.schedule_date, c.finish_date, c.secretarial_start_date, c.secretarial_finish_date, c.itr14_start_date, c.itr14_date, c.invoice_date]
+                for c in data
+            ]
+            return export_to_csv("All_AFS_progress_export.csv", headers, rows)
+
     return render(request, "client/financials_progress.html", {
         "form": form,
-        "data": data,
+        "clients": data,
         "scheduled": data,
         "count": len(data),
         "headers": headers,
@@ -475,7 +520,15 @@ def search_vat_clients(request):
                     Q(vat_category__vat_category="C") |
                     Q(vat_category__vat_category="E", month_end=index)
                 )
-
+        if request.GET.get("export") == "csv":
+            headers = ["Name", "Registration Number",
+                       "Internal ID", "Vat Number"]
+            rows = [
+                [c.get_client_full_name(), c.entity_reg_number,
+                 c.internal_id_number, c.vat_reg_number]
+                for c in clients
+            ]
+            return export_to_csv("vat_export.csv", headers, rows)
         count = clients.count()
 
         return render(request, "client/search_vat_client.html", {
@@ -854,6 +907,14 @@ def financials_productivity_monitor(request):
         unique_inv_days = calculate_unique_days_from_dict(
             "invoicing_days", returned_data)
         max_dict = calculate_max_days_from_dict(returned_data)
+        # if request.GET.get("export") == "csv":
+        #     headers = ["Name", "Registration Number", "Internal ID"]
+        #     rows = [
+        #         [c.get_client_full_name(), c.entity_reg_number,
+        #          c.internal_id_number]
+        #         for c in returned_data
+        #     ]
+        #     return export_to_csv("financial_prog_monitor_export.csv", headers, rows)
     context = {
         "form": form,
         "is_valid": is_valid,
@@ -868,3 +929,52 @@ def financials_productivity_monitor(request):
         "max_dict": max_dict
     }
     return render(request, "client/financials_accountability.html", context)
+
+
+class ClientUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Client
+    template_name = "client/edit_client.html"
+    context_object_name = "client"
+    fields = get_client_model_fields()
+    permission_required = "client.change_client"
+    pk_url_kwarg = "id"
+
+    def get_success_url(self):
+        return reverse_lazy('client-detail', kwargs={'id': self.object.pk})
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+
+        optional_fields = []
+
+        boolean_fields = ['is_active', 'is_sa_resident']
+        date_fields = ['birthday_of_entity']
+
+        for field_name, field in form.fields.items():
+
+            if field_name not in optional_fields:
+                field.required = False
+            if field_name in boolean_fields:
+
+                field.widget.attrs.update({
+                    'class': 'form-check-input',
+                })
+            elif field_name in date_fields:
+
+                field.widget.attrs.update({
+                    'class': 'form-control',
+                    'type': 'date',
+
+                }, format='%Y-%m-%d')
+                if self.object and getattr(self.object, field_name):
+                    field.initial = getattr(
+                        self.object, field_name).strftime('%Y-%m-%d')
+            else:
+                field.widget.attrs.update({
+                    'class': 'form-control',
+                })
+
+            if not field.widget.attrs.get('placeholder'):
+                field.widget.attrs['placeholder'] = field.label
+
+        return form

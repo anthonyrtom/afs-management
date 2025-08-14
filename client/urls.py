@@ -26,6 +26,7 @@ urlpatterns = [
     path('client-financial-years/create/', views.create_clients_for_financial_year,
          name='create_client_financial_year'),
     path("client/<int:id>/", views.ClientDetailView.as_view(), name="client-detail"),
+    path("edit-client/<int:id>/", views.ClientUpdate.as_view(), name="edit_client"),
     path("ajax/update-vat-status/", views.ajax_update_vat_status,
          name="ajax_update_vat_status"),
     path("ajax/update-comment/", views.ajax_update_comment,

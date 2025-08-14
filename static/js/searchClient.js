@@ -20,14 +20,16 @@ function setupFiltering() {
         if (!table) return;
     
         const rows = table.querySelectorAll("tbody tr");
-        
+        let countFound = 0;
         rows.forEach(row => {
             const nameCell = row.querySelector("td:nth-child(1) a"); 
             if (!nameCell) return;
             
             const matchName = !name || nameCell.textContent.toLowerCase().includes(name);
             row.style.display = matchName ? "" : "none";
+            if(matchName) countFound++;
         });
+        updateRowCount(countFound, rows.length);
     }
     setTimeout(applyFilters, 0);
     
