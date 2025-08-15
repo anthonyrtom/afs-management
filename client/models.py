@@ -465,6 +465,7 @@ class VatSubmissionHistory(models.Model):
     marked_submitted_by = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_submitted")
     date_marked_submitted = models.DateTimeField(null=True)
+    date_invoiced = models.DateTimeField(null=True)
     marked_paid_by = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_paid")
     marked_notified_by = models.ForeignKey(
@@ -557,6 +558,10 @@ class ClientProvisionalTax(models.Model):
     prov_tax_numb = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(3)])
     comment = models.TextField(null=True)
+    marked_finished_by = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_finished")
+    invoiced_by = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_invoiced")
 
     class Meta:
         unique_together = ('client', 'financial_year', 'prov_tax_numb')
@@ -572,6 +577,10 @@ class ClientCipcReturnHistory(models.Model):
     finish_date = models.DateField(null=True)
     invoice_date = models.DateField(null=True)
     comment = models.TextField(null=True)
+    marked_finished_by = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_finished")
+    invoiced_by = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_invoiced")
 
     class Meta:
         unique_together = ('client', 'financial_year')

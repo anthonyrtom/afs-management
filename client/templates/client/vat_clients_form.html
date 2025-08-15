@@ -6,7 +6,7 @@
 {% if user.is_authenticated %}
     <h6 class="h6 mt-4">Process VAT Clients by Month or Accountant</h6>
 
-    <form method="post">
+    <form method="get">
         {% csrf_token %}
         <div class="row g-3 mt-2">
                 <div class="col-md-4 mt-2">

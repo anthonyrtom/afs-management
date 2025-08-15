@@ -77,10 +77,12 @@
             </button>
             
             {% if clients %}
-            <a href="?{% for key, value in request.GET.items %}{{ key }}={{ value }}&{% endfor %}export=csv" 
-            class="btn btn-success btn-sm">
-                <i class="fas fa-download"></i> Export to CSV
-            </a>
+            {% block exportblock %}
+                <a href="?{% for key, value in request.GET.items %}{{ key }}={{ value }}&{% endfor %}export=csv" 
+                class="btn btn-success btn-sm">
+                    <i class="fas fa-download"></i> Export to CSV
+                </a>
+            {% endblock %}
             {% endif %}
         </div>
         

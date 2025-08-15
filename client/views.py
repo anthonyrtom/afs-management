@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.utils import timezone
 from .models import ClientFinancialYear
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
@@ -173,9 +174,11 @@ def dashboard_list(request, filter_type, client_type):
         clients = [client for client in clients if ClientService.is_service_offered(client.id, cipc_service.id, today) and client.get_birthday_in_year(
             today.year) and client.get_birthday_in_year(today.year).month == today.month and client.client_type and client.client_type.name == client_type]
     if request.GET.get("export") == "csv":
-        headers = ["Name", "Registration Number", "Internal ID"]
+        headers = ["Name", "Registration Number",
+                   "Internal ID", "CIPC Birthday", "Accountant"]
         rows = [
-            [c.get_client_full_name(), c.entity_reg_number, c.internal_id_number]
+            [c.get_client_full_name(), c.entity_reg_number, c.internal_id_number,
+             c.birthday_of_entity, c.accountant]
             for c in clients
         ]
         return export_to_csv("dashboard_export.csv", headers, rows)
@@ -575,7 +578,7 @@ def create_or_update_vat(request):
 @login_required
 def process_vat_clients_for_period(request):
     """Handles form submission and displays filtered VAT clients."""
-    form = VatClientsPeriodProcess(request.POST or None)
+    form = VatClientsPeriodProcess(request.GET or None)
 
     if form.is_valid():
         client = form.cleaned_data['client']
@@ -615,10 +618,19 @@ def process_vat_clients_for_period(request):
         if search_query:
             vat_clients = vat_clients.filter(
                 client__name__icontains=search_query)
+        if request.GET.get("export") == "csv":
+            headers = ["Name", "Registration Number", "Internal ID",
+                       "Year", "Month", "Submitted", "Client Notified", "Client Paid", "Comment", "Marked Notified by", "Marked Submitted By", "Marked Paid By", "Date Submitted"]
+            rows = [
+                [c.client.get_client_full_name(), c.client.vat_reg_number,
+                 c.client.internal_id_number, c.year.the_year, c.month.name, c.submitted, c.client_notified, c.paid, c.comment, c.marked_notified_by, c.marked_submitted_by, c.marked_paid_by, c.date_marked_submitted]
+                for c in vat_clients
+            ]
+            return export_to_csv(f"vat_submission_{year}0{month}.csv", headers, rows)
 
         count = len(vat_clients)
         return render(request, "client/vat_clients_list.html", {
-            "vat_clients": vat_clients,
+            "clients": vat_clients,
             "headers": headers, "count": count,
             "metrics": metrics,
             "form": form,
@@ -655,6 +667,14 @@ def ajax_update_vat_status(request):
             value = request.POST.get("value") == 'true'
             if field_name in ['submitted', 'client_notified', 'paid']:
                 setattr(client, field_name, value)
+                if field_name == 'submitted':
+                    client.marked_submitted_by = request.user
+                    client.date_marked_submitted = timezone.now().date()
+                elif field_name == 'client_notified':
+                    client.marked_notified_by = request.user
+                elif field_name == 'paid':
+                    client.marked_paid_by = request.user
+
                 client.save()
                 return JsonResponse({"success": True})
             else:
@@ -666,7 +686,13 @@ def ajax_update_vat_status(request):
                 value = request.POST.get(field) == 'true'
                 setattr(client, field, value)
                 updated_any_field_in_bulk = True
-
+                if field == "submitted":
+                    client.marked_submitted_by = request.user
+                    client.date_marked_submitted = timezone.now().date()
+                elif field == 'client_notified':
+                    client.marked_notified_by = request.user
+                elif field == 'paid':
+                    client.marked_paid_by = request.user
         if updated_any_field_in_bulk:
             client.save()
             return JsonResponse({"success": True})
@@ -907,14 +933,15 @@ def financials_productivity_monitor(request):
         unique_inv_days = calculate_unique_days_from_dict(
             "invoicing_days", returned_data)
         max_dict = calculate_max_days_from_dict(returned_data)
-        # if request.GET.get("export") == "csv":
-        #     headers = ["Name", "Registration Number", "Internal ID"]
-        #     rows = [
-        #         [c.get_client_full_name(), c.entity_reg_number,
-        #          c.internal_id_number]
-        #         for c in returned_data
-        #     ]
-        #     return export_to_csv("financial_prog_monitor_export.csv", headers, rows)
+        if request.GET.get("export") == "csv":
+            headers = ["Name", "Registration Number", "Internal ID",
+                       "Year", "Schedule Date", "AFSs Finish Date", "Sec Start Date", "Sec Finish Date", "ITR14 Start Date", "ITR14 Finish Date", "Invoice Date"]
+            rows = [
+                [c.client.get_client_full_name(), c.client.entity_reg_number,
+                 c.client.internal_id_number, c.financial_year.the_year, c.schedule_date, c.finish_date, c.secretarial_start_date, c.secretarial_finish_date, c.itr14_start_date, c.itr14_date, c.invoice_date]
+                for c in data
+            ]
+            return export_to_csv("financial_prog_monitor_export.csv", headers, rows)
     context = {
         "form": form,
         "is_valid": is_valid,

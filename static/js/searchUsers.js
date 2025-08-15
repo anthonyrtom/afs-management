@@ -20,7 +20,7 @@ function setupFiltering() {
         if (!table) return;
     
         const rows = table.querySelectorAll("tbody tr");
-        
+        let rowsCounter = 0;
         rows.forEach(row => {
             const nameCell = row.querySelector("td:nth-child(1)"); 
             const emailCell = row.querySelector("td:nth-child(2)"); 
@@ -29,8 +29,11 @@ function setupFiltering() {
             
             const matchName = !name || nameCell.textContent.toLowerCase().includes(name);
             const matchEmail = !name || emailCell.textContent.toLowerCase().includes(name);
-            row.style.display = (matchName || matchEmail) ? "" : "none";
+            const allMatch = matchName || matchEmail
+            row.style.display = allMatch ? "" : "none";
+            if(allMatch) rowsCounter++;
         });
+        updateRowCount(rowsCounter,rows.length);
     }
     setTimeout(applyFilters, 0);
     
