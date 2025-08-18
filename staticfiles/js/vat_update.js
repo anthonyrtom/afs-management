@@ -189,14 +189,16 @@ function setupFiltering() {
         if (!table) return;
     
         const rows = table.querySelectorAll("tbody tr:not(:first-child)");
-        
+        let rowsCounter = 0;
         rows.forEach(row => {
             const nameCell = row.querySelector("td:nth-child(2) a"); 
             if (!nameCell) return;
             
             const matchName = !name || nameCell.textContent.toLowerCase().includes(name);
             row.style.display = matchName ? "" : "none";
+            if(matchName) rowsCounter++;
         });
+        updateRowCount(rowsCounter, rows.length);
     }
     setTimeout(applyFilters, 0);
     

@@ -463,13 +463,13 @@ class VatSubmissionHistory(models.Model):
     client_notified = models.BooleanField(default=False)
     comment = models.TextField(null=True)
     marked_submitted_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_submitted")
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="marked_submitted")
     date_marked_submitted = models.DateTimeField(null=True)
     date_invoiced = models.DateTimeField(null=True)
     marked_paid_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_paid")
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="marked_paid")
     marked_notified_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_notified")
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="marked_notified")
 
     class Meta:
         unique_together = ['client', 'year', 'month']
@@ -559,9 +559,9 @@ class ClientProvisionalTax(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(3)])
     comment = models.TextField(null=True)
     marked_finished_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_finished")
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="prov_tax_marked_finished")
     invoiced_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_invoiced")
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="prov_tax_marked_invoiced")
 
     class Meta:
         unique_together = ('client', 'financial_year', 'prov_tax_numb')
@@ -578,9 +578,9 @@ class ClientCipcReturnHistory(models.Model):
     invoice_date = models.DateField(null=True)
     comment = models.TextField(null=True)
     marked_finished_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_finished")
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="cipc_marked_finished")
     invoiced_by = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name="marked_invoiced")
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="cipc_marked_invoiced")
 
     class Meta:
         unique_together = ('client', 'financial_year')

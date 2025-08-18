@@ -15,10 +15,10 @@ from django.views.generic import DetailView
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views import View
-from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService
+from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax
 from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv
 from users.models import CustomUser
-from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm
+from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm
 
 
 @login_required
@@ -1005,3 +1005,158 @@ class ClientUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
                 field.widget.attrs['placeholder'] = field.label
 
         return form
+
+
+@login_required
+def update_prov_cipc_return(request):
+    form = CreateUpdateProvCipcForm(request.GET or None)
+    return_caption = "Select the return type"
+    if form.is_valid():
+        return_type = form.cleaned_data.get("return_type", None)
+        selected_year_ids = form.cleaned_data.get("years", None)
+        accountants = form.cleaned_data.get("accountant", [])
+        searchterm = form.cleaned_data.get("searchterm", "")
+        month = form.cleaned_data.get("month", None)
+        client_type = form.cleaned_data.get("client_type", [])
+
+        month = int(month)
+        client_type = list(map(int, client_type))
+
+        selected_year_ids = int(selected_year_ids)
+
+        client_list = []
+        today = timezone.now().date()
+        data = []
+        selected_year = FinancialYear.objects.get(
+            id=selected_year_ids)
+        client_obj = Client.objects.filter(
+            client_type__id__in=client_type)
+        if "None" in accountants:
+            accountant_ids_list = [int(aid)
+                                   for aid in accountants if aid != 'None']
+            client_obj = client_obj.filter(
+                Q(accountant__isnull=True) | Q(
+                    accountant__id__in=accountant_ids_list)
+            )
+        else:
+            accountant_ids_list = [int(aid) for aid in accountants]
+            client_obj = client_obj.filter(
+                accountant__id__in=accountant_ids_list)
+        if searchterm:
+            client_obj = client_obj.filter(
+                name__icontains=searchterm)
+        if return_type == "cipc":
+            return_caption = "CIPC Annual return Submission"
+            client_list = [
+                c.id for c in client_obj if c.is_client_cipc_reg_eligible()]
+            for client_id in client_list:
+                cipc_return, created = ClientCipcReturnHistory.objects.get_or_create(
+                    client_id=client_id, financial_year_id=selected_year_ids)
+            data = ClientCipcReturnHistory.objects.filter(
+                client_id__in=client_list, financial_year_id=selected_year_ids, client__birthday_of_entity__month=month)
+        elif return_type == "first" or return_type == "second":
+            return_caption = return_type.capitalize() + " Provisional Tax Submission"
+
+            month_end_of_prov = datetime(
+                selected_year.the_year, month, 28).date()
+            prov_numb = 1
+            if return_type == "first":
+                client_list = [
+                    c.id for c in client_obj if c.is_first_prov_tax_month(month_end_of_prov)]
+            elif return_type == "second":
+                prov_numb = 2
+                client_list = [
+                    c.id for c in client_obj if c.is_second_prov_tax_month(month_end_of_prov)]
+
+            for client_id in client_list:
+                prov_return, created = ClientProvisionalTax.objects.get_or_create(
+                    client_id=client_id, financial_year_id=selected_year_ids, prov_tax_numb=prov_numb
+                )
+            data = ClientProvisionalTax.objects.filter(
+                client_id__in=client_list, financial_year_id=selected_year_ids, prov_tax_numb=prov_numb
+            )
+        headers = ["Client Name", "Year", "Month", "Finished",
+                   "Finish Date", "Invoiced", "Invoice Date", "Comment", "Actions"]
+        month_str = settings.MONTHS_LIST[month - 1].title()
+        if request.GET.get("export") == "csv":
+            print_headers = ["Client No", "Client Name", "Year", "Month",
+                             "Finish Date", "Invoice Date", "Comment"]
+            rows = [
+                [c.client.internal_id_number, c.client.get_client_full_name(), selected_year.the_year,
+                 month_str, c.finish_date, c.invoice_date, c.comment]
+                for c in data
+            ]
+            return export_to_csv(f"{return_type}_return_export_{month_str}.csv", print_headers, rows)
+        data_context = {
+            "clients": data,
+            "form": form,
+            "count": len(data),
+            "return_caption": return_caption,
+            "headers": headers,
+            "month": month_str,
+            "return_type": return_type
+        }
+        return render(request, "client/prov_cipc_sub.html", data_context)
+    return render(request, "client/prov_cipc_sub.html", {"form": form, "return_type": return_caption})
+
+
+@require_POST
+@login_required
+def clear_save_cipc_prov(request):
+    trans_id = request.POST.get("transId")
+    return_type = request.POST.get("returnType")
+    button_clicked = request.POST.get("buttonClicked")
+    try:
+        if return_type == "cipc":
+            trans_id = int(trans_id)
+            cipc_trans = ClientCipcReturnHistory.objects.get(id=trans_id)
+            if button_clicked == "cancel":
+                cipc_trans.finish_date = None
+                cipc_trans.invoice_date = None
+                cipc_trans.comment = ""
+                cipc_trans.save()
+            else:
+                finish_date = request.POST.get("finishDate", None)
+                invoice_date = request.POST.get("invoiceDate", None)
+                comment = request.POST.get("comment", "")
+                cipc_trans = ClientCipcReturnHistory.objects.get(id=trans_id)
+                if comment:
+                    cipc_trans.comment = comment
+                if finish_date:
+                    finish_date_dt = datetime.strptime(finish_date, "%Y-%m-%d")
+                    cipc_trans.finish_date = finish_date_dt
+                    cipc_trans.marked_finished_by = request.user
+                if invoice_date:
+                    invoice_date_dt = datetime.strptime(
+                        invoice_date, "%Y-%m-%d")
+                    cipc_trans.invoice_date = invoice_date_dt
+                    cipc_trans.invoiced_by = request.user
+                cipc_trans.save()
+        elif return_type == "first" or return_type == "second":
+            trans_id = int(trans_id)
+            prov_trans = ClientProvisionalTax.objects.get(id=trans_id)
+            if button_clicked == "cancel":
+                prov_trans.finish_date = None
+                prov_trans.invoice_date = None
+                prov_trans.comment = ""
+                prov_trans.save()
+            else:
+                finish_date = request.POST.get("finishDate", None)
+                invoice_date = request.POST.get("invoiceDate", None)
+                comment = request.POST.get("comment", "")
+                prov_trans = ClientProvisionalTax.objects.get(id=trans_id)
+                if comment:
+                    prov_trans.comment = comment
+                if finish_date:
+                    finish_date_dt = datetime.strptime(finish_date, "%Y-%m-%d")
+                    prov_trans.finish_date = finish_date_dt
+                    prov_trans.marked_finished_by = request.user
+                if invoice_date:
+                    invoice_date_dt = datetime.strptime(
+                        invoice_date, "%Y-%m-%d")
+                    prov_trans.invoice_date = invoice_date_dt
+                    prov_trans.invoiced_by = request.user
+                prov_trans.save()
+        return JsonResponse({"success": True, "message": "Updated successfully"})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": "Error occured"})

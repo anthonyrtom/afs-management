@@ -48,7 +48,7 @@ function setupSaveButtons() {
                 }
             })
             .catch(err => {
-                console.error("Error saving row", err);
+                
                 alert("Unexpected error saving");
             })
             .finally(() => {

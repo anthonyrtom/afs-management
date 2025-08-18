@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function applyFilters() {
         const rows = document.querySelectorAll("tbody tr");
         let countDisplay = 0;
+        const allDataRows = document.querySelectorAll("tbody tr:not(.summary-row)")
         rows.forEach(row => {
             if (row.classList.contains("summary-row")) {
                 row.style.display = "";
@@ -48,7 +49,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const itr14Status = row.children[4].querySelector('button').innerText.toLowerCase().trim();
             const invoiceStatus = row.children[5].querySelector('button').innerText.toLowerCase().trim();
 
-            // const matchName = filters.name === "" || name.includes(filters.name);
             const matchYear = filters.year === "all" || year === filters.year;
             const matchAFS = filters.afs === "all" || 
                 (filters.afs === "completed" && afsStatus === "completed") || 
@@ -64,8 +64,8 @@ document.addEventListener("DOMContentLoaded", function () {
             if(visibleRow)
             countDisplay++;
         });
-        const numbRows = rows.length - 2;
-        updateRowCount(countDisplay, numbRows);
+        const numbRows = rows.length - 1;
+        updateRowCount(countDisplay, allDataRows.length);
     }
 
     if (yearFilter) yearFilter.addEventListener("change", updateFilters);
@@ -76,17 +76,3 @@ document.addEventListener("DOMContentLoaded", function () {
     applyFilters();
 });
 
-    function updateRowCount(visible, total) {
-        
-        let countDisplay = document.getElementById("filtered-row-count");
-
-        countDisplay.textContent = `Showing ${visible} of ${total} records`;
-        countDisplay.style.margin = "10px 0";
-        countDisplay.style.fontWeight = "bold";
-        countDisplay.style.backgroundColor = '#f8f9fa';
-        countDisplay.style.padding = '8px 15px';
-        countDisplay.style.borderRadius = '4px';
-        countDisplay.style.margin = '10px 0';
-        countDisplay.style.fontWeight = 'bold';
-        countDisplay.style.borderLeft = '4px solid #0d6efd';
-    }
