@@ -734,6 +734,7 @@ def update_client_financial(request, financial_year_id):
 
 
 @login_required
+@permission_required("client.change_clientfinancialyear", raise_exception=True)
 def create_clients_for_financial_year(request):
     form = ClientFinancialYearProcessForm(request.POST or None)
     if form.is_valid():
@@ -779,11 +780,19 @@ def book_service_dates(request):
         financial_years = FinancialYear.objects.filter(
             id__in=selected_year_ids)
 
+        eligible_clients = Client.objects.filter(
+            client_type__in=client_type, month_end__in=month)
+
         valid_clients = [
-            c for c in Client.objects.all() if c.is_afs_client(today) and c.month_end in month]
+            c.id for c in eligible_clients if c.is_afs_client(today)]
+
+        for year in selected_year_ids:
+            created_clients = ClientFinancialYear.setup_clients_afs_for_year(
+                year)
 
         data = ClientFinancialYear.objects.filter(
-            client__in=valid_clients, financial_year__in=financial_years, client__client_type__id__in=client_type)
+            client_id__in=valid_clients, financial_year__in=financial_years, client__client_type__id__in=client_type)
+
         if "None" in accountants:
             accountant_ids_list = [int(aid)
                                    for aid in accountants if aid != 'None']

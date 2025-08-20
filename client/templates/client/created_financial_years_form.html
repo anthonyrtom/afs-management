@@ -4,6 +4,7 @@
 
 {% block content %}
 {% if user.is_authenticated %}
+{% if perms.client.change_clientfinancialyear %}
 <h6 class="mt-4 h6">Create Client Financial Years</h6>
 <div class="container">
     <form method="post">
@@ -40,5 +41,6 @@
         </div>
     </form>
 </div>
+{% endif %}
 {% endif %}
 {% endblock %}

@@ -56,14 +56,7 @@
                 </select>
             </td>
             <td >
-                <!-- <div class="form-group col-md-4 mt-2">
-                    <label for="filter-date-validity">Date Status</label>
-                    <select id="filter-date-validity" class="form-control">
-                    <option value="all">All Dates</option>
-                    <option value="valid">Valid Dates Only</option>
-                    <option value="invalid">Placeholder Dates Only</option>
-                    </select>
-                </div> -->
+
             </td> 
             <td></td>
             <td></td>
@@ -77,28 +70,28 @@
                  <td>{{ record.financial_year }}</td>
                 
                     {% if update_type == "Accounting" %}
-                        <td><input name="start_date" type="date" value="{{ record.schedule_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        <td><input name="start_date" type="date" value="{{ record.schedule_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_change_acc_date %} disabled {% endif %}></td>
                         
-                        <td><input name="finish_date" type="date" value="{{ record.finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        <td><input name="finish_date" type="date" value="{{ record.finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_change_acc_date %} disabled {% endif %}></td>
                         
                         <td>
-                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
+                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_change_acc_date %} disabled {% endif %}>Save</button>
                         <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
                         </td>
                     {% elif update_type == "Taxation" %}
-                        <td><input name="start_date" type="date" value="{{ record.itr14_start_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        <td><input name="start_date" type="date" value="{{ record.itr14_start_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_tax_date %} disabled {% endif %}></td>
                         
-                        <td><input name="finish_date" type="date" value="{{ record.itr14_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        <td><input name="finish_date" type="date" value="{{ record.itr14_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_tax_date %} disabled {% endif %}></td>
                         <td>
-                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
+                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_tax_date %} disabled {% endif %}>Save</button>
                         <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
                         </td>
                     {% else %}
-                        <td><input name="start_date" type="date" value="{{ record.secretarial_start_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        <td><input name="start_date" type="date" value="{{ record.secretarial_start_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_sec_date %} disabled {% endif %}></td>
                         
-                        <td><input name="finish_date" type="date" value="{{ record.secretarial_finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}></td>
+                        <td><input name="finish_date" type="date" value="{{ record.secretarial_finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_sec_date %} disabled {% endif %}></td>
                         <td>
-                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>Save</button>
+                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_sec_date %} disabled {% endif %}>Save</button>
                         <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
                         </td>
                     {% endif %}

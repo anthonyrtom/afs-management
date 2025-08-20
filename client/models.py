@@ -109,6 +109,10 @@ class Client(models.Model):
     client_service = models.ManyToManyField(
         'Service', through='ClientService', related_name='client_services')
 
+    class Meta:
+        permissions = [
+            ("update_client", "A User can update client information")]
+
     def __str__(self):
         return self.name
 
@@ -408,7 +412,8 @@ class ClientFinancialYear(models.Model):
 
     class Meta:
         unique_together = ('client', 'financial_year')
-        permissions = [("change_invoice_date", "Can edit the invoice date")]
+        permissions = [("change_invoice_date", "Can edit the invoice date"),
+                       ("change_tax_date", "A User can change tax dates on financial statements progress"), ("change_acc_date", "Can change the start and finish date on financial"), ("change_sec_date", "A User canchange secretarial date")]
 
     def __str__(self):
         return self.client.name
@@ -474,6 +479,8 @@ class VatSubmissionHistory(models.Model):
     class Meta:
         unique_together = ['client', 'year', 'month']
         verbose_name_plural = "Vat Submission History"
+        permissions = [("change_vat201_status", "A user can change the VAT201 submission status"),
+                       ("change_emp_201_invoice_date", "A User can change the invoice dates for VAT201")]
 
     @staticmethod
     def create_or_get_vat_clients(year, month):
@@ -521,6 +528,8 @@ class ClientService(models.Model):
     class Meta:
         unique_together = ["client", "service"]
         verbose_name_plural = "Client Services"
+        permissions = [
+            ("change_client_service", "A user can change a client service offering")]
 
     def __str__(self):
         return f"{self.client.name}-{self.service.name}"
@@ -565,7 +574,8 @@ class ClientProvisionalTax(models.Model):
 
     class Meta:
         unique_together = ('client', 'financial_year', 'prov_tax_numb')
-        permissions = [("change_invoice_date", "Can edit the invoice date")]
+        permissions = [("change_invoice_date", "Can edit the invoice date"),
+                       ("change_irp_date", "A User can change the IRP6 start and finish dates")]
 
     def __str__(self):
         return self.client.name
@@ -584,7 +594,8 @@ class ClientCipcReturnHistory(models.Model):
 
     class Meta:
         unique_together = ('client', 'financial_year')
-        permissions = [("change_invoice_date", "Can edit the invoice date")]
+        permissions = [("change_invoice_date", "Can edit the invoice date of a CIPC return"),
+                       ("change_return_date", "A User can change the return date on the app")]
 
     def __str__(self):
         return self.client.name
