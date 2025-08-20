@@ -1,11 +1,16 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} Edit Client{% endblock title %}
+{% block title %} 
+    {% if client.pk %} Edit Client {% else %} New Client {% endif %}
+{% endblock title %}
 
 {% block content %}
     {% if user.is_authenticated %}
     <div class="container mt-4">
-        <h2 class="mb-4">Edit Client</h2>
+    <h2 class="mb-4">
+        {% if client.pk %} Edit Client {% else %} Create New Client {% endif %}
+    </h2>
+        
         <form method="post">
             {% csrf_token %}
             
@@ -184,7 +189,7 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="{{ form.birthday_of_entity.id_for_label }}">Entity Birthday</label>
-                        <input type="date" value="{{ form.birthday_of_entity.value }}" class="form-control">
+                        {{ form.birthday_of_entity }}
                         
                     </div>
                 </div>
@@ -194,13 +199,13 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="{{ form.entity_reg_number.id_for_label }}">Entity Registration Number</label>
-                        <input type="text" value="{{ form.entity_reg_number.value }}" class="form-control">
+                        {{ form.entity_reg_number }}
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary w-100">Update Client</button>
+                        <button type="submit" class="btn btn-primary w-100">{% if client.pk %} Update Client {% else %} Create Client {% endif %}</button>
                     </div>
                 </div>
             </div>

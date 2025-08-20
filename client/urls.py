@@ -43,4 +43,5 @@ urlpatterns = [
          views.progress_update_financials, name="progress-update-financials"),
     path("financials-productivity-monitor/",
          views.financials_productivity_monitor, name="financials-productivity-monitor"),
+    path("client/new/", views.ClientCreate.as_view(), name="client-create"),
 ]

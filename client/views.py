@@ -1,3 +1,6 @@
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from django import forms
 from django.db.models import Q
 from django.utils import timezone
 from .models import ClientFinancialYear
@@ -984,7 +987,6 @@ class ClientUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         form = super().get_form(form_class)
 
         optional_fields = []
-
         boolean_fields = ['is_active', 'is_sa_resident']
         date_fields = ['birthday_of_entity']
 
@@ -992,21 +994,27 @@ class ClientUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 
             if field_name not in optional_fields:
                 field.required = False
-            if field_name in boolean_fields:
 
+            if field_name in boolean_fields:
                 field.widget.attrs.update({
                     'class': 'form-check-input',
                 })
+
             elif field_name in date_fields:
 
-                field.widget.attrs.update({
-                    'class': 'form-control',
-                    'type': 'date',
+                form.fields[field_name].widget = forms.DateInput(
+                    attrs={
+                        "class": "form-control",
+                        "type": "date"
+                    },
+                    format="%Y-%m-%d"
+                )
 
-                }, format='%Y-%m-%d')
                 if self.object and getattr(self.object, field_name):
-                    field.initial = getattr(
-                        self.object, field_name).strftime('%Y-%m-%d')
+                    form.fields[field_name].initial = getattr(
+                        self.object, field_name).strftime('%Y-%m-%d'
+                                                          )
+
             else:
                 field.widget.attrs.update({
                     'class': 'form-control',
@@ -1171,3 +1179,48 @@ def clear_save_cipc_prov(request):
         return JsonResponse({"success": True, "message": "Updated successfully"})
     except Exception as e:
         return JsonResponse({"success": False, "message": "Error occured"})
+
+
+class ClientCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Client
+    template_name = "client/edit_client.html"
+    context_object_name = "client"
+    fields = get_client_model_fields()
+    permission_required = "client.add_client"
+
+    def get_success_url(self):
+        return reverse_lazy("client-detail", kwargs={"id": self.object.pk})
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+
+        optional_fields = []
+        boolean_fields = ["is_active", "is_sa_resident"]
+        date_fields = ["birthday_of_entity"]
+
+        for field_name, field in form.fields.items():
+            if field_name not in optional_fields:
+                field.required = False
+
+            if field_name in boolean_fields:
+                field.widget.attrs.update({
+                    "class": "form-check-input",
+                })
+
+            elif field_name in date_fields:
+                form.fields[field_name].widget = forms.DateInput(
+                    attrs={
+                        "class": "form-control",
+                        "type": "date",
+                    },
+                    format="%Y-%m-%d",
+                )
+            else:
+                field.widget.attrs.update({
+                    "class": "form-control",
+                })
+
+            if not field.widget.attrs.get("placeholder"):
+                field.widget.attrs["placeholder"] = field.label
+
+        return form

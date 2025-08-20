@@ -93,11 +93,20 @@
                 <td>{{ month }}</td>
                 <td> <button {% if record.finish_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.finish_date %} Completed {% else %}Incomplete {% endif %}</button></td>
                 
-                <td> <input name="finish_date" type="date" value="{{ record.finish_date|date:'Y-m-d' }}" class="form-control" > </td>
+                {% if return_type == "cipc" %}
+                    <td> <input name="finish_date" type="date" value="{{ record.finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_return_date %} disabled {% endif %}> </td>
+                {% else %}
+                     <td> <input name="finish_date" type="date" value="{{ record.finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_irp_date %} disabled {% endif %}> </td>                   
+                {% endif %}
                 
                 <td> <button {% if record.invoice_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.invoice_date %} Invoiced {% else %}Pending {% endif %}</button></td>
-                <td> <input name="invoice_date" type="date" value="{{ record.invoice_date|date:'Y-m-d' }}" class="form-control" > </td>
+                
+               
+                <td> <input name="invoice_date" type="date" value="{{ record.invoice_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_invoice_date %} disabled {% endif %}> </td>
+                
+
                 <td> <textarea class="form-control" >{{ record.comment|default_if_none:"" }}</textarea></td>
+                
                 <td>     
                     <div class="dropdown"> 
                         <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton{{ forloop.counter }}" data-bs-toggle="dropdown" aria-expanded="false">
@@ -105,7 +114,9 @@
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ forloop.counter }}">
                             <li><a class="dropdown-item save-action" href="#" data-client="{{ record.client.id }}">Save</a></li>
-                            <li><a class="dropdown-item clear-action" href="#" data-client="{{ record.client.id }}">Clear</a></li>
+                        
+                            <li {% if not perms.client.change_return_date or not perms.client.change_irp_date or not perms.client.change_invoice_date %} disabled {% endif %}><a class="dropdown-item clear-action" href="#" data-client="{{ record.client.id }}">Clear</a></li>
+
                         </ul>
                         <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
                     </div> 
