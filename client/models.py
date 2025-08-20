@@ -227,7 +227,7 @@ class Client(models.Model):
 
     def get_first_prov_tax_month(self):
         if not self.month_end:
-            raise ValueError("Mont can not be blank")
+            raise ValueError("Month can not be blank")
         if self.month_end < 7:
             return self.month_end + 6
         elif self.month_end <= 12:
@@ -297,6 +297,34 @@ class Client(models.Model):
                 client for client in clients if client.is_prov_tax_client(as_of_date)]
 
             return clients
+        except:
+            return clients
+
+    @staticmethod
+    def get_first_second_prov_tax_clients(as_of_date, month=None, client_type=None, filter_q=None):
+        clients = []
+        try:
+            if client_type:
+                client_type = ClientType.objects.filter(
+                    name=client_type).first()
+                clients = Client.objects.filter(
+                    client_type=client_type).order_by("name")
+            else:
+                clients = Client.objects.all().order_by("name")
+
+            if filter_q:
+                clients = clients.filter(name__icontains=filter_q)
+
+            if month:
+                clients = [client for client in clients if client.get_first_prov_tax_month(
+                    as_of_date) == month or client.month_end == month]
+            data = []
+            service_id = Service.objects.get(name="Provisional Tax")
+            for client in clients:
+                if client.is_prov_tax_client(as_of_date):
+                    data.append(client)
+
+            return data
         except:
             return clients
 

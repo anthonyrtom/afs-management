@@ -159,12 +159,14 @@ def dashboard_list(request, filter_type, client_type):
 
     elif filter_type == "curr_prov_tax_clients":
         clients = Client.get_prov_tax_clients(
-            today, month=today.month, client_type=client_type)
+            today, client_type=client_type)
+        clients = [client for client in clients if client.is_first_prov_tax_month(
+            today) or client.is_second_prov_tax_month(today)]
 
     elif filter_type == "cipc_clients":
         clients = Client.get_clients_of_type(
             "Cipc Returns", today)
-        # service = ClientService.objects.filter()
+
         clients = [
             client for client in clients if client.client_type and client.client_type.name == client_type and ClientService.is_service_offered(client.id, cipc_service.id, today) and client.is_client_cipc_reg_eligible()]
 

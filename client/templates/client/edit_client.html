@@ -184,15 +184,24 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="{{ form.birthday_of_entity.id_for_label }}">Entity Birthday</label>
-                        {{ form.birthday_of_entity }}
+                        <input type="date" value="{{ form.birthday_of_entity.value }}" class="form-control">
+                        
                     </div>
                 </div>
             </div>
 
             <div class="row mt-4">
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">Update Client</button>
-
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.entity_reg_number.id_for_label }}">Entity Registration Number</label>
+                        <input type="text" value="{{ form.entity_reg_number.value }}" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">Update Client</button>
+                    </div>
                 </div>
             </div>
         </form>
