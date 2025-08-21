@@ -15,3 +15,14 @@
         }
 
     }
+
+function getCSRFTokenUtils() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
+function getAjaxUrlsUtils() {
+    const urlContainer = document.getElementById("ajax-urls");
+    if(urlContainer)
+        return urlContainer.dataset.updateCipcprovUrl;
+    return "";
+}

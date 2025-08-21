@@ -80,13 +80,13 @@ function clearSaveRow() {
             .then(data => {
                 if (data.success) {
                     msg.style.display = "inline";
-                    setTimeout(() => msg.style.display = "none", 10000);
+                    setTimeout(() => msg.style.display = "none", 5000);
                 } else {
                     msg.classList.remove("text-success");
                     msg.classList.add("text-warning");
                     msg.textContent = data.message;
                     msg.style.display = "inline";
-                    setTimeout(() => msg.style.display = "none", 10000);
+                    setTimeout(() => msg.style.display = "none", 5000);
                 }
             })
             .catch(err => {
@@ -128,13 +128,13 @@ function clearSaveRow() {
             .then(data => {
                 if (data.success) {
                     msg.style.display = "inline";
-                    setTimeout(() => msg.style.display = "none", 10000);
+                    setTimeout(() => msg.style.display = "none", 5000);
                 } else {
                     msg.classList.remove("text-success");
                     msg.classList.add("text-warning");
                     msg.textContent = data.message;
                     msg.style.display = "inline";
-                    setTimeout(() => msg.style.display = "none", 10000);
+                    setTimeout(() => msg.style.display = "none", 5000);
                 }
             })
             .catch(err => {

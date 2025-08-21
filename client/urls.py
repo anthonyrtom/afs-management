@@ -44,4 +44,8 @@ urlpatterns = [
     path("financials-productivity-monitor/",
          views.financials_productivity_monitor, name="financials-productivity-monitor"),
     path("client/new/", views.ClientCreate.as_view(), name="client-create"),
+    path("client-service-edit/", views.update_client_service,
+         name="client-service-edit"),
+    path("update-client-service", views.update_client_service_ajax,
+         name="update-client-service"),
 ]

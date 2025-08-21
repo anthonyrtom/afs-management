@@ -21,7 +21,7 @@ from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax
 from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv
 from users.models import CustomUser
-from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm
+from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm
 
 
 @login_required
@@ -1224,3 +1224,66 @@ class ClientCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
                 field.widget.attrs["placeholder"] = field.label
 
         return form
+
+
+@login_required
+def update_client_service(request):
+    form = ClientServiceForm(request.GET or None)
+    if form.is_valid():
+        service = form.cleaned_data["service"]
+        search_q = form.cleaned_data.get("searchterm", "")
+
+        clients = ClientService.objects.filter(service=service)
+        if search_q:
+            clients = clients.filter(client__name__icontains=search_q)
+        count = len(clients)
+        headers = ["Client Name", "Status",
+                   "Start Date", "End Date", "Comment", "Actions"]
+        context = {"clients": clients, "count": count,
+                   "form": form, "headers": headers}
+        if request.GET.get("export") == "csv":
+            csvheaders = ["Name", "Registration Number", "Internal ID",
+                          "Service Start", "Service End", "Comment"]
+            rows = [
+                [c.client.get_client_full_name(), c.client.entity_reg_number, c.client.internal_id_number,
+                 c.start_date, c.end_date, c.comment]
+                for c in clients
+            ]
+            service = Service.objects.get(id=service)
+            return export_to_csv(f"{service.name}_client_service_export.csv", csvheaders, rows)
+        return render(request, "client/client_service.html", context)
+    return render(request, "client/client_service.html", {"form": form})
+
+
+@login_required
+@require_POST
+def update_client_service_ajax(request):
+    trans_id = request.POST.get("transId", None)
+    if not trans_id:
+        return JsonResponse({"success": False, "message": "No transaction found"})
+    comment = request.POST.get("comment", None)
+    start_date = request.POST.get("startDate", None)
+    end_date = request.POST.get("finishDate", None)
+
+    try:
+        trans_id = int(trans_id)
+        client_service = ClientService.objects.get(id=trans_id)
+        if comment:
+            client_service.comment = comment
+        if start_date and end_date:
+            start_date_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+            if start_date_date > end_date_date:
+                return JsonResponse({"success": False, "message": "Start date can not be after end date"})
+            client_service.start_date = start_date_date
+            client_service.end_date = end_date_date
+        if start_date:
+            start_date_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            client_service.start_date = start_date_date
+        if end_date:
+            end_date_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+            client_service.end_date = end_date_date
+        client_service.save()
+        return JsonResponse({"success": True, "message": "Updated successfully"})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": "An Error occured"})

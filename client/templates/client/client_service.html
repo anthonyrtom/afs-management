@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} 
+    Client Service
+{% endblock title %}
+
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<div id="ajax-urls"
+     data-update-cipcprov-url="{% url 'update-client-service' %}">
+</div>
+    {% if user.is_authenticated %}
+    <h2 class="mb-4 mt-2"> Client Service </h2>
+            
+    <form method="get">
+        <div class="row mb-3">
+            {% csrf_token %}
+                <div class="col-md-4">
+                    {{form.service.label_tag}}
+                    {{form.service}}
+                </div>
+                <div class="col-md-4">
+                    {{form.searchterm.label_tag}}
+                    {{form.searchterm}}
+                </div>
+                <div class="col-md-4 mt-4">
+                    <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+                </div>
+        </div>
+    </form>
+
+{% if clients %}
+    <h6 class="mt-4" id="filtered-row-count">{{count}} Clients found</h6>  
+        <table class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    {% for header in headers %}
+                        <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for client_service in clients %}
+                <tr data-row-id="{{ client_service.id }}">
+                    <td><a href="{% url 'client-detail' client_service.client.id %}" class="text-decoration-none">{{client_service.client.get_client_full_name}}</a>
+                        </td>
+                        <td >{% if client_service.end_date %}<i class="fas fa-times-circle text-danger"></i> {% else %} <i class="fas fa-check-circle text-success"></i> {% endif %}</td>
+                        <td><input name="start_date" type="date" class="form-control" value="{{ client_service.start_date|date:'Y-m-d' }}" {% if not perms.client.change_client_service %} disabled {% endif %}></td>
+                        <td><input name="finish_date" type="date" class="form-control" value="{{ client_service.end_date|date:'Y-m-d' }}" {% if not perms.client.change_client_service %} disabled {% endif %}> </td>
+                        <td> <textarea class="form-control" {% if not perms.client.change_client_service %} disabled {% endif %}>{{client_service.comment|default_if_none:""}} </textarea></td>
+                        <td><button class="btn btn-success" {% if not perms.client.change_client_service %} disabled {% endif %}>Save</button>
+                            <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
+                        </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+{% endif %}
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/searchClient.js' %}"></script>
+<script src="{% static 'js/updateClientService.js' %}"></script>
+{% endblock extra_js %}

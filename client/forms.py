@@ -741,3 +741,27 @@ class CreateUpdateProvCipcForm(forms.Form):
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
             self.fields['accountant'].choices = accountant_choices
+
+
+class ClientServiceForm(forms.Form):
+    service = forms.ChoiceField(
+        choices=[],
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        error_messages={
+            "required": "Please select a service before submitting."
+        }
+    )
+    searchterm = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Search",
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Search by client Name'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['service'].choices = [
+            (c.id, c.name.title()) for c in Service.objects.all().order_by("name")
+        ]
