@@ -1,22 +1,39 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
-<div class="container mt-5" style="max-width: 400px;">
-    <h4 class="mb-4 text-center">Login</h4>
-    <form method="post" novalidate>
-        {% csrf_token %}
-        {% for field in form %}
-            <div class="mb-3">
-                {{ field.label_tag }}
-                {{ field }}
-                {% if field.errors %}
-                    <div class="text-danger small">{{ field.errors|striptags }}</div>
-                {% endif %}
+<div class="container mt-5">
+    <div class="row justify-content-center align-items-center" style="min-height: 350px;">
+        <!-- Logo Column -->
+        <div class="col-md-4 d-flex justify-content-center align-items-center p-0">
+            <img src="{% static 'images/logo.jpg' %}"
+                 alt="Company Logo"
+                 class="img-fluid"
+                 style="max-height: 300px; object-fit: contain; opacity: 0.8;">
+        </div>
+
+        <!-- Login Form Column -->
+        <div class="col-md-4 d-flex justify-content-center align-items-center p-0">
+            <div class="p-3 w-100 shadow rounded-3"
+                 style="background:white; max-width: 350px;">
+                <h5 class="mb-3 text-center">Login</h5>
+                <form method="post" novalidate class="d-flex flex-column gap-2">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div>
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    {% if form.non_field_errors %}
+                        <div class="text-danger small">{{ form.non_field_errors|striptags }}</div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary w-100 py-2">Login</button>
+                </form>
             </div>
-        {% endfor %}
-        {% if form.non_field_errors %}
-            <div class="text-danger small">{{ form.non_field_errors|striptags }}</div>
-        {% endif %}
-        <button type="submit" class="btn btn-success w-100">Login</button>
-    </form>
+        </div>
+    </div>
 </div>
 {% endblock %}
