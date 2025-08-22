@@ -1,3 +1,4 @@
+from django.views.generic import ListView
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
 from django import forms
@@ -1287,3 +1288,41 @@ def update_client_service_ajax(request):
         return JsonResponse({"success": True, "message": "Updated successfully"})
     except Exception as e:
         return JsonResponse({"success": False, "message": "An Error occured"})
+
+
+class ClientServiceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = ClientService
+    fields = ["client", "service", "start_date", "end_date", "comment"]
+    template_name = "client/client_service_form.html"
+    success_url = reverse_lazy("client-service-list")
+    permission_required = "client.change_client_service"
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+
+        for field_name, field in form.fields.items():
+            field.widget.attrs.update({"class": "form-control"})
+
+        form.fields["client"].queryset = Client.objects.all().order_by("name")
+
+        form.fields["service"].queryset = form.fields["service"].queryset.order_by(
+            "name")
+
+        form.fields["start_date"].widget.input_type = "date"
+        form.fields["end_date"].widget.input_type = "date"
+
+        form.fields["start_date"].required = False
+        form.fields["end_date"].required = False
+        form.fields["comment"].required = False
+
+        return form
+
+    def form_valid(self, form):
+        return super().form_valid(form)
+
+
+class ClientServiceListView(LoginRequiredMixin, ListView):
+    model = ClientService
+    template_name = "client/client_service_list.html"
+    context_object_name = "client_services"
+    ordering = ["client__name"]

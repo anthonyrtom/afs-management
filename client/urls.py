@@ -48,4 +48,10 @@ urlpatterns = [
          name="client-service-edit"),
     path("update-client-service", views.update_client_service_ajax,
          name="update-client-service"),
+    path("update-client-service", views.update_client_service_ajax,
+         name="update-client-service"),
+    path('client-service/create/', views.ClientServiceCreateView.as_view(),
+         name='client-service-create'),
+    path('client-service/', views.ClientServiceListView.as_view(),
+         name='client-service-list'),
 ]
