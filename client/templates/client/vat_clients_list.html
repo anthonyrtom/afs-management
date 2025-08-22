@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}VAT Clients{% endblock %}
-
+{% block exportblock %}
+    <a href="?{{ request.GET.urlencode }}&export=csv" 
+    class="btn btn-success btn-sm">
+        <i class="fas fa-download"></i> Export to CSV
+    </a>
+{% endblock %}
 {% block content %}
 <meta name="csrf-token" content="{{ csrf_token }}">
 
@@ -76,7 +81,7 @@
                 {% for client in clients %}
                     <tr class="data-row">
                         <td><input type="checkbox" class="mark-complete" data-client-id="{{ client.id }}" data-client-name="{{client.client.name}}" {% if client.submitted and client.client_notified and client.paid %} checked {% endif %} {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}></td>
-                        <td><a href="{% url 'client-detail' client.client.id %}" class="text-decoration-none">{{ client.client.name }}</a></td>
+                        <td><a href="{% url 'client-detail' client.client.id %}" class="text-decoration-none">{{ client.client.get_client_full_name }}</a></td>
                         <td>{{ client.month }} {{ client.year }}</td>
 
                         <td>

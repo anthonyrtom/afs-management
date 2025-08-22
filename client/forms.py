@@ -254,6 +254,81 @@ class VatClientsPeriodProcess(forms.Form):
     )
 
 
+class VatClientPeriodUpdateForm(forms.Form):
+    client = forms.MultipleChoiceField(
+        required=True,
+        widget=forms.SelectMultiple(attrs={'class':
+                                           'form-control selectpicker',
+                                           "data-live-search": "true",
+                                           "data-actions-box": "true", })
+    )
+    year = forms.ChoiceField(
+        choices=[],
+        label="Select Year",
+        required=True,
+        widget=forms.Select(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Year",
+        })
+    )
+    months_list = settings.MONTHS_LIST
+    months_indexes_of = get_month_as_index(months_list)
+    choices = [(i, month.upper())
+               for month, i in zip(months_list, months_indexes_of)]
+
+    month = forms.ChoiceField(
+        choices=choices,
+        required=True,
+        widget=forms.Select(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select year end"}),
+        label="VAT Period",
+    )
+
+    accountant = forms.MultipleChoiceField(
+        choices=[],
+        label="Select Accountant(s)",
+        required=True,
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-control selectpicker",
+            "data-live-search": "true",
+            "data-actions-box": "true",
+            "title": "Select Accountant(s), you can select multiple"}))
+
+    radio_choices = [("all", "All"), ("complete",
+                                      "Completed"), ("incomplete", "Incomplete")]
+    radio_option = forms.ChoiceField(
+        label="Select",
+        choices=radio_choices,
+        widget=forms.RadioSelect(
+            attrs={"class": "form-check-inline"}),
+        initial="all",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client'].choices = [
+            (c.id, c.name.upper()) for c in Client.objects.all().order_by("name")
+        ]
+        self.fields['year'].choices = [
+            (c.id, c.the_year) for c in FinancialYear.objects.all().order_by("-the_year")
+        ]
+        accountant_job_title = JobTitle.objects.filter(
+            title="Accountant").first()
+
+        accountant_choices = [("None", "Not Assigned")]
+        if accountant_job_title:
+            accountant_users = CustomUser.objects.filter(
+                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_choices.extend(
+                [(user.id, user.get_full_name() or user.email) for user in accountant_users])
+            self.fields['accountant'].choices = accountant_choices
+
+
 class ClientFinancialYearProcessForm(forms.Form):
     client_type = forms.ModelChoiceField(
         queryset=ClientType.objects.all().order_by("name"),
@@ -726,7 +801,7 @@ class CreateUpdateProvCipcForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client_type'].choices = [
-            (c.id, c.name.upper()) for c in ClientType.objects.all()
+            (c.id, c.name.upper()) for c in ClientType.objects.all().order_by("name")
         ]
         self.fields['years'].choices = [(cy.id, cy.the_year) for cy in FinancialYear.objects.all().order_by(
             "-the_year")]

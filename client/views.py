@@ -22,7 +22,7 @@ from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax
 from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv
 from users.models import CustomUser
-from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm
+from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm
 
 
 @login_required
@@ -580,38 +580,113 @@ def create_or_update_vat(request):
         return render(request, "client/create_or_view_vat.html", {"created_clients": created_clients, "count": count, "headers": headers})
     return render(request, "client/create_or_view_vat.html", {"form": form})
 
+# deprecated
+# @login_required
+# def process_vat_clients_for_period(request):
+#     """Handles form submission and displays filtered VAT clients."""
+#     form = VatClientsPeriodProcess(request.GET or None)
+
+#     if form.is_valid():
+#         client = form.cleaned_data['client']
+#         year = form.cleaned_data['year']
+#         month = form.cleaned_data['month']
+#         accountant = form.cleaned_data['accountant']
+#         radio_option = form.cleaned_data["radio_option"]
+
+#         vat_clients = []
+#         if radio_option == "complete":
+#             vat_clients = VatSubmissionHistory.objects.filter(
+#                 year=year, submitted=True, client_notified=True, paid=True).order_by("client__name")
+#         elif radio_option == "incomplete":
+#             vat_clients = VatSubmissionHistory.objects.filter(
+#                 year=year, submitted=False, client_notified=False, paid=False).order_by("client__name")
+#         else:
+#             vat_clients = VatSubmissionHistory.objects.filter(
+#                 year=year).order_by("client__name")
+
+#         if client and client != "all":
+#             vat_clients = vat_clients.filter(client=client)
+#         if month and month != "all":
+#             month = month.lower()
+#             month = settings.MONTHS_LIST.index(month) + 1
+#             vat_clients = vat_clients.filter(month=month)
+#         if accountant:
+#             vat_clients = vat_clients.filter(client__accountant=accountant)
+#         metrics = {}
+#         metrics["submitted"] = len(vat_clients.filter(submitted=True))
+#         metrics["client_notified"] = len(
+#             vat_clients.filter(client_notified=True))
+#         metrics["paid"] = len(vat_clients.filter(paid=True))
+
+#         headers = ["Mark Complete", "Name", "Period", "Submitted",
+#                    "Client Notified", "Paid", "Comment", "Update Comment"]
+#         search_query = request.POST.get("search")
+#         if search_query:
+#             vat_clients = vat_clients.filter(
+#                 client__name__icontains=search_query)
+#         if request.GET.get("export") == "csv":
+#             headers = ["Name", "Registration Number", "Internal ID",
+#                        "Year", "Month", "Submitted", "Client Notified", "Client Paid", "Comment", "Marked Notified by", "Marked Submitted By", "Marked Paid By", "Date Submitted"]
+#             rows = [
+#                 [c.client.get_client_full_name(), c.client.vat_reg_number,
+#                  c.client.internal_id_number, c.year.the_year, c.month.name, c.submitted, c.client_notified, c.paid, c.comment, c.marked_notified_by, c.marked_submitted_by, c.marked_paid_by, c.date_marked_submitted]
+#                 for c in vat_clients
+#             ]
+#             return export_to_csv(f"vat_submission_{year}0{month}.csv", headers, rows)
+
+#         count = len(vat_clients)
+#         return render(request, "client/vat_clients_list.html", {
+#             "clients": vat_clients,
+#             "headers": headers, "count": count,
+#             "metrics": metrics,
+#             "form": form,
+#         })
+
+#     return render(request, "client/vat_clients_form.html", {"form": form})
+
 
 @login_required
-def process_vat_clients_for_period(request):
+def update_vat_status_submission(request):
     """Handles form submission and displays filtered VAT clients."""
-    form = VatClientsPeriodProcess(request.GET or None)
+    form = VatClientPeriodUpdateForm(request.GET or None)
 
     if form.is_valid():
-        client = form.cleaned_data['client']
+        clients = form.cleaned_data['client']
         year = form.cleaned_data['year']
         month = form.cleaned_data['month']
         accountant = form.cleaned_data['accountant']
         radio_option = form.cleaned_data["radio_option"]
 
-        vat_clients = []
-        if radio_option == "complete":
-            vat_clients = VatSubmissionHistory.objects.filter(
-                year=year, submitted=True, client_notified=True, paid=True).order_by("client__name")
-        elif radio_option == "incomplete":
-            vat_clients = VatSubmissionHistory.objects.filter(
-                year=year, submitted=False, client_notified=False, paid=False).order_by("client__name")
-        else:
-            vat_clients = VatSubmissionHistory.objects.filter(
-                year=year).order_by("client__name")
+        clients = list(map(int, clients))
+        year = int(year)
+        month = int(month)
 
-        if client and client != "all":
-            vat_clients = vat_clients.filter(client=client)
-        if month and month != "all":
-            month = month.lower()
-            month = settings.MONTHS_LIST.index(month) + 1
-            vat_clients = vat_clients.filter(month=month)
-        if accountant:
-            vat_clients = vat_clients.filter(client__accountant=accountant)
+        fin_year = FinancialYear.objects.get(id=year)
+        month_str = settings.MONTHS_LIST[(month-1)]
+        returned_clients = VatSubmissionHistory.create_or_get_vat_clients(
+            year=fin_year, month=month_str)
+
+        vat_clients = VatSubmissionHistory.objects.filter(
+            year=year, client_id__in=clients, month=month).order_by("client__name")
+        if radio_option == "complete":
+            vat_clients = vat_clients.filter(
+                submitted=True, client_notified=True, paid=True)
+        elif radio_option == "incomplete":
+            vat_clients = vat_clients.filter(
+                year=year, submitted=False, client_notified=False, paid=False)
+
+        if "None" in accountant:
+            accountant_ids_list = [int(aid)
+                                   for aid in accountant if aid != 'None']
+            vat_clients = vat_clients.filter(
+                Q(client__accountant__isnull=True) | Q(
+                    client__accountant__id__in=accountant_ids_list)
+            )
+        else:
+            accountant_ids_list = [int(aid) for aid in accountant]
+            vat_clients = vat_clients.filter(
+                client__accountant__id__in=accountant_ids_list)
+
         metrics = {}
         metrics["submitted"] = len(vat_clients.filter(submitted=True))
         metrics["client_notified"] = len(
@@ -620,19 +695,19 @@ def process_vat_clients_for_period(request):
 
         headers = ["Mark Complete", "Name", "Period", "Submitted",
                    "Client Notified", "Paid", "Comment", "Update Comment"]
-        search_query = request.POST.get("search")
+        search_query = request.GET.get("search")
         if search_query:
             vat_clients = vat_clients.filter(
                 client__name__icontains=search_query)
         if request.GET.get("export") == "csv":
-            headers = ["Name", "Registration Number", "Internal ID",
-                       "Year", "Month", "Submitted", "Client Notified", "Client Paid", "Comment", "Marked Notified by", "Marked Submitted By", "Marked Paid By", "Date Submitted"]
+            headers_export = ["Name", "Registration Number", "Internal ID",
+                              "Year", "Month", "Submitted", "Client Notified", "Client Paid", "Comment", "Marked Notified by", "Marked Submitted By", "Marked Paid By", "Date Submitted"]
             rows = [
                 [c.client.get_client_full_name(), c.client.vat_reg_number,
                  c.client.internal_id_number, c.year.the_year, c.month.name, c.submitted, c.client_notified, c.paid, c.comment, c.marked_notified_by, c.marked_submitted_by, c.marked_paid_by, c.date_marked_submitted]
                 for c in vat_clients
             ]
-            return export_to_csv(f"vat_submission_{year}0{month}.csv", headers, rows)
+            return export_to_csv(f"vat_submission_{year}0{month}.csv", headers_export, rows)
 
         count = len(vat_clients)
         return render(request, "client/vat_clients_list.html", {
@@ -1094,7 +1169,7 @@ def update_prov_cipc_return(request):
                 )
             data = ClientProvisionalTax.objects.filter(
                 client_id__in=client_list, financial_year_id=selected_year_ids, prov_tax_numb=prov_numb
-            )
+            ).order_by("client__name")
         headers = ["Client Name", "Year", "Month", "Finished",
                    "Finish Date", "Invoiced", "Invoice Date", "Comment", "Actions"]
         month_str = settings.MONTHS_LIST[month - 1].title()

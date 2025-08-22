@@ -88,7 +88,7 @@
 
         {% for record in clients %}
             <tr data-row-id="{{ record.id }}" data-return-type="{{return_type}}">
-                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.name }}</a></td>
+                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.get_client_full_name }}</a></td>
                 <td>{{ record.financial_year }}</td>
                 <td>{{ month }}</td>
                 <td> <button {% if record.finish_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.finish_date %} Completed {% else %}Incomplete {% endif %}</button></td>

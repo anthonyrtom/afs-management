@@ -47,7 +47,7 @@
                         <input type="checkbox" name="mark-complete" class="mark-complete" data-client-id="{{ entry.id }}" data-client-name="{{entry.client.name}}" {% if entry.wp_done and entry.afs_done and entry.posting_done and entry.itr34c_issued %} checked {% endif %} {% if not perms.client.change_clientfinancialyear %} disabled {% endif %}>
                     </td>
                     
-                    <td><a href="{% url 'client-detail' entry.client.id %}" class="text-decoration-none">{{entry.client.name}}</a>
+                    <td><a href="{% url 'client-detail' entry.client.id %}" class="text-decoration-none">{{entry.client.get_client_full_name}}</a>
                     </td>
                     
                     <td>{{ entry.financial_year }}</td>

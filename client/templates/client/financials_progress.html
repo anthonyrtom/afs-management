@@ -95,7 +95,7 @@
 
         {% for record in clients %}
             <tr>
-                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.name }}</a></td>
+                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.get_client_full_name }}</a></td>
                 <td>{{ record.financial_year }}</td>
                 <td>{{ record.schedule_date|default:"Not Scheduled" }}</td>
                 <td> <button {% if record.finish_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.finish_date %} Completed {% else %}Incomplete {% endif %}</button></td>

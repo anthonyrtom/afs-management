@@ -133,7 +133,7 @@
 
         {% for id, record in data.items %}
             <tr>
-                <td><a href="{% url 'client-detail' record.client_id %}" class="text-decoration-none">{{ record.name }}</a></td>
+                <td><a href="{% url 'client-detail' record.client_id %}" class="text-decoration-none">{{ record.get_client_full_name }}</a></td>
                 <td>{{record.fy }}</td>
                 
                 <td>{{ record.fin_days }}</td>

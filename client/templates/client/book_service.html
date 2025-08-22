@@ -66,7 +66,7 @@
 
         {% for record in scheduled %}
             <tr class="data-row" data-id="{{ record.id }}" data-url="{% url 'progress-update-financials' record.id %}">
-                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.name }}</a></td>
+                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.get_client_full_name }}</a></td>
                  <td>{{ record.financial_year }}</td>
                 
                     {% if update_type == "Accounting" %}
