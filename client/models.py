@@ -109,6 +109,15 @@ class Client(models.Model):
     client_service = models.ManyToManyField(
         'Service', through='ClientService', related_name='client_services')
 
+    def clean(self):
+        self.name = self.name.strip().upper()
+        if self.surname:
+            self.surname = self.surname.strip().upper()
+
+    def save(self, *args, **kwargs):
+        # self.full_clean()
+        super().save(*args, **kwargs)
+
     class Meta:
         permissions = [
             ("update_client", "A User can update client information")]

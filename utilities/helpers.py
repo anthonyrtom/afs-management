@@ -141,6 +141,19 @@ def get_client_model_fields():
     return all_list
 
 
+def get_optional_fields_for_client():
+    """
+    Helper function to get the field list of the Client model that are optional
+    Args:
+    None
+    Returns:
+        A list of all the fields except ManyToMany fields
+    """
+    optional_fields = ["surname", "email", "cell_number", "contact_person", "contact_person_cell",  "is_active", "is_sa_resident", "income_tax_number", "paye_reg_number",
+                       "first_month_for_paye_sub", "uif_reg_number", "entity_reg_number", "birthday_of_entity", "vat_reg_number", "first_month_for_vat_sub", "vat_category", "registered_address", "coida_reg_number", "first_month_for_coida_sub",  "uif_dept_reg_number", "accountant", "first_financial_year", "client_type"]
+    return optional_fields
+
+
 def export_to_csv(filename, headers, rows):
     """
     Exports data to a CSV file.

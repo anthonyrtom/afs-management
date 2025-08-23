@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} 
+    {{return_caption}}
+{% endblock title %}
+
+{% block exportblock %}
+    <a href="?{{ request.GET.urlencode }}&export=csv" 
+    class="btn btn-success btn-sm">
+        <i class="fas fa-download"></i> Export to CSV
+    </a>
+{% endblock %}
+
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<div id="ajax-urls"
+     data-update-individual-url ="{% url 'update-individual-director-year' %}">
+</div>
+    {% if user.is_authenticated %}
+        
+
+    {% if clients %}
+    
+    <table class="table table-striped table-hover table-bordered mt-4 mb-4">
+    {% include "client/_table_headers.html" with headers=headers %}
+    <thead>
+        Count: {{count}}
+    </thead>
+    <tbody>
+
+        {% for record in clients %}
+            <tr data-row-id="{{ record.id }}" >
+                <td><a href="{% url 'client-detail' record.id %}" class="text-decoration-none">{{ record.get_client_full_name }}</a></td>
+                <td>{{ record.internal_id_number }}</td>
+
+                    <td> <input name="start_year" type="number" value="{{ record.first_financial_year|default_if_none:''}}" class="form-control"> </td>                
+                    <td>
+                        <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
+                        <button  class="btn btn-primary save-btn">Save</button>
+                    </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    {% endif %}        
+    {% endif %}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/temp.js' %}"></script>
+{% endblock extra_js %}

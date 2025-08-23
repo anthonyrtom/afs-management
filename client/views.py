@@ -20,7 +20,7 @@ from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax
-from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv
+from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv, get_optional_fields_for_client
 from users.models import CustomUser
 from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm
 
@@ -253,13 +253,14 @@ def view_service_overview(request):
                 clients = [client for client in clients if client.get_birthday_in_year(
                     today.year) and client.get_birthday_in_year(today.year).month == month]
         if request.GET.get("export") == "csv":
-            headers = ["Name", "Registration Number", "Internal ID"]
+            headers_export = ["Name", "Registration Number",
+                              "Internal ID", "Client Type"]
             rows = [
                 [c.get_client_full_name(), c.entity_reg_number,
-                 c.internal_id_number]
+                 c.internal_id_number, c.client_type.name]
                 for c in clients
             ]
-            return export_to_csv("clients_export.csv", headers, rows)
+            return export_to_csv(f"{selected_a_service}_clients_export.csv", headers_export, rows)
 
         count = len(clients)
         headers = ["Name", "Registration Number"]
@@ -813,19 +814,19 @@ def update_client_financial(request, financial_year_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-
-@login_required
-@permission_required("client.change_clientfinancialyear", raise_exception=True)
-def create_clients_for_financial_year(request):
-    form = ClientFinancialYearProcessForm(request.POST or None)
-    if form.is_valid():
-        year = form.cleaned_data["financial_year"]
-        created_clients = ClientFinancialYear.setup_clients_afs_for_year(
-            year.the_year)
-        messages.success(
-            request, f"{len(created_clients)} created or returned")
-        return redirect(reverse("process"))
-    return render(request, "client/created_financial_years_form.html", {"form": form})
+# deprecated
+# @login_required
+# @permission_required("client.change_clientfinancialyear", raise_exception=True)
+# def create_clients_for_financial_year(request):
+#     form = ClientFinancialYearProcessForm(request.POST or None)
+#     if form.is_valid():
+#         year = form.cleaned_data["financial_year"]
+#         created_clients = ClientFinancialYear.setup_clients_afs_for_year(
+#             year.the_year)
+#         messages.success(
+#             request, f"{len(created_clients)} created or returned")
+#         return redirect(reverse("process"))
+#     return render(request, "client/created_financial_years_form.html", {"form": form})
 
 
 class ClientDetailView(LoginRequiredMixin, DetailView):
@@ -867,9 +868,9 @@ def book_service_dates(request):
         valid_clients = [
             c.id for c in eligible_clients if c.is_afs_client(today)]
 
-        for year in selected_year_ids:
+        for year in financial_years:
             created_clients = ClientFinancialYear.setup_clients_afs_for_year(
-                year)
+                year.the_year)
 
         data = ClientFinancialYear.objects.filter(
             client_id__in=valid_clients, financial_year__in=financial_years, client__client_type__id__in=client_type)
@@ -1270,12 +1271,12 @@ class ClientCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
 
-        optional_fields = []
+        optional_fields = get_optional_fields_for_client()
         boolean_fields = ["is_active", "is_sa_resident"]
         date_fields = ["birthday_of_entity"]
 
         for field_name, field in form.fields.items():
-            if field_name not in optional_fields:
+            if field_name in optional_fields:
                 field.required = False
 
             if field_name in boolean_fields:
@@ -1401,3 +1402,34 @@ class ClientServiceListView(LoginRequiredMixin, ListView):
     template_name = "client/client_service_list.html"
     context_object_name = "client_services"
     ordering = ["client__name"]
+
+
+@login_required
+def adjust_individual(request):
+    client_id = request
+    all_individuals = Client.objects.filter(client_type__name="Individual")
+    today = datetime.now().date()
+    # all_individuals = [
+    #     c for c in all_individuals if c.is_afs_client(today)]
+    context = {"clients": all_individuals, "count": len(all_individuals)}
+    return render(request, "client/temp.html", context)
+
+
+@login_required
+@require_POST
+def ajax_update_individual_fin_start_year(request):
+    trans_id = request.POST.get("transId")
+    financial_year = request.POST.get("financialYear")
+    if not trans_id and not financial_year:
+        return JsonResponse({"success": False, "message": "Transaction Id or financial year can not be empty"})
+    try:
+        trans_id = int(trans_id)
+        financial_year = int(financial_year)
+        client = Client.objects.filter(id=trans_id).first()
+        fin_year_inst = FinancialYear.objects.get(the_year=financial_year)
+        client.first_financial_year = fin_year_inst
+        client.save()
+    except Exception as e:
+        # print(e)
+        return JsonResponse({"success": False, "message": "There was an error"})
+    return JsonResponse({"success": True, "message": "Updated successfully"})

@@ -17,8 +17,18 @@
 
     <div class="card shadow-sm rounded-3">
         <div class="card-body">
-            <form method="post" class="needs-validation">
+            <!-- Add novalidate to prevent default browser validation -->
+            <form method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
+
+                <!-- Display non-field errors (e.g., global form errors) at the top -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
                 <table class="table table-borderless align-middle mb-4">
                     <!-- Row 1: Name, Surname, Email -->
@@ -26,14 +36,35 @@
                         <td>
                             <label class="form-label">Name*</label>
                             {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Surname*</label>
                             {{ form.surname }}
+                            {% if form.surname.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.surname.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Email*</label>
                             {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -42,14 +73,35 @@
                         <td>
                             <label class="form-label">Month End</label>
                             {{ form.month_end }}
+                            {% if form.month_end.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.month_end.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Last Day</label>
                             {{ form.last_day }}
+                            {% if form.last_day.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.last_day.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Internal ID Number</label>
                             {{ form.internal_id_number }}
+                            {% if form.internal_id_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.internal_id_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -58,14 +110,35 @@
                         <td>
                             <label class="form-label">VAT Reg Number</label>
                             {{ form.vat_reg_number }}
+                            {% if form.vat_reg_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.vat_reg_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">VAT Category</label>
                             {{ form.vat_category }}
+                            {% if form.vat_category.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.vat_category.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">First Month for VAT</label>
                             {{ form.first_month_for_vat_sub }}
+                            {% if form.first_month_for_vat_sub.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_month_for_vat_sub.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -74,14 +147,35 @@
                         <td>
                             <label class="form-label">Client Type</label>
                             {{ form.client_type }}
+                            {% if form.client_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.client_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Registered Address</label>
                             {{ form.registered_address }}
+                            {% if form.registered_address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.registered_address.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Accountant</label>
                             {{ form.accountant }}
+                            {% if form.accountant.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.accountant.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -90,14 +184,35 @@
                         <td>
                             <label class="form-label">PAYE Reg Number</label>
                             {{ form.paye_reg_number }}
+                            {% if form.paye_reg_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.paye_reg_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Income Tax Number</label>
                             {{ form.income_tax_number }}
+                            {% if form.income_tax_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.income_tax_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">UIF Dept Reg Number</label>
                             {{ form.uif_dept_reg_number }}
+                            {% if form.uif_dept_reg_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.uif_dept_reg_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -106,14 +221,35 @@
                         <td>
                             <label class="form-label">Cell Number</label>
                             {{ form.cell_number }}
+                            {% if form.cell_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.cell_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Contact Person</label>
                             {{ form.contact_person }}
+                            {% if form.contact_person.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.contact_person.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Contact Person Cell</label>
                             {{ form.contact_person_cell }}
+                            {% if form.contact_person_cell.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.contact_person_cell.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -122,14 +258,35 @@
                         <td>
                             <label class="form-label">COIDA Reg Number</label>
                             {{ form.coida_reg_number }}
+                            {% if form.coida_reg_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.coida_reg_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">First Month for COIDA</label>
                             {{ form.first_month_for_coida_sub }}
+                            {% if form.first_month_for_coida_sub.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_month_for_coida_sub.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">First Financial Year</label>
                             {{ form.first_financial_year }}
+                            {% if form.first_financial_year.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_financial_year.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -138,19 +295,47 @@
                         <td>
                             <label class="form-label">Entity Birthday</label>
                             {{ form.birthday_of_entity }}
+                            {% if form.birthday_of_entity.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.birthday_of_entity.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <label class="form-label">Entity Registration Number</label>
                             {{ form.entity_reg_number }}
+                            {% if form.entity_reg_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.entity_reg_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <div class="form-check mt-4">
                                 {{ form.is_active }}
                                 <label class="form-check-label">Is Active</label>
+                                {% if form.is_active.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.is_active.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="form-check mt-2">
                                 {{ form.is_sa_resident }}
                                 <label class="form-check-label">Is SA Resident</label>
+                                {% if form.is_sa_resident.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.is_sa_resident.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
