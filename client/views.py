@@ -1370,7 +1370,7 @@ class ClientServiceCreateView(LoginRequiredMixin, PermissionRequiredMixin, Creat
     model = ClientService
     fields = ["client", "service", "start_date", "end_date", "comment"]
     template_name = "client/client_service_form.html"
-    success_url = reverse_lazy("client-service-list")
+    success_url = reverse_lazy("process")
     permission_required = "client.change_client_service"
 
     def get_form(self, form_class=None):
