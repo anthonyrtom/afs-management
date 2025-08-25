@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from django.urls import reverse_lazy
 from pathlib import Path
 import dj_database_url
 import os
@@ -149,3 +150,5 @@ FIRST_FINANCIAL_YEAR = 2015
 LAST_FINANCIAL_YEAR = 9999
 MONTHS_LIST = ["january", "february", "march", "april", "may", "june",
                "july", "august", "september", "october", "november", "december"]
+
+LOGIN_URL = reverse_lazy('login')

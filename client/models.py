@@ -1,3 +1,4 @@
+import calendar
 from datetime import date, datetime
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -256,6 +257,25 @@ class Client(models.Model):
             return False
         return True
 
+    def is_year_after_first_financial_year(self, year):
+        if not (self.month_end and self.last_day):
+            return False
+        if not self.first_financial_year:
+            return False
+
+        first_year = self.first_financial_year.the_year
+
+        _, first_year_last_day = calendar.monthrange(
+            first_year, self.month_end)
+        first_year_end = datetime(
+            first_year, self.month_end, first_year_last_day).date()
+
+        _, given_year_last_day = calendar.monthrange(year, self.month_end)
+        given_year_end = datetime(
+            year, self.month_end, given_year_last_day).date()
+
+        return given_year_end >= first_year_end
+
     def is_vat_vendor(self, as_at_date, service_name):
         if not self.vat_category:
             return False
@@ -450,7 +470,7 @@ class ClientFinancialYear(models.Model):
     class Meta:
         unique_together = ('client', 'financial_year')
         permissions = [("change_invoice_date", "Can edit the invoice date"),
-                       ("change_tax_date", "A User can change tax dates on financial statements progress"), ("change_acc_date", "Can change the start and finish date on financial"), ("change_sec_date", "A User canchange secretarial date")]
+                       ("change_tax_date", "A User can change tax dates on financial statements progress"), ("change_acc_date", "Can change the start and finish date on financial"), ("change_sec_date", "A User can change secretarial date")]
 
     def __str__(self):
         return self.client.name

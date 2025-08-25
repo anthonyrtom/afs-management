@@ -1153,17 +1153,18 @@ def update_prov_cipc_return(request):
                 client_id__in=client_list, financial_year_id=selected_year_ids, client__birthday_of_entity__month=month)
         elif return_type == "first" or return_type == "second":
             return_caption = return_type.capitalize() + " Provisional Tax Submission"
-
+            client_list = [
+                c for c in client_obj if c.is_prov_tax_client(today) and c.is_year_after_first_financial_year(selected_year.the_year)]
             month_end_of_prov = datetime(
                 selected_year.the_year, month, 28).date()
             prov_numb = 1
             if return_type == "first":
                 client_list = [
-                    c.id for c in client_obj if c.is_first_prov_tax_month(month_end_of_prov)]
+                    c.id for c in client_list if c.is_first_prov_tax_month(month_end_of_prov)]
             elif return_type == "second":
                 prov_numb = 2
                 client_list = [
-                    c.id for c in client_obj if c.is_second_prov_tax_month(month_end_of_prov)]
+                    c.id for c in client_list if c.is_second_prov_tax_month(month_end_of_prov)]
 
             for client_id in client_list:
                 prov_return, created = ClientProvisionalTax.objects.get_or_create(

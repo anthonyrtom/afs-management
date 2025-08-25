@@ -743,13 +743,13 @@ class CreateUpdateProvCipcForm(forms.Form):
                 "title": "Select Client type(s), you can select multiple"}))
     years = forms.ChoiceField(
         choices=[],
-        label="Select Financial Year",
+        label="Select a Year in which return is due",
         required=True,
         widget=forms.Select(attrs={
             "class": "form-control selectpicker",
             "data-live-search": "true",
             "data-actions-box": "true",
-            "title": "Select Financial Year, you CAN NOT select multiple"
+            "title": "Select a year,actual year when return is done"
         })
     )
     return_type = forms.ChoiceField(
@@ -787,8 +787,8 @@ class CreateUpdateProvCipcForm(forms.Form):
             "class": "form-control selectpicker",
             "data-live-search": "true",
             "data-actions-box": "true",
-            "title": "Select year end, you CAN NOT select multiple"}),
-        label="Year Ending",
+            "title": "Select on month when return is due"}),
+        label="Month in which return is due",
     )
     searchterm = forms.CharField(
         max_length=150,
