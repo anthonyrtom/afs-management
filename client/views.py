@@ -652,13 +652,13 @@ def update_vat_status_submission(request):
     form = VatClientPeriodUpdateForm(request.GET or None)
 
     if form.is_valid():
-        clients = form.cleaned_data['client']
+        client_type = form.cleaned_data['client_type']
         year = form.cleaned_data['year']
         month = form.cleaned_data['month']
         accountant = form.cleaned_data['accountant']
         radio_option = form.cleaned_data["radio_option"]
 
-        clients = list(map(int, clients))
+        client_type = list(map(int, client_type))
         year = int(year)
         month = int(month)
 
@@ -668,7 +668,7 @@ def update_vat_status_submission(request):
             year=fin_year, month=month_str)
 
         vat_clients = VatSubmissionHistory.objects.filter(
-            year=year, client_id__in=clients, month=month).order_by("client__name")
+            year=year, client__client_type_id__in=client_type, month=month).order_by("client__name")
         if radio_option == "complete":
             vat_clients = vat_clients.filter(
                 submitted=True, client_notified=True, paid=True)

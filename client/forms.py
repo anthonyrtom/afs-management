@@ -255,7 +255,7 @@ class VatClientsPeriodProcess(forms.Form):
 
 
 class VatClientPeriodUpdateForm(forms.Form):
-    client = forms.MultipleChoiceField(
+    client_type = forms.MultipleChoiceField(
         required=True,
         widget=forms.SelectMultiple(attrs={'class':
                                            'form-control selectpicker',
@@ -311,8 +311,8 @@ class VatClientPeriodUpdateForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['client'].choices = [
-            (c.id, c.name.upper()) for c in Client.objects.all().order_by("name")
+        self.fields['client_type'].choices = [
+            (c.id, c.name.upper()) for c in ClientType.objects.all().order_by("name")
         ]
         self.fields['year'].choices = [
             (c.id, c.the_year) for c in FinancialYear.objects.all().order_by("-the_year")
