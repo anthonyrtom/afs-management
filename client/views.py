@@ -310,13 +310,14 @@ def view_all_clients(request):
                                              Q(vat_reg_number__icontains=query) |
                                              Q(internal_id_number__icontains=query))
         if request.GET.get("export") == "csv":
-            headers = ["Name", "Registration Number", "Internal ID"]
+            headers_export = ["Name", "Registration Number",
+                              "Internal ID", "First Year AFS", "Accountant", "Year End"]
             rows = [
                 [c.get_client_full_name(), c.entity_reg_number,
-                 c.internal_id_number]
+                 c.internal_id_number, c.first_financial_year, c.accountant, c.get_month_end_as_string(), ]
                 for c in all_clients
             ]
-            return export_to_csv("all_clients_export.csv", headers, rows)
+            return export_to_csv("all_clients_export.csv", headers_export, rows)
 
         count = len(all_clients)
         return render(request, "client/all_clients.html", {"clients": all_clients, "headers": headers, "count": count, "form": form})
