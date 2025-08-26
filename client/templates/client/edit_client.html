@@ -45,7 +45,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <label class="form-label">Surname*</label>
+                            <label class="form-label">Surname</label>
                             {{ form.surname }}
                             {% if form.surname.errors %}
                                 <div class="invalid-feedback d-block">
@@ -71,7 +71,7 @@
                     <!-- Row 2: Month End, Last Day, Internal ID -->
                     <tr>
                         <td>
-                            <label class="form-label">Month End</label>
+                            <label class="form-label">Month End*</label>
                             {{ form.month_end }}
                             {% if form.month_end.errors %}
                                 <div class="invalid-feedback d-block">
@@ -82,7 +82,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <label class="form-label">Last Day</label>
+                            <label class="form-label">Last Day*</label>
                             {{ form.last_day }}
                             {% if form.last_day.errors %}
                                 <div class="invalid-feedback d-block">
@@ -93,7 +93,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <label class="form-label">Internal ID Number</label>
+                            <label class="form-label">Client Code*</label>
                             {{ form.internal_id_number }}
                             {% if form.internal_id_number.errors %}
                                 <div class="invalid-feedback d-block">
@@ -145,7 +145,7 @@
                     <!-- Row 4: Client Type, Registered Address, Accountant -->
                     <tr>
                         <td>
-                            <label class="form-label">Client Type</label>
+                            <label class="form-label">Client Type*</label>
                             {{ form.client_type }}
                             {% if form.client_type.errors %}
                                 <div class="invalid-feedback d-block">
