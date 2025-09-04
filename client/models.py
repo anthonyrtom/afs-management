@@ -22,7 +22,7 @@ class ClientType(models.Model):
                 {'name': f'A client type with the name "{self.name}" already exists.'})
 
     def save(self, *args, **kwargs):
-        self.full_clean()  # Ensure clean() is called before saving
+        self.full_clean()
         super().save(*args, **kwargs)
 
 
@@ -122,9 +122,10 @@ class Client(models.Model):
     class Meta:
         permissions = [
             ("update_client", "A User can update client information")]
+        ordering = ['name']
 
     def __str__(self):
-        return self.name
+        return self.get_client_full_name()
 
     def get_month_end_as_string(self):
         if not self.month_end:
