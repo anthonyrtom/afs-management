@@ -892,13 +892,13 @@ def book_service_dates(request):
         update_type = service.title() if service else ""
         if service and service.title() == "Accounting":
             headers.extend(["Acc Schedule Date",
-                           "Acc Finish Date", "Save"])
+                           "Acc Finish Date", "Save/Clear"])
         elif service and service.title() == "Taxation":
             headers.extend(["Tax Schedule Date",
-                           "Tax Finish Date", "Save"])
+                           "Tax Finish Date", "Save/Clear"])
         else:
             headers.extend(["Secretarial Schedule Date",
-                           "Secretarial Finish Date", "Save"])
+                           "Secretarial Finish Date", "Save/Clear"])
 
     return render(request, "client/book_service.html", {
         "form": form,
