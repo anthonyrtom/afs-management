@@ -955,6 +955,65 @@ def progress_update_financials(request, client_id):
     return JsonResponse({"success": True, "message": "Was updated successfully"})
 
 
+@require_POST
+@login_required
+def progress_update_financials(request, client_id):
+    try:
+        department = request.POST.get("department")
+        start_date = request.POST.get("start_date", None)
+        end_date = request.POST.get("finish_date", None)
+        clear = request.POST.get("clear", "false") == "true"
+
+        client_financial_year = ClientFinancialYear.objects.get(id=client_id)
+
+        if clear:
+            # Reset fields
+            if department == "accounting":
+                client_financial_year.schedule_date = None
+                client_financial_year.finish_date = None
+            elif department == "taxation":
+                client_financial_year.itr14_start_date = None
+                client_financial_year.itr14_date = None
+            elif department == "secretarial":
+                client_financial_year.secretarial_start_date = None
+                client_financial_year.secretarial_finish_date = None
+            client_financial_year.save()
+            return JsonResponse({"success": True, "message": "Cleared successfully"})
+
+        # --- Normal Save flow ---
+        if not start_date and not end_date:
+            return JsonResponse({"success": False, "message": "Nothing to update here!, enter values"})
+
+        start_date_as_date = None
+        end_date_as_date = None
+        if start_date:
+            start_date_as_date = datetime.strptime(
+                start_date, '%Y-%m-%d').date()
+        if end_date:
+            end_date_as_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        if start_date and end_date and start_date_as_date > end_date_as_date:
+            return JsonResponse({"success": False, "message": "Schedule date can not be greater than end date"})
+        elif end_date and not start_date:
+            return JsonResponse({"success": False, "message": "You can not have an end date before a start date"})
+
+        if department == "accounting":
+            client_financial_year.schedule_date = start_date or None
+            client_financial_year.finish_date = end_date or None
+        elif department == "taxation":
+            client_financial_year.itr14_start_date = start_date or None
+            client_financial_year.itr14_date = end_date or None
+        elif department == "secretarial":
+            client_financial_year.secretarial_start_date = start_date or None
+            client_financial_year.secretarial_finish_date = end_date or None
+
+        client_financial_year.save()
+    except Exception as e:
+        return JsonResponse({"success": False, "message": "Could not update"})
+
+    return JsonResponse({"success": True, "message": "Was updated successfully"})
+
+
 @login_required
 def financials_productivity_monitor(request):
     form = FinancialProductivityForm(request.GET or None)

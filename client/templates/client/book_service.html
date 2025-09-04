@@ -76,6 +76,12 @@
                         
                         <td>
                         <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_change_acc_date %} disabled {% endif %}>Save</button>
+                        
+                        <button type="button" class="btn btn-warning btn-sm clear-btn"
+                                {% if not perms.client.change_change_acc_date %} disabled {% endif %}>
+                                Clear
+                        </button>
+
                         <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
                         </td>
                     {% elif update_type == "Taxation" %}
@@ -84,6 +90,12 @@
                         <td><input name="finish_date" type="date" value="{{ record.itr14_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_tax_date %} disabled {% endif %}></td>
                         <td>
                         <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_tax_date %} disabled {% endif %}>Save</button>
+
+                        <button type="button" class="btn btn-warning btn-sm clear-btn"
+                                {% if not perms.client.change_tax_date %} disabled {% endif %}>
+                                Clear
+                        </button>
+
                         <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
                         </td>
                     {% else %}
@@ -92,6 +104,12 @@
                         <td><input name="finish_date" type="date" value="{{ record.secretarial_finish_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_sec_date %} disabled {% endif %}></td>
                         <td>
                         <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_sec_date %} disabled {% endif %}>Save</button>
+ 
+                        <button type="button" class="btn btn-warning btn-sm clear-btn"
+                                {% if not perms.client.change_sec_date %} disabled {% endif %}>
+                                Clear
+                        </button>
+                        
                         <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
                         </td>
                     {% endif %}
