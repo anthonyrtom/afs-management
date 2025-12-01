@@ -1,0 +1,12 @@
+{% extends 'base.html' %} 
+{% load static %} 
+{% block title %} File upload results{% endblock title %} 
+
+{% block content %} 
+  {% if user.is_authenticated %}
+    <div class="container mt-4 mb-4">
+      <h6 class="h6">Success: {{success}}</h6>
+      <h6 class="h6">Failures: {{failures}}</h6>
+    </div>
+  {% endif %} 
+{% endblock %}

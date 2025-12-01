@@ -58,4 +58,6 @@ urlpatterns = [
          name='individual-adjust'),
     path('update-individual-director-year/', views.ajax_update_individual_fin_start_year,
          name='update-individual-director-year'),
+    path('upload-afs-csv/', views.upload_csv_process,
+         name='upload-afs-csv'),
 ]

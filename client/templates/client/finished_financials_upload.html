@@ -1,0 +1,18 @@
+{% extends 'base.html' %} 
+{% load static %} 
+
+{% block title %} 
+  Upload Finished Financials
+{% endblock title %} 
+
+{% block content %} 
+  {% if user.is_authenticated %}
+  <div class="container mt-4 mb-4">
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" accept=".csv" name="csv_file" />
+      <button type="submit" class="btn btn-success">Upload</button>
+    </form>
+  </div>
+  {% endif %} 
+{% endblock %}

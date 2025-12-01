@@ -1,56 +1,105 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %} Process Dashboard {% endblock title %}
+{% block title %}
+  Process Dashboard
+{% endblock title %}
 
 {% block content %}
-    {% if user.is_authenticated %}
-       <h2 class="h2 text-center">Process</h2>
-       
-       <div class="container mt-5 p5">
-        <div class="row">
-            <div class="col-md-6">
-                <h6 class="h6">Secretarial & Client Maintenance</h6>
-                <ul class="list-group">
-                    {% comment %}
-                    <!-- {% if perms.client.change_clientfinancialyear %}
-                    <li class="list-group-item">
-                        <a href="{% url 'create_client_financial_year'%}" class="list-group-item list-group-item-action list-group-item-primary">Create Financials for a year</a>
-                    </li> 
-                    {% endif %} -->
-                    {% endcomment %}
-                    
-                    {% if perms.client.change_client %}
-                    <li class="list-group-item">
-                        <a href="{% url 'client-create'%}" class="list-group-item list-group-item-action list-group-item-primary">Add New Client</a>
-                    </li> 
-                   
-                    <li class="list-group-item">
-                        <a href="{% url 'client-service-create'%}" class="list-group-item list-group-item-action list-group-item-primary">Match Services to Clients</a>
-                    </li> 
-                     {% endif %}
-                    <li class="list-group-item">
-                        <a href="{% url 'client-service-edit'%}" class="list-group-item list-group-item-action list-group-item-primary">Client Services View/Edit</a>
-                    </li> 
+  {% if user.is_authenticated %}
+    <h2 class="h2 text-center">Process</h2>
 
-                </ul>
-            </div>
-            <div class="col-md-6">
-                <h6 class="h6">Process Taxation & Accounting</h6>
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <a href="{% url 'book-service'%}" class="list-group-item list-group-item-action list-group-item-primary">Update/View Financials Target Dates</a>
-                    </li>             
-                    <li class="list-group-item">
-                        <a href="{% url 'process_vat_clients_for_period' %}" class="list-group-item list-group-item-action list-group-item-primary">Update/View VAT progress of clients for a VAT period</a>
-                    </li> 
-                    
-                    <li class="list-group-item">
-                        <a href="{% url 'create-or-update-cipc' %}" class="list-group-item list-group-item-action list-group-item-primary">Update/View (CIPC AR/ Prov Tax) progress</a>
-                    </li> 
-                   
-                </ul>
-            </div>
+    <div class="container mt-5 p5">
+      <div class="row">
+        <div class="col-md-6">
+          <h6 class="h6">Secretarial & Client Maintenance</h6>
+          <ul class="list-group">
+            {% comment %}
+            <!-- 
+            {% if perms.client.change_clientfinancialyear %}
+              <li class="list-group-item">
+                <a
+                  href="{% url 'create_client_financial_year' %}"
+                  class="list-group-item list-group-item-action list-group-item-primary"
+                >
+                  Create Financials for a year
+                </a>
+              </li>
+            {% endif %} 
+            -->
+            {% endcomment %}
+
+            {% if perms.client.change_client %}
+              <li class="list-group-item">
+                <a
+                  href="{% url 'client-create' %}"
+                  class="list-group-item list-group-item-action list-group-item-primary"
+                >
+                  Add New Client
+                </a>
+              </li>
+
+              <li class="list-group-item">
+                <a
+                  href="{% url 'client-service-create' %}"
+                  class="list-group-item list-group-item-action list-group-item-primary"
+                >
+                  Match Services to Clients
+                </a>
+              </li>
+            {% endif %}
+
+            <li class="list-group-item">
+              <a
+                href="{% url 'client-service-edit' %}"
+                class="list-group-item list-group-item-action list-group-item-primary"
+              >
+                Client Services View/Edit
+              </a>
+            </li>
+          </ul>
         </div>
+
+        <div class="col-md-6">
+          <h6 class="h6">Process Taxation & Accounting</h6>
+          <ul class="list-group">
+            <li class="list-group-item">
+              <a
+                href="{% url 'book-service' %}"
+                class="list-group-item list-group-item-action list-group-item-primary"
+              >
+                Update/View Financials Target Dates
+              </a>
+            </li>
+
+            <li class="list-group-item">
+              <a
+                href="{% url 'process_vat_clients_for_period' %}"
+                class="list-group-item list-group-item-action list-group-item-primary"
+              >
+                Update/View VAT progress of clients for a VAT period
+              </a>
+            </li>
+
+            <li class="list-group-item">
+              <a
+                href="{% url 'create-or-update-cipc' %}"
+                class="list-group-item list-group-item-action list-group-item-primary"
+              >
+                Update/View (CIPC AR/ Prov Tax) progress
+              </a>
+            </li>
+
+            <li class="list-group-item">
+              <a
+                href="{% url 'upload-afs-csv' %}"
+                class="list-group-item list-group-item-action list-group-item-primary"
+              >
+                Upload AFSs CSVs
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
-    {% endif %}
+  {% endif %}
 {% endblock %}

@@ -1,3 +1,5 @@
+import io
+import csv
 from django.views.generic import ListView
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
@@ -1494,3 +1496,46 @@ def ajax_update_individual_fin_start_year(request):
         # print(e)
         return JsonResponse({"success": False, "message": "There was an error"})
     return JsonResponse({"success": True, "message": "Updated successfully"})
+
+
+@login_required
+def upload_csv_process(request):
+    if request.method == "POST":
+        file = request.FILES.get("csv_file")
+        if not file:
+            messages.error(request, "No file found")
+            return render(request, "client/finished_financials_upload.html")
+        if not file.name.endswith(".csv"):
+            messages.error(request, "client/finished_financials_upload.html")
+            return render(request, "client/finished_financials_upload.html")
+        decoded_file = file.read().decode("utf-8")
+        io_string = io.StringIO(decoded_file)
+        reader = csv.DictReader(io_string)
+        result_dict = {"success": 0, "failures": 0}
+        for row in reader:
+            client_code = row.get("Code")
+            tax_year = row.get("TaxYear")
+            assessment_date = row.get("Date")
+            try:
+                client = Client.objects.get(internal_id_number=client_code)
+                tax_year = FinancialYear.objects.filter(
+                    the_year=int(tax_year)).first()
+                if not client or not tax_year:
+                    result_dict["failures"] += 1
+                    continue
+                assessment_date = datetime.strptime(
+                    assessment_date, "%d/%m/%Y")
+                tax_client, created = ClientFinancialYear.objects.get_or_create(
+                    client=client,  financial_year=tax_year)
+                tax_client.itr34c_issued = True
+                tax_client.afs_done = True
+                tax_client.finish_date = assessment_date
+                tax_client.itr14_date = assessment_date
+                tax_client.save()
+                result_dict["success"] += 1
+            except Exception as e:
+                # print(e)
+                result_dict["failures"] += 1
+                # continue
+        return render(request, "client/file_upload_result.html", result_dict)
+    return render(request, "client/finished_financials_upload.html")

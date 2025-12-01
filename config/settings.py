@@ -152,3 +152,4 @@ MONTHS_LIST = ["january", "february", "march", "april", "may", "june",
                "july", "august", "september", "october", "november", "december"]
 
 LOGIN_URL = reverse_lazy('login')
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
