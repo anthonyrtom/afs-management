@@ -432,10 +432,10 @@ def financials_progress(request):
 
         if request.GET.get("export") == "csv":
             headers = ["Name", "Registration Number", "Internal ID",
-                       "Year", "Schedule Date", "AFSs Finish Date", "Sec Start Date", "Sec Finish Date", "ITR14 Start Date", "ITR14 Finish Date", "Invoice Date"]
+                       "Year", "Schedule Date", "AFSs Finish Date", "Sec Start Date", "Sec Finish Date", "ITR14 Start Date", "ITR14 Finish Date", "Invoice Date", "Accountant Email"]
             rows = [
                 [c.client.get_client_full_name(), c.client.entity_reg_number,
-                 c.client.internal_id_number, c.financial_year.the_year, c.schedule_date, c.finish_date, c.secretarial_start_date, c.secretarial_finish_date, c.itr14_start_date, c.itr14_date, c.invoice_date]
+                 c.client.internal_id_number, c.financial_year.the_year, c.schedule_date, c.finish_date, c.secretarial_start_date, c.secretarial_finish_date, c.itr14_start_date, c.itr14_date, c.invoice_date, c.client.accountant.email if c.client.accountant else ""]
                 for c in data
             ]
             return export_to_csv("All_AFS_progress_export.csv", headers, rows)
