@@ -6,8 +6,10 @@
 {% if user.is_authenticated %}
     <div class="container mt-5">
         <h2>Client Details: {{ client.name }}</h2>
-        <h6><a href="{% url 'edit_client' client.id %}">Edit</a></h6>
-
+        {% if perms.client.change_client %}
+            <h6><a href="{% url 'edit_client' client.id %}">Edit</a></h6>
+            <h6><a href="{% url 'client-services-manage' client.id %}">Assign services to client</a></h6>
+        {% endif %}
         <table class="table table-bordered mt-3">
             <tr>
                 <th>Name</th>
@@ -16,6 +18,18 @@
             <tr>
                 <th>Surname</th>
                 <td>{{ client.surname|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Internal ID Number</th>
+                <td>{{ client.internal_id_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Accountant</th>
+                <td>{{ client.accountant|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>VAT Category</th>
+                <td>{{ client.vat_category|default:"N/A" }}</td>
             </tr>
             <tr>
                 <th>Email</th>
@@ -54,6 +68,10 @@
                 <td>{% if client.is_sa_resident %} ✅ Yes {% else %} ❌ No {% endif %}</td>
             </tr>
             <tr>
+                <th>Entity Registration Number</th>
+                <td>{{ client.entity_reg_number|default:"N/A" }}</td>
+            </tr>
+            <tr>
                 <th>Income Tax Number</th>
                 <td>{{ client.income_tax_number|default:"N/A" }}</td>
             </tr>
@@ -69,10 +87,7 @@
                 <th>UIF Registration Number</th>
                 <td>{{ client.uif_reg_number|default:"N/A" }}</td>
             </tr>
-            <tr>
-                <th>Entity Registration Number</th>
-                <td>{{ client.entity_reg_number|default:"N/A" }}</td>
-            </tr>
+
             <tr>
                 <th>Entity CIPC birthday</th>
                 <td>{{ client.birthday_of_entity|default:"N/A" }}</td>
@@ -85,10 +100,7 @@
                 <th>First Month for VAT Submission</th>
                 <td>{{ client.first_month_for_vat_sub|default:"N/A" }}</td>
             </tr>
-            <tr>
-                <th>VAT Category</th>
-                <td>{{ client.vat_category|default:"N/A" }}</td>
-            </tr>
+
             <tr>
                 <th>Registered Address</th>
                 <td>{{ client.registered_address|default:"N/A" }}</td>
@@ -101,18 +113,12 @@
                 <th>First Month for COIDA Submission</th>
                 <td>{{ client.first_month_for_coida_sub|default:"N/A" }}</td>
             </tr>
-            <tr>
-                <th>Internal ID Number</th>
-                <td>{{ client.internal_id_number|default:"N/A" }}</td>
-            </tr>
+
             <tr>
                 <th>UIF Department Registration Number</th>
                 <td>{{ client.uif_dept_reg_number|default:"N/A" }}</td>
             </tr>
-            <tr>
-                <th>Accountant</th>
-                <td>{{ client.accountant|default:"N/A" }}</td>
-            </tr>
+
             <tr>
                 <th>First Financial Year</th>
                 <td>{{ client.first_financial_year|default:"N/A" }}</td>

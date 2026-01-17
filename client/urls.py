@@ -60,4 +60,11 @@ urlpatterns = [
          name='update-individual-director-year'),
     path('upload-afs-csv/', views.upload_csv_process,
          name='upload-afs-csv'),
+    path("client/<int:client_id>/services/",
+         views.client_services_manage, name="client-services-manage"),
+    path("client/<int:client_id>/service/<int:service_id>/save/",
+         views.save_client_service,
+         name="save-client-service"
+         ),
+
 ]

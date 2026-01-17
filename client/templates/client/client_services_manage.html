@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Client Services{% endblock %}
+
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<h2 class="mb-3">
+    Services for {{ client.get_client_full_name }}
+</h2>
+
+<table class="table table-bordered table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Service</th>
+            <th>Status</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Comment</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        {% with cs=row.client_service %}
+        <tr data-service-id="{{ row.service.id }}">
+            <td>{{ row.service.name }}</td>
+
+            <td>
+                {% if cs and not cs.end_date %}
+                    <i class="fas fa-check-circle text-success"></i>
+                {% else %}
+                    <i class="fas fa-times-circle text-danger"></i>
+                {% endif %}
+            </td>
+
+            <td>
+                <input type="date"
+                       class="form-control start-date"
+                       value="{{ cs.start_date|date:'Y-m-d' }}">
+            </td>
+
+            <td>
+                <input type="date"
+                       class="form-control end-date"
+                       value="{{ cs.end_date|date:'Y-m-d' }}">
+            </td>
+
+            <td>
+                <textarea class="form-control comment">{{ cs.comment|default_if_none:"" }}</textarea>
+            </td>
+
+            <td>
+                <button class="btn btn-success save-service">
+                    Save
+                </button>
+                <span class="save-message text-success small ms-2" style="display:none;">
+                    Saved!
+                </span>
+            </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const CLIENT_ID = {{ client.id }};
+</script>
+<script src="{% static 'js/updateClientServicePerClient.js' %}"></script>
+{% endblock %}

@@ -1539,3 +1539,64 @@ def upload_csv_process(request):
                 # continue
         return render(request, "client/file_upload_result.html", result_dict)
     return render(request, "client/finished_financials_upload.html")
+
+
+@login_required
+def client_services_manage(request, client_id):
+    client = get_object_or_404(Client, id=client_id)
+
+    services = Service.objects.all().order_by("name")
+    client_services = {
+        cs.service_id: cs
+        for cs in ClientService.objects.filter(client=client)
+    }
+
+    rows = []
+    for service in services:
+        cs = client_services.get(service.id)
+        rows.append({
+            "service": service,
+            "client_service": cs,
+        })
+
+    context = {
+        "client": client,
+        "rows": rows,
+    }
+
+    return render(request, "client/client_services_manage.html", context)
+
+
+def empty_to_none(value):
+    return value if value else None
+
+
+@require_POST
+@login_required
+def save_client_service(request, client_id, service_id):
+    client = get_object_or_404(Client, id=client_id)
+    service = get_object_or_404(Service, id=service_id)
+
+    start_date = empty_to_none(request.POST.get("start_date"))
+    end_date = empty_to_none(request.POST.get("end_date"))
+    comment = request.POST.get("comment", "")
+
+    cs, created = ClientService.objects.get_or_create(
+        client=client,
+        service=service,
+        defaults={
+            "start_date": start_date,
+            "end_date": end_date,
+            "comment": comment,
+        }
+    )
+
+    if not created:
+        cs.start_date = start_date
+        cs.end_date = end_date
+        cs.comment = comment
+
+    # cs.full_clean()  # your model validation
+    cs.save()
+
+    return JsonResponse({"status": "ok"})
