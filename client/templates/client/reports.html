@@ -23,7 +23,7 @@
                     </li> 
 
                     <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'view-service-overview' %}" class="list-group-item list-group-item-action list-group-item-primary">Clients with Services Due (by Service/Month) </a>
+                        <a href="{% url 'view-service-overview' %}" class="list-group-item list-group-item-action list-group-item-primary">Clients with Due Services(by Service/Month) </a>
                     </li> 
             </ul>
         </div>
@@ -37,9 +37,11 @@
                 <li class="list-group-item">
                     <a href="{% url 'financials-progress' %}" class="list-group-item list-group-item-action list-group-item-primary">All Financial Statements Progress</a>
                 </li> 
+                {% if user.is_superuser %}
                 <li class="list-group-item">
                     <a href="{% url 'financials-productivity-monitor' %}" class="list-group-item list-group-item-action list-group-item-primary">Financials days monitor</a>
                 </li> 
+                {% endif %}
                
             </ul>
         </div>
@@ -50,9 +52,11 @@
                 <li class="list-group-item">
                     <a href="{% url 'search-users'%}" class="list-group-item list-group-item-action list-group-item-primary">Search Users</a>
                 </li>  
+                {% comment %}
                 <li class="list-group-item">
                     <a href="{% url 'individual-adjust'%}" class="list-group-item list-group-item-action list-group-item-primary">Adjust Individual dates</a>
                 </li>  
+                {% endcomment %}
 
             </ul>
         </div>
