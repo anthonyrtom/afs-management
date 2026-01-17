@@ -88,7 +88,7 @@
                 Update/View (CIPC AR/ Prov Tax) progress
               </a>
             </li>
-
+            {% if user.is_superuser %}
             <li class="list-group-item">
               <a
                 href="{% url 'upload-afs-csv' %}"
@@ -97,6 +97,7 @@
                 Upload AFSs CSVs
               </a>
             </li>
+            {% endif %}
           </ul>
         </div>
       </div>
