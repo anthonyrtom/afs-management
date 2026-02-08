@@ -98,6 +98,20 @@
 
                         <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
                         </td>
+                    {% elif update_type == "Invoicing" %}
+                         <td><input name="invoice_date" type="date" value="{{ record.invoice_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_invoice_date %} disabled {% endif %}></td>
+                        
+                        <td><input name="invoice_number" type="text" value="{{ record.inv_number|default:''}}" class="form-control" {% if not perms.client.change_invoice_date %} disabled {% endif %}></td>
+                        <td>
+                        <button type="button" class="btn btn-success btn-sm save-btn" {% if not perms.client.change_invoice_date %} disabled {% endif %}>Save</button>
+ 
+                        <button type="button" class="btn btn-warning btn-sm clear-btn"
+                                {% if not perms.client.change_invoice_date %} disabled {% endif %}>
+                                Clear
+                        </button>
+                        
+                        <span class="save-message text-success small ms-2" style="display: none;">Saved!</span>
+                        </td>                       
                     {% else %}
                         <td><input name="start_date" type="date" value="{{ record.secretarial_start_date|date:'Y-m-d' }}" class="form-control" {% if not perms.client.change_sec_date %} disabled {% endif %}></td>
                         

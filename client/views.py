@@ -898,6 +898,9 @@ def book_service_dates(request):
         elif service and service.title() == "Taxation":
             headers.extend(["Tax Schedule Date",
                            "Tax Finish Date", "Save/Clear"])
+        elif service and service.title() == "Invoicing":
+            headers.extend(["Invoicing Date",
+                           "Invoice Number", "Save/Clear"])
         else:
             headers.extend(["Secretarial Schedule Date",
                            "Secretarial Finish Date", "Save/Clear"])
@@ -965,9 +968,14 @@ def progress_update_financials(request, client_id):
         start_date = request.POST.get("start_date", None)
         end_date = request.POST.get("finish_date", None)
         clear = request.POST.get("clear", "false") == "true"
-
+        invoice_date = request.POST.get("invoice_date", None)
+        invoice_number = request.POST.get("invoice_number", None)
         client_financial_year = ClientFinancialYear.objects.get(id=client_id)
-
+        if department == "invoicing":
+            start_date = None
+            end_date = None
+            invoice_date_as_date = datetime.strptime(
+                invoice_date, '%Y-%m-%d').date()
         if clear:
             # Reset fields
             if department == "accounting":
@@ -979,11 +987,14 @@ def progress_update_financials(request, client_id):
             elif department == "secretarial":
                 client_financial_year.secretarial_start_date = None
                 client_financial_year.secretarial_finish_date = None
+            elif department == "invoicing":
+                client_financial_year.inv_number == None
+                client_financial_year.invoice_date == None
             client_financial_year.save()
             return JsonResponse({"success": True, "message": "Cleared successfully"})
 
         # --- Normal Save flow ---
-        if not start_date and not end_date:
+        if not department == "invoicing" and not start_date and not end_date:
             return JsonResponse({"success": False, "message": "Nothing to update here!, enter values"})
 
         start_date_as_date = None
@@ -1008,7 +1019,9 @@ def progress_update_financials(request, client_id):
         elif department == "secretarial":
             client_financial_year.secretarial_start_date = start_date or None
             client_financial_year.secretarial_finish_date = end_date or None
-
+        elif department == "invoicing":
+            client_financial_year.invoice_date = invoice_date_as_date or None
+            client_financial_year.inv_number = invoice_number or None
         client_financial_year.save()
     except Exception as e:
         return JsonResponse({"success": False, "message": "Could not update"})

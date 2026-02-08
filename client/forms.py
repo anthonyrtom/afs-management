@@ -587,7 +587,7 @@ class BookServiceForm(forms.Form):
 
     service = forms.ChoiceField(
         choices=[("accounting", "Accounting"), ("secretarial",
-                                                "Secretarial"), ("taxation", "Taxation")],
+                                                "Secretarial"), ("taxation", "Taxation"), ("invoicing", "Invoicing")],
         required=True,
         label="Department",
         widget=forms.Select(attrs={

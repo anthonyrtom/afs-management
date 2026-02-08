@@ -10,21 +10,31 @@ function setupSaveButtons() {
             const row = button.closest("tr");
             const rowId = row.dataset.id;
             const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
-
-            const startDate = row.querySelector('input[name="start_date"]').value;
-            const finishDate = row.querySelector('input[name="finish_date"]').value;
             const departmentId = document.querySelector('#id_service').value;
+            let startDate = null;
+            let finishDate = null;
+            let invoiceNumber = null;
+            let invoiceDate = null;
+            if (departmentId != "invoicing") {
+                startDate = row.querySelector('input[name="start_date"]').value;
+                finishDate = row.querySelector('input[name="finish_date"]').value;
+            } else {
+                invoiceNumber = row.querySelector('input[name="invoice_number"]').value;
+                invoiceDate = row.querySelector('input[name="invoice_date"]').value;
+            }
 
             const formData = new FormData();
             formData.append("financial_year_id", rowId);
             formData.append("finish_date", finishDate);
             formData.append("start_date", startDate);
             formData.append("department", departmentId);
-            
+            formData.append("invoice_number", invoiceNumber);
+            formData.append("invoice_date", invoiceDate);
+
             button.disabled = true;
 
             const url = row.dataset.url;
-            
+
             fetch(url, {
                 method: "POST",
                 headers: {
@@ -33,28 +43,28 @@ function setupSaveButtons() {
                 },
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                const msg = row.querySelector(".save-message");
-                if (data.success) {
-                    msg.style.display = "inline";
-                    setTimeout(() => msg.style.display = "none", 10000);
-                } else {
-                    msg.classList.remove("text-success");
-                    msg.classList.add("text-warning")
-                    // alert("Save failed: " + (data.message || "Unknown error"));
-                    msg.textContent = data.message
-                    msg.style.display = "inline";
-                    setTimeout(() => msg.style.display = "none", 10000);
-                }
-            })
-            .catch(err => {
-                
-                alert("Unexpected error saving");
-            })
-            .finally(() => {
-                button.disabled = false;
-            });
+                .then(response => response.json())
+                .then(data => {
+                    const msg = row.querySelector(".save-message");
+                    if (data.success) {
+                        msg.style.display = "inline";
+                        setTimeout(() => msg.style.display = "none", 10000);
+                    } else {
+                        msg.classList.remove("text-success");
+                        msg.classList.add("text-warning")
+                        // alert("Save failed: " + (data.message || "Unknown error"));
+                        msg.textContent = data.message
+                        msg.style.display = "inline";
+                        setTimeout(() => msg.style.display = "none", 10000);
+                    }
+                })
+                .catch(err => {
+
+                    alert("Unexpected error saving");
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
         });
     });
 }
@@ -86,33 +96,33 @@ function setupClearButtons() {
                 },
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                const msg = row.querySelector(".save-message");
-                if (data.success) {
-                    // Clear the inputs in the UI
-                    row.querySelector('input[name="start_date"]').value = "";
-                    row.querySelector('input[name="finish_date"]').value = "";
+                .then(response => response.json())
+                .then(data => {
+                    const msg = row.querySelector(".save-message");
+                    if (data.success) {
+                        // Clear the inputs in the UI
+                        row.querySelector('input[name="start_date"]').value = "";
+                        row.querySelector('input[name="finish_date"]').value = "";
 
-                    msg.classList.remove("text-warning");
-                    msg.classList.add("text-success");
-                    msg.textContent = "Cleared!";
-                    msg.style.display = "inline";
-                    setTimeout(() => msg.style.display = "none", 10000);
-                } else {
-                    msg.classList.remove("text-success");
-                    msg.classList.add("text-warning");
-                    msg.textContent = data.message || "Clear failed";
-                    msg.style.display = "inline";
-                    setTimeout(() => msg.style.display = "none", 10000);
-                }
-            })
-            .catch(err => {
-                alert("Unexpected error clearing");
-            })
-            .finally(() => {
-                button.disabled = false;
-            });
+                        msg.classList.remove("text-warning");
+                        msg.classList.add("text-success");
+                        msg.textContent = "Cleared!";
+                        msg.style.display = "inline";
+                        setTimeout(() => msg.style.display = "none", 10000);
+                    } else {
+                        msg.classList.remove("text-success");
+                        msg.classList.add("text-warning");
+                        msg.textContent = data.message || "Clear failed";
+                        msg.style.display = "inline";
+                        setTimeout(() => msg.style.display = "none", 10000);
+                    }
+                })
+                .catch(err => {
+                    alert("Unexpected error clearing");
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
         });
     });
 }

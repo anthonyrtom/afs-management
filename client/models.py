@@ -467,6 +467,7 @@ class ClientFinancialYear(models.Model):
     tax_comment = models.TextField(null=True)
     sec_comment = models.TextField(null=True)
     inv_comment = models.TextField(null=True)
+    inv_number = models.CharField(max_length=20, null=True, blank=True)
 
     class Meta:
         unique_together = ('client', 'financial_year')
