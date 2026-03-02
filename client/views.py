@@ -1528,8 +1528,8 @@ def upload_csv_process(request):
         for row in reader:
             client_code = row.get("Code")
             tax_year = row.get("TaxYear")
-            assessment_date = row.get("Date")
-            invoice_date = row.get("InvoiceDate") or None
+            assessment_date_str = row.get("Date")
+            invoice_date_str = row.get("InvoiceDate") or None
             invoice_number = row.get("InvoiceNumber") or None
             try:
                 client = Client.objects.get(internal_id_number=client_code)
@@ -1538,17 +1538,24 @@ def upload_csv_process(request):
                 if not client or not tax_year:
                     result_dict["failures"] += 1
                     continue
-                assessment_date = datetime.strptime(
-                    assessment_date, "%d/%m/%Y")
-                if invoice_date:
+                assessment_date = None
+                if assessment_date_str and assessment_date_str.strip():
+                    assessment_date = datetime.strptime(
+                        assessment_date_str.strip(), "%d/%m/%Y")
+
+                invoice_date = None
+                if invoice_date_str and invoice_date_str.strip():
                     invoice_date = datetime.strptime(
-                        invoice_date, "%d/%m/%Y")
+                        invoice_date_str, "%d/%m/%Y")
+
                 tax_client, created = ClientFinancialYear.objects.get_or_create(
-                    client=client,  financial_year=tax_year, invoice_date=invoice_date, inv_number=invoice_number)
+                    client=client,  financial_year=tax_year)
                 tax_client.itr34c_issued = True
                 tax_client.afs_done = True
                 tax_client.finish_date = assessment_date
                 tax_client.itr14_date = assessment_date
+                tax_client.invoice_date = invoice_date
+                tax_client.inv_number = invoice_number
                 tax_client.save()
                 result_dict["success"] += 1
             except Exception as e:
