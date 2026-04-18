@@ -1,3 +1,5 @@
+from __future__ import annotations
+from django.utils import timezone
 import calendar
 from datetime import date, datetime
 from django.db import models
@@ -7,6 +9,7 @@ from django.db.models import Q
 from django.conf import settings
 from users.models import CustomUser
 from django.core.exceptions import ValidationError
+from datetime import time
 
 
 class ClientType(models.Model):
@@ -658,3 +661,446 @@ class ClientCipcReturnHistory(models.Model):
 
     def __str__(self):
         return self.client.name
+
+
+"""
+Starting new class for project managent to simplify the project management
+A lot of the models above will become redudanct when this becomes live and successful
+"""
+
+
+class RecurringType(models.Model):
+    recurring_type_name = models.CharField(
+        max_length=20, unique=True, blank=False)
+
+    def __str__(self):
+        return self.recurring_type_name
+
+
+class Event(models.Model):
+    description = models.CharField(max_length=150, null=True, blank=True)
+    start_date = models.DateField(null=False)
+    end_date = models.DateField(null=True)
+    start_time = models.TimeField(null=True)
+    end_time = models.TimeField(null=True)
+    is_all_day_event = models.BooleanField(null=False, default=True)
+    created_by = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="user_events")
+    is_recurring = models.BooleanField(null=False, default=False)
+    created_date = models.DateTimeField(null=False, auto_now_add=True)
+    client_service = models.ForeignKey(
+        ClientService, on_delete=models.SET_NULL, related_name="client_service_events", null=True)
+    parent_event = models.ForeignKey(
+        "self", null=True, on_delete=models.SET_NULL, related_name="child_events")
+
+    def __str__(self):
+        client_service_name = "not a client service"
+        if self.client_service:
+            client_service_name = self.client_service.client.get_client_full_name + \
+                " " + self.client_service.service.name
+        return f"{self.start_date}-{self.is_all_day_event}-{self.created_by}-{self.created_date}-{client_service_name}"
+
+    def has_event_end_date_passed(self, test_date):
+        """Return True if the given date is after this event's end_date."""
+        if isinstance(test_date, datetime):
+            test_date = test_date.date()
+        if not isinstance(test_date, date):
+            raise ValueError("test_date must be a date or datetime instance.")
+        if self.end_date:
+            return test_date > self.end_date
+        return False
+
+    def is_active(self):
+        """Return True if today falls within the event's date range."""
+        today = timezone.now().date()
+        if today < self.start_date:
+            return False
+        if self.end_date and today > self.end_date:
+            return False
+        return True
+
+    def get_child_exceptions(self):
+        """Return all exception/rescheduled instances branching from this event."""
+        return self.child_events.all()
+
+    def get_recurring_pattern(self):
+        """Return the RecurringEvent pattern, or None for non-recurring events."""
+        return self.recurring_events.first()
+
+    def clean(self):
+        errors = {}
+
+        if self.end_date and self.end_date < self.start_date:
+            errors["end_date"] = "End date cannot be before start date."
+
+        if self.is_all_day_event:
+            if self.start_time or self.end_time:
+                errors["start_time"] = (
+                    "Start/end times must be empty for all-day events."
+                )
+        else:
+            if not self.start_time:
+                errors["start_time"] = (
+                    "Start time is required for non-all-day events."
+                )
+            if not self.end_time:
+                errors["end_time"] = (
+                    "End time is required for non-all-day events."
+                )
+            if (
+                self.start_time
+                and self.end_time
+                and self.start_date == self.end_date
+                and self.end_time <= self.start_time
+            ):
+                errors["end_time"] = (
+                    "End time must be after start time on the same day."
+                )
+
+        if not self.is_recurring and self.parent_event:
+            pass
+
+        if errors:
+            raise ValidationError(errors)
+
+    @classmethod
+    def create_normal_event(cls, start_date, user, start_time=None, end_time=None, is_all_day_event=False):
+        if isinstance(start_date, datetime):
+            start_date = start_date.date()
+        elif start_date is None:
+            raise TypeError(
+                "Start date must be either datetime object or date")
+        if start_time is None and is_all_day_event is None:
+            raise ValueError(
+                "Both start time and is_all_day_event can not be null")
+        if start_time and not end_time:
+            raise ValueError("You need end time")
+        if start_time is not None and end_time is not None:
+            if not isinstance(start_time, time) or not isinstance(end_time, time):
+                raise TypeError(
+                    "start_time and end_time must be datetime.time instances")
+
+            if start_time > end_time:
+                raise ValueError("Your start time is ahead of end time")
+        if not start_time:
+            is_all_day_event = True
+        return cls.objects.create(start_date=start_date, created_by=user, start_time=start_time,
+                                  end_time=end_time, is_all_day_event=is_all_day_event)
+
+
+class RecurringEvent(models.Model):
+    event = models.ForeignKey(
+        Event, null=False, on_delete=models.CASCADE, related_name="recurring_events")
+    recurring_type = models.ForeignKey(
+        RecurringType, null=False, on_delete=models.CASCADE, related_name="all_recurring_events")
+    separation_count = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)])
+    max_numb_occurances = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1)]
+    )
+
+    day_of_week = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(7)]
+    )
+    week_of_month = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(-4), MaxValueValidator(4)]
+    )
+    day_of_month = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(-31), MaxValueValidator(31)]
+    )
+    month_of_year = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(12)]
+    )
+
+    def __str__(self):
+        return f"{self.event}-{self.recurring_type.recurring_type_name}"
+
+    def get_recurring_type_name(self):
+        return self.recurring_type.recurring_type_name
+
+    def clean(self):
+        errors = {}
+        rtype = self.get_recurring_type_name().lower()
+
+        if self.event_id and not self.event.is_recurring:
+            errors["event"] = (
+                "The linked Event must have is_recurring=True."
+            )
+        if rtype == "weekly":
+            if self.day_of_week is None:
+                errors["day_of_week"] = (
+                    "day_of_week is required for weekly recurrence."
+                )
+
+        elif rtype == "monthly":
+            has_day_of_month = self.day_of_month is not None
+            has_week_day = (
+                self.week_of_month is not None and self.day_of_week is not None
+            )
+            if not has_day_of_month and not has_week_day:
+                errors["day_of_month"] = (
+                    "Monthly recurrence requires either day_of_month "
+                    "or both week_of_month and day_of_week."
+                )
+
+        elif rtype == "yearly":
+            if self.month_of_year is None:
+                errors["month_of_year"] = (
+                    "month_of_year is required for yearly recurrence."
+                )
+            if self.day_of_month is None:
+                errors["day_of_month"] = (
+                    "day_of_month is required for yearly recurrence."
+                )
+
+        event_has_end = self.event_id and self.event.end_date
+        if not event_has_end and not self.max_numb_occurances:
+            errors["max_numb_occurances"] = (
+                "Provide either an end_date on the Event or "
+                "max_numb_occurances to bound the recurrence."
+            )
+
+        if errors:
+            raise ValidationError(errors)
+
+
+class ProjectOccurence(models.Model):
+    """
+    One concrete instance of an Event.
+
+    For non-recurring events: one row is created automatically (via signal
+    or overridden save()) when the Event is saved.
+    For recurring events: one row per generated occurrence date.
+
+    Completion is gated by compulsory OccurrenceStageCompletion rows.
+    """
+
+    class Status(models.TextChoices):
+        SCHEDULED = "scheduled", "Scheduled"
+        IN_PROGRESS = "in_progress", "In Progress"
+        COMPLETED = "completed", "Completed"
+        CANCELLED = "cancelled", "Cancelled"
+        RESCHEDULED = "rescheduled", "Rescheduled"
+        MISSED = "missed", "Missed"
+
+    event = models.ForeignKey(
+        Event, on_delete=models.CASCADE, related_name="project_recurring_events"
+    )
+    original_date = models.DateField()
+    original_start_time = models.TimeField(null=True, blank=True)
+
+    rescheduled_date = models.DateField(null=True, blank=True)
+    rescheduled_start_time = models.TimeField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.SCHEDULED
+    )
+    completed_by = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="completed_occurrences"
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("event", "original_date")
+        ordering = ["original_date"]
+
+    def __str__(self):
+        return f"{self.event} on {self.original_date} [{self.status}]"
+
+    @property
+    def effective_date(self):
+        return self.rescheduled_date or self.original_date
+
+    @property
+    def effective_end_date(self):
+        if self.event.end_date:
+            return self.event.end_date
+
+        return None
+
+    def get_compulsory_incomplete_stages(self):
+        """Return any compulsory stages not yet completed for this occurrence."""
+        qs = ProjectStageCompletion.get_incomplete_stages(self.id, False)
+        return qs
+
+    def get_all_incomplete_stages(self):
+        """Return all imcomplete stages not yet completed for this occurrence."""
+        qs = ProjectStageCompletion.get_incomplete_stages(self.id, True)
+        return qs
+
+    def get_completion_summary(self):
+        """
+        Returns a dict useful for progress indicators in the UI.
+        e.g. {"total": 4, "completed": 2, "compulsory_incomplete": 1}
+        """
+        stages = self.project_occurence_completion.all()
+        total = stages.count()
+        completed = stages.filter(is_stage_complete=False).count()
+        compulsory_incomplete = self.get_compulsory_incomplete_stages().count()
+        return {
+            "total": total,
+            "completed": completed,
+            "compulsory_incomplete": compulsory_incomplete,
+            "percent_complete": round((completed / total) * 100) if total else 0,
+        }
+
+    def clean(self):
+        errors = {}
+
+        if self.status == self.Status.RESCHEDULED and not self.rescheduled_date:
+            errors["rescheduled_date"] = (
+                "A rescheduled_date is required when status is 'rescheduled'."
+            )
+
+        if self.status == self.Status.COMPLETED:
+            if not self.completed_by:
+                errors["completed_by"] = (
+                    "completed_by is required when marking an occurrence complete."
+                )
+            if not self.completed_at:
+                errors["completed_at"] = (
+                    "completed_at is required when marking an occurrence complete."
+                )
+            if self.pk:
+                incomplete = self.get_compulsory_incomplete_stages()
+                if incomplete.exists():
+                    names = ", ".join(
+                        incomplete.values_list("name", flat=True)
+                    )
+                    errors["status"] = (
+                        f"Cannot mark complete — the following compulsory "
+                        f"stages are unfinished: {names}."
+                    )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def mark_complete(self, user):
+        """Attempt to mark this occurrence complete. Raises ValidationError if
+        compulsory stages are unfinished."""
+        self.status = self.Status.COMPLETED
+        self.completed_by = user
+        self.completed_at = timezone.now()
+        self.full_clean()
+        self.save()
+
+    def reschedule(self, new_date, new_start_time=None):
+        if self.effective_end_date and new_date > self.effective_end_date:
+            raise ValidationError(
+                "Cannot reschedule to a date earlier than the end date."
+            )
+        if self.has_number_occurences_reached_limit():
+            raise ValidationError(
+                "Cannot reschedule, the maximum number of runs has been reached."
+            )
+        self.rescheduled_date = new_date
+        self.rescheduled_start_time = new_start_time
+        self.status = self.Status.RESCHEDULED
+        self.full_clean()
+        self.save()
+
+    def has_number_occurences_reached_limit(self):
+        if self.effective_end_date:
+            return False
+        if not self.event.is_recurring:
+            return False
+        recur_instance = RecurringEvent.objects.filter(
+            event_id=self.event.id).first()
+        if not recur_instance.max_numb_occurances:
+            return False
+        all_instances_count = ProjectOccurence.objects.filter(
+            event=self.event).count()
+        return all_instances_count >= recur_instance.max_numb_occurances
+
+
+class Stage(models.Model):
+    stage_name = models.CharField(
+        max_length=100, unique=True, blank=False)
+
+    def __str__(self):
+        return self.stage_name
+
+    def save(self, *args, **kwargs):
+        self.stage_name = self.stage_name.title()
+        super().save(*args, **kwargs)
+
+
+class ProjectStage(models.Model):
+    stage = models.ForeignKey(
+        Stage, on_delete=models.SET_NULL, null=True, related_name="project_stages")
+    event = models.ForeignKey(
+        Event, on_delete=models.CASCADE, null=False, blank=False, related_name="event_project_stages")
+    is_stage_compulsory = models.BooleanField(null=False, default=True)
+    assigned_to = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_project_stages")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("stage", "event")
+        ordering = ("event", "stage")
+
+    def __str__(self):
+        return f"stage-{self.stage}-event-{self.event}"
+
+
+class ProjectStageCompletion(models.Model):
+    project_occurence = models.ForeignKey(
+        ProjectOccurence, on_delete=models.CASCADE, null=False, related_name="project_occurence_completion")
+    project_stage = models.ForeignKey(
+        ProjectStage, on_delete=models.CASCADE, null=False, related_name="project_stage_completion")
+    is_stage_complete = models.BooleanField(null=False, default=False)
+    completed_at = models.DateTimeField(auto_now_add=True)
+    is_stage_compulsory = models.BooleanField(null=False, default=True)
+
+    class Meta:
+        unique_together = ("project_occurence", "project_stage")
+        ordering = ("project_occurence", "project_stage")
+
+    def mark_stage_complete(self):
+        if not self.is_stage_complete:
+            self.is_stage_complete = True
+            self.save()
+            return True
+        return False
+
+    def mark_stage_incomplete(self):
+        if self.is_stage_complete:
+            self.is_stage_complete = False
+            self.save()
+            return True
+        return False
+
+    def __str__(self):
+        return f"project-{self.project_occurence}-project_stage-{self.project_stage}-status-{self.is_stage_complete}"
+
+    @staticmethod
+    def get_complete_stages(project_occurence_id):
+        qs = ProjectStageCompletion.objects.filter(
+            project_occurence=project_occurence_id,
+            is_stage_complete=True
+        )
+        return qs
+
+    @staticmethod
+    def get_incomplete_stages(project_occurence_id, include_non_compulsory=True):
+        """
+        Given an project_occurence_id, get all of its stages that have
+        is_stage_complete = False and include_non_compulsory will include stages that are not compulsory
+        return a list of all instances
+        """
+        qs = ProjectStageCompletion.objects.filter(
+            project_occurence=project_occurence_id,
+            is_stage_complete=False
+        )
+
+        if not include_non_compulsory:
+            qs = qs.filter(is_stage_compulsory=True)
+
+        return qs

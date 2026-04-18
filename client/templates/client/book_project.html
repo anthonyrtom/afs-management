@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{service}}{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<div class="container mt-3">
+    <h6 class="h6 mt-2">Book Project</h6>
+    {% if service == "normal" %}
+        {% include "client/normal_event.html" with form=event_form %}
+    {% elif service == "recurring" %}
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    {% if service == "normal" %}
+        <script src="{% static 'js/validate_booking_normal.js' %}"></script>
+    {% endif %}
+{% endblock extra_js %}

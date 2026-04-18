@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Book an Project{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<div class="container mt-3">
+    <h6 class="h6 mt-2">Book a Project</h6>
+       <form method="GET">
+            <div class="mb-2">
+                {{ form.project_type.label_tag }}
+                {{ form.project_type }}
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+</div>
+{% endif %}
+{% endblock %}
+

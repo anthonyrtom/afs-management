@@ -1,3 +1,5 @@
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 import io
 import csv
 from django.views.generic import ListView
@@ -21,10 +23,10 @@ from django.views.generic import DetailView
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views import View
-from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax
+from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax, Event
 from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv, get_optional_fields_for_client
 from users.models import CustomUser
-from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm
+from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm, ScheduleEventForm, NormalEventForm
 
 
 @login_required
@@ -1625,3 +1627,57 @@ def save_client_service(request, client_id, service_id):
     cs.save()
 
     return JsonResponse({"status": "ok"})
+
+
+"""
+Views for scheduling events
+"""
+
+
+@login_required
+def schedule_service(request):
+    schedule_form = ScheduleEventForm(request.GET or None)
+    service = None
+    event_form = None
+
+    if request.method == "GET" and schedule_form.is_valid():
+        service = schedule_form.cleaned_data.get("project_type")
+        if service == "normal":
+            event_form = NormalEventForm()
+        elif service == "recurring":
+            event_form = None
+
+        if event_form:
+            return render(request, "client/book_project.html", {
+                "service": service,
+                "event_form": event_form
+            })
+
+    if request.method == "POST":
+        service = request.POST.get("service")
+        if service == "normal":
+            event_form = NormalEventForm(request.POST)
+        elif service == "recurring":
+            event_form = None
+        else:
+            event_form = None
+
+        if event_form and event_form.is_valid():
+            start_date = event_form.cleaned_data["event_start_date"]
+            start_time = event_form.cleaned_data["event_start_time"]
+            end_time = event_form.cleaned_data["event_end_time"]
+            is_all_day = event_form.cleaned_data["is_all_day"]
+            is_all_day = str(is_all_day).strip().lower(
+            ) == "yes" if isinstance(is_all_day, str) else False
+            event = Event.create_normal_event(
+                start_date, request.user, start_time, end_time, is_all_day)
+            messages.success(request, "Successfuly created")
+            return redirect("reports")
+        return render(request, "client/book_project.html", {
+            "service": service,
+            "event_form": event_form
+        })
+
+    return render(request, "client/project_form.html", {
+        "form": schedule_form
+    })

@@ -38,7 +38,7 @@ IDLE_TIMEOUT = 3600
 
 INSTALLED_APPS = [
     'users',
-    'client',
+    'client.apps.ClientConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -153,3 +153,4 @@ MONTHS_LIST = ["january", "february", "march", "april", "may", "june",
 
 LOGIN_URL = reverse_lazy('login')
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+MAX_EVENTS_IN_PROJECT = 20

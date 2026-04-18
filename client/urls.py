@@ -21,12 +21,9 @@ urlpatterns = [
 
     path('update-financial-year/<int:financial_year_id>/', views.update_client_financial,
          name='update-client-financial'),
-    #     path('create-or-update-vat/', views.create_or_update_vat,
-    #          name="create-or-update-vat"),
     path('create-or-update-cipc/', views.update_prov_cipc_return,
          name="create-or-update-cipc"),
-    #     path('client-financial-years/create/', views.create_clients_for_financial_year,
-    #          name='create_client_financial_year'),
+
     path("client/<int:id>/", views.ClientDetailView.as_view(), name="client-detail"),
     path("edit-client/<int:id>/", views.ClientUpdate.as_view(), name="edit_client"),
     path("ajax/update-vat-status/", views.ajax_update_vat_status,
@@ -65,6 +62,10 @@ urlpatterns = [
     path("client/<int:client_id>/service/<int:service_id>/save/",
          views.save_client_service,
          name="save-client-service"
+         ),
+    path("schedule-service/",
+         views.schedule_service,
+         name="schedule-service"
          ),
 
 ]

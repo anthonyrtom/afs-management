@@ -11,22 +11,8 @@
     <div class="container mt-5 p5">
       <div class="row">
         <div class="col-md-6">
-          <h6 class="h6">Secretarial & Client Maintenance</h6>
+          <h6 class="h6">Client Maintenance and Projects</h6>
           <ul class="list-group">
-            {% comment %}
-            <!-- 
-            {% if perms.client.change_clientfinancialyear %}
-              <li class="list-group-item">
-                <a
-                  href="{% url 'create_client_financial_year' %}"
-                  class="list-group-item list-group-item-action list-group-item-primary"
-                >
-                  Create Financials for a year
-                </a>
-              </li>
-            {% endif %} 
-            -->
-            {% endcomment %}
 
             {% if perms.client.change_client %}
               <li class="list-group-item">
@@ -54,6 +40,14 @@
                 class="list-group-item list-group-item-action list-group-item-primary"
               >
                 Client Services View/Edit
+              </a>
+            </li>
+            <li class="list-group-item">
+              <a
+                href="{% url 'schedule-service' %}"
+                class="list-group-item list-group-item-action list-group-item-primary"
+              >
+                Book a new Project
               </a>
             </li>
           </ul>

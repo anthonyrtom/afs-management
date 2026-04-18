@@ -840,3 +840,56 @@ class ClientServiceForm(forms.Form):
         self.fields['service'].choices = [
             (c.id, c.name.title()) for c in Service.objects.all().order_by("name")
         ]
+
+
+"""
+Project Management Forms
+"""
+
+
+class ScheduleEventForm(forms.Form):
+    form_choices = (("normal", "One time Project"), ("recurring",
+                    "Recurring Project"), ("financial", "Periodic Financials"), ("cipc", "Annual CIPC Returns"), ("emp201", "EMP201 Returns"), ("vat", "VAT Submission Returns"))
+    project_type = forms.ChoiceField(
+        choices=form_choices,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        error_messages={
+            "required": "Please select one option"
+        }
+    )
+
+
+class NormalEventForm(forms.Form):
+    event_start_date = forms.DateField(label="Select start date", required=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
+        attrs={"type": "date", "class": "form-control", "id": "start-date"},))
+
+    all_day_event = (("yes", "Yes"), ("no", "No"))
+    is_all_day = forms.ChoiceField(
+        choices=all_day_event,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        error_messages={
+            "required": "Please select one option"
+        }
+    )
+    event_start_time = forms.TimeField(required=False,
+                                       widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+    event_end_time = forms.TimeField(required=False,
+                                     widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_all_day = cleaned_data.get("is_all_day")
+        start_time = cleaned_data.get("event_start_time")
+        end_time = cleaned_data.get("event_end_time")
+
+        if is_all_day == "no":
+            if not start_time:
+                self.add_error('event_start_time',
+                               "Start time is required for non-all-day events.")
+            if not end_time:
+                self.add_error('event_end_time',
+                               "End time is required for non-all-day events.")
+
+        return cleaned_data
