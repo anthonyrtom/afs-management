@@ -992,10 +992,8 @@ def progress_update_financials(request, client_id):
             elif department == "invoicing":
                 client_financial_year.inv_number = None
                 client_financial_year.invoice_date = None
-            try:
-                client_financial_year.save()
-            except Exception as e:
-                print(e)
+
+            client_financial_year.save()
             return JsonResponse({"success": True, "message": "Cleared successfully"})
 
         # --- Normal Save flow ---
