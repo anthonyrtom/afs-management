@@ -974,8 +974,10 @@ def progress_update_financials(request, client_id):
         if department == "invoicing":
             start_date = None
             end_date = None
-            invoice_date_as_date = datetime.strptime(
-                invoice_date, '%Y-%m-%d').date()
+            invoice_date_as_date = None
+            if invoice_date:
+                invoice_date_as_date = datetime.strptime(
+                    invoice_date, '%Y-%m-%d').date()
         if clear:
             # Reset fields
             if department == "accounting":
@@ -988,9 +990,12 @@ def progress_update_financials(request, client_id):
                 client_financial_year.secretarial_start_date = None
                 client_financial_year.secretarial_finish_date = None
             elif department == "invoicing":
-                client_financial_year.inv_number == None
-                client_financial_year.invoice_date == None
-            client_financial_year.save()
+                client_financial_year.inv_number = None
+                client_financial_year.invoice_date = None
+            try:
+                client_financial_year.save()
+            except Exception as e:
+                print(e)
             return JsonResponse({"success": True, "message": "Cleared successfully"})
 
         # --- Normal Save flow ---
