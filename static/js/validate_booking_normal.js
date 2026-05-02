@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function validateTimeOrder(event) {
-        console.log("Submit event fired");
         if (isAllDaySelect.value === 'no') {
             const startTime = startTimeInput.value;
             const endTime = endTimeInput.value;

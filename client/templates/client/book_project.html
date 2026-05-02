@@ -3,19 +3,24 @@
 {% block title %}{{service}}{% endblock %}
 
 {% block content %}
-{% if user.is_authenticated %}
-<div class="container mt-3">
-    <h6 class="h6 mt-2">Book Project</h6>
-    {% if service == "normal" %}
-        {% include "client/normal_event.html" with form=event_form %}
-    {% elif service == "recurring" %}
+    {% if user.is_authenticated %}
+        <div class="container mt-3">
+            
+            {% if service == "normal" %}
+            <h6 class="h6 mt-2">Book A Normal Project</h6>
+                {% include "client/normal_event.html" with form=event_form %}
+            {% elif service == "recurring" %}
+                <h6 class="h6 mt-2">Book A Recurring Project</h6>
+                {% include "client/recurring_event.html" with form=event_form %}
+            {% endif %}
+        </div>
     {% endif %}
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
     {% if service == "normal" %}
         <script src="{% static 'js/validate_booking_normal.js' %}"></script>
+    {% elif service == "recurring" %}
+        <script src="{% static 'js/validate_booking_recurring.js' %}"></script>
     {% endif %}
 {% endblock extra_js %}

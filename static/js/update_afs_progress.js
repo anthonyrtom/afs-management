@@ -87,7 +87,6 @@ function setupClearButtons() {
             button.disabled = true;
 
             const url = row.dataset.url;
-            debugger;
             fetch(url, {
                 method: "POST",
                 headers: {
@@ -101,8 +100,13 @@ function setupClearButtons() {
                     const msg = row.querySelector(".save-message");
                     if (data.success) {
                         // Clear the inputs in the UI
-                        row.querySelector('input[name="start_date"]').value = "";
-                        row.querySelector('input[name="finish_date"]').value = "";
+                        if (departmentId == "invoicing") {
+                            row.querySelector('input[name="invoice_date"]').value = "";
+                            row.querySelector('input[name="invoice_number"]').value = "";
+                        } else {
+                            row.querySelector('input[name="start_date"]').value = "";
+                            row.querySelector('input[name="finish_date"]').value = "";
+                        }
 
                         msg.classList.remove("text-warning");
                         msg.classList.add("text-success");
@@ -126,3 +130,5 @@ function setupClearButtons() {
         });
     });
 }
+
+

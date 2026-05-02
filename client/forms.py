@@ -893,3 +893,63 @@ class NormalEventForm(forms.Form):
                                "End time is required for non-all-day events.")
 
         return cleaned_data
+
+
+class RecurringEventForm(forms.Form):
+    event_start_date = forms.DateField(label="Select start date", required=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
+        attrs={"type": "date", "class": "form-control"}))
+
+    all_day_event = (("yes", "Yes"), ("no", "No"))
+    is_all_day = forms.ChoiceField(
+        choices=all_day_event,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        error_messages={
+            "required": "Please select one option"
+        }
+    )
+    event_start_time = forms.TimeField(required=False,
+                                       widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+    event_end_time = forms.TimeField(required=False,
+                                     widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+
+    recur_type_choices = (("daily", "Daily"), ("weekly", "Weekly"), (
+        "monthly", "Monthly"), ("yearly", "Yearly"))
+
+    recurring_type = forms.ChoiceField(choices=recur_type_choices, required=True, widget=forms.Select(attrs={"class": "form-control"}),        error_messages={
+        "required": "Please select one option"
+    })
+
+    separation_count = forms.IntegerField(
+        min_value=0, required=False, widget=forms.NumberInput(attrs={"class": "form-control", "min": 0}),    error_messages={
+            "min_value": "Value must be at least 0"})
+
+    end = forms.ChoiceField(choices=(("never", "Never"), ("endon", "End On"), (
+        "endafter", "End After")), required=True, widget=forms.Select(attrs={"class": "form-control"}), label="End")
+
+    number_of_occurences = forms.IntegerField(
+        min_value=0, required=False, widget=forms.NumberInput(attrs={"class": "form-control", "min": 0}),    error_messages={
+            "min_value": "Value must be at least 0"})
+
+    event_end_date = forms.DateField(label="Select end date", required=False, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'], widget=forms.DateInput(
+        attrs={"type": "date", "class": "form-control", }))
+
+    months_list = settings.MONTHS_LIST
+    months_indexes_of = get_month_as_index(months_list)
+    yearly_event_choices = [(i, month.upper())
+                            for month, i in zip(months_list, months_indexes_of)]
+
+    yearly_event_month = forms.ChoiceField(
+        choices=yearly_event_choices, required=False, widget=forms.Select(attrs={"class": "form-control"}), label="Yearly Event Month")
+
+    day_of_month = forms.IntegerField(
+        min_value=1, max_value=31, required=False, widget=forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 31}),    error_messages={
+            "min_value": "Value must be at least 1"})
+
+    week_of_month = forms.IntegerField(
+        min_value=-4, max_value=4, required=False, widget=forms.NumberInput(attrs={"class": "form-control", "min": -4, "max": 4}),    error_messages={
+            "min_value": "Value must be at least -4"})
+
+    day_of_week = forms.IntegerField(
+        min_value=1, max_value=7, required=False, widget=forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 7}),    error_messages={
+            "min_value": "Value must be at least 1"})

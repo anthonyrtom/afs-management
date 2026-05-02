@@ -26,7 +26,7 @@ from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax, Event
 from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv, get_optional_fields_for_client
 from users.models import CustomUser
-from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm, ScheduleEventForm, NormalEventForm
+from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm, ScheduleEventForm, NormalEventForm, RecurringEventForm
 
 
 @login_required
@@ -976,8 +976,9 @@ def progress_update_financials(request, client_id):
         if department == "invoicing":
             start_date = None
             end_date = None
-            invoice_date_as_date = datetime.strptime(
-                invoice_date, '%Y-%m-%d').date()
+            if invoice_date:
+                invoice_date_as_date = datetime.strptime(
+                    invoice_date, '%Y-%m-%d').date()
         if clear:
             # Reset fields
             if department == "accounting":
@@ -990,8 +991,8 @@ def progress_update_financials(request, client_id):
                 client_financial_year.secretarial_start_date = None
                 client_financial_year.secretarial_finish_date = None
             elif department == "invoicing":
-                client_financial_year.inv_number == None
-                client_financial_year.invoice_date == None
+                client_financial_year.inv_number = None
+                client_financial_year.invoice_date = None
             client_financial_year.save()
             return JsonResponse({"success": True, "message": "Cleared successfully"})
 
@@ -1645,7 +1646,7 @@ def schedule_service(request):
         if service == "normal":
             event_form = NormalEventForm()
         elif service == "recurring":
-            event_form = None
+            event_form = RecurringEventForm()
 
         if event_form:
             return render(request, "client/book_project.html", {
@@ -1658,7 +1659,7 @@ def schedule_service(request):
         if service == "normal":
             event_form = NormalEventForm(request.POST)
         elif service == "recurring":
-            event_form = None
+            event_form = RecurringEventForm(request.POST)
         else:
             event_form = None
 
