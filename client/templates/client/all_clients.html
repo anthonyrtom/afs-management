@@ -5,56 +5,105 @@
 {% block content %} 
     {% if user.is_authenticated %}
     <div class="container mt-2">
-       <h6 class="h6 mt-2">Filter Clients</h6>
-            <form method="get"  class="mt-2">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        {{form.client_type.label_tag}}
-                        {{form.client_type}}
-                    </div>
-                    <div class="col-md-6">
-                        {{form.year_end.label_tag}}
-                        {{form.year_end}}
-                    </div>
-                    <div class="col-md-6">
-                        {{form.accountant.label_tag}}
-                        {{form.accountant}}
-                    </div>
-                    <div class="col-md-6">
-                        {{form.service_offered.label_tag}}
-                        {{form.service_offered}}
-                    </div>
-                    <div class="col-md-6 mt-4">
-                    <input type="text" class="form-control" placeholder="Search client" name="searchterm">    
+        <h6 class="h6 mt-2">Filter Clients</h6>
+        
+        <!-- Filter Form Section -->
+        <form method="get" class="mt-2">
+            <div class="row g-3">
+                <!-- Row 1: Type and Group -->
+                <div class="col-md-6">
+                    {{ form.client_type.label_tag }}
+                    {{ form.client_type }}
                 </div>
-                <div class="col-md-6 mt-4">
-                    <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+                <div class="col-md-6">
+                    {{ form.client_group.label_tag }}
+                    {{ form.client_group }}
+                </div>
+
+                <!-- Row 2: Year End and Accountant -->
+                <div class="col-md-6">
+                    {{ form.year_end.label_tag }}
+                    {{ form.year_end }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.accountant.label_tag }}
+                    {{ form.accountant }}
+                </div>
+
+                <!-- Row 3: Service and Search -->
+                <div class="col-md-6">
+                    {{ form.service_offered.label_tag }}
+                    {{ form.service_offered }}
+                </div>
+                <div class="col-md-6">
+                    <label for="searchterm">Search Term</label>
+                    <input type="text" id="searchterm" class="form-control" placeholder="Search by name, ID or tax numbers..." name="searchterm" value="{{ request.GET.searchterm }}">  
+                </div>
+
+                <!-- Action Button Row -->
+                <div class="col-12 mt-4">
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters & Search</button>
                 </div>   
-                </div>
-          
-            </form>   
+            </div>
+        </form>   
       
-    <h6 class="h6 mt-2">{% if clients %} {{count}} clients found in the system {% else %} Nothing found {% endif %}</h6>
-    
-    {% if clients %}
-    <table class="table table-striped table-hover table-bordered">
-        {% include "client/_table_headers.html" with headers=headers %}
-        <tbody>
-            {% for client in clients %}
-                <tr>
-                    <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.get_client_full_name}}</a></td>
-                    <td>{{client.internal_id_number}}</td>
-                    <td>{{client.entity_reg_number}}</td>
-                    <td>{{client.client_type.name}}</td>
-                    <td>{{client.get_month_end_as_string}}</td>
-                    <td>{{client.accountant.first_name}} {{client.accountant.last_name}}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
+        <hr class="my-4">
+        
+        <!-- Results Logic -->
+        {% if not has_filters %}
+            {# This shows only when the user first lands on the page #}
+            <div class="alert alert-info text-center shadow-sm">
+                <i class="fas fa-info-circle me-2"></i> 
+                Welcome! Please select your filter criteria above and click <strong>Apply Filters</strong> to view the client list.
+            </div>
+        {% else %}
+            {# This shows only after the 'Apply Filters' button has been clicked #}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="h6 mb-0">
+                    {% if clients %} 
+                        <strong>{{ count }}</strong> clients found 
+                    {% else %} 
+                        No clients found matching the selected criteria.
+                    {% endif %}
+                </h6>
+                {% comment %} {% if clients %}
+                    <a href="?{{ request.GET.urlencode }}&export=csv" class="btn btn-sm btn-outline-success">
+                        Export to CSV
+                    </a>
+                {% endif %} {% endcomment %}
+            </div>
+
+            {% if clients %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-bordered shadow-sm">
+                    {% include "client/_table_headers.html" with headers=headers %}
+                    <tbody>
+                        {% for client in clients %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'client-detail' client.id %}" class="text-decoration-none fw-bold">
+                                        {{ client.get_client_full_name }}
+                                    </a>
+                                </td>
+                                <td>{{ client.internal_id_number }}</td>
+                                <td>{{ client.entity_reg_number|default:"-" }}</td>
+                                <td>{{ client.client_type.name }}</td>
+                                <td>{{ client.get_month_end_as_string }}</td>
+                                <td>
+                                    {% if client.accountant %}
+                                        {{ client.accountant.get_full_name|default:client.accountant.email }}
+                                    {% else %}
+                                        <span class="text-muted small italic">Not Assigned</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        {% endif %}
     </div>
-    
     {% endif %}
 {% endblock content %}
 

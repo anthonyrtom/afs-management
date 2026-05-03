@@ -66,10 +66,31 @@ class Month(models.Model):
                 {'name': f'A month with that name "{self.name}" already exists.'})
 
 
+class ClientGroup(models.Model):
+    name = models.CharField(max_length=150, null=False,
+                            blank=False, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        self.name = self.name.title()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        self.name = self.name.strip().title()
+        if ClientGroup.objects.exclude(id=self.id).filter(name__iexact=self.name).exists():
+            raise ValidationError(
+                {'name': f'That group already exists-"{self.name}"'})
+
+
 class Client(models.Model):
     name = models.CharField(max_length=150, null=False)
     client_type = models.ForeignKey(
         ClientType, on_delete=models.SET_NULL, null=True, related_name='clients')
+    client_group = models.ForeignKey(
+        ClientGroup, on_delete=models.SET_NULL, null=True, related_name='group_clients', blank=True)
     surname = models.CharField(max_length=150, null=True)
     email = models.EmailField(max_length=100, null=True)
     cell_number = models.CharField(max_length=50, null=True)
@@ -471,6 +492,7 @@ class ClientFinancialYear(models.Model):
 
     class Meta:
         unique_together = ('client', 'financial_year')
+        ordering = ("client", "financial_year")
         permissions = [("change_invoice_date", "Can edit the invoice date"),
                        ("change_tax_date", "A User can change tax dates on financial statements progress"), ("change_acc_date", "Can change the start and finish date on financial"), ("change_sec_date", "A User can change secretarial date")]
 

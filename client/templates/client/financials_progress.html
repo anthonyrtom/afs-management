@@ -1,12 +1,15 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %} Financial Statements Progress{% endblock title %}
+
 {% block exportblock %}
-    <a href="?{{ request.GET.urlencode }}&export=csv" 
-    class="btn btn-success btn-sm">
+    {% if is_valid %}
+    <a href="?{{ request.GET.urlencode }}&export=csv" class="btn btn-success btn-sm">
         <i class="fas fa-download"></i> Export to CSV
     </a>
+    {% endif %}
 {% endblock %}
+
 {% block content %}
     {% if user.is_authenticated %}
         <h6 class="h6 mt-4">Check Progress of Financial Statements</h6>     
@@ -17,12 +20,12 @@
                     {{ form.client_type }} 
                 </div>
                 <div class="form-group col-md-4 mt-2">
-                    {{ form.month.label_tag }}  
-                    {{ form.month }}  
+                    {{ form.client_group.label_tag }}  
+                    {{ form.client_group }} 
                 </div>
                 <div class="form-group col-md-4 mt-2">
-                    {{ form.accountant.label_tag }}  
-                    {{ form.accountant }} 
+                    {{ form.month.label_tag }}  
+                    {{ form.month }}  
                 </div>
              </div>
             <div class="row g-3 mt-2">
@@ -30,85 +33,108 @@
                     {{ form.years.label_tag }}  
                     {{ form.years }}  
                 </div>
-
-                    <div class="form-group col-md-4 mt-2">
-                        {{ form.searchterm.label_tag }}  
-                        {{ form.searchterm }}  
-                    </div>
-                    <div class="form-group col-md-4 mt-2">
-                    <input type="hidden" class="form-label">&nbsp;</input> 
-                    <button id="id_submit_btn" type="submit" class="btn btn-outline-primary w-100">Submit</button>
-                    
-                    </div>
+                <div class="form-group col-md-4 mt-2">
+                    {{ form.accountant.label_tag }}  
+                    {{ form.accountant }} 
+                </div>
+                <div class="form-group col-md-4 mt-2">
+                    {{ form.searchterm.label_tag }}  
+                    {{ form.searchterm }}  
+                </div>
             </div>
-            </form>
+            <div class="row mt-3">
+                <div class="col-md-4 offset-md-8">
+                    <button id="id_submit_btn" type="submit" class="btn btn-outline-primary w-100">Submit</button>
+                </div>
+            </div>
+        </form>
+
     {% if is_valid %}
     <h6 class="h6 mt-4" id="filtered-row-count">Total found: {{count}}</h6>
     <table class="table table-striped table-hover table-bordered">
     {% include "client/_table_headers.html" with headers=headers %}
-    <thead>
-        <tr>
-            <td>
-                <!-- <input type="text" id="filter-name" class="form-control form-control-sm" placeholder="Search name"> -->
-            </td>
-            <td>
-                <select id="filter-year" class="form-select form-select-sm">
-                    <option value="all">All</option>
-                    {% for year in unique_years %}
-                        <option value="{{ year }}">{{ year }}</option>
-                    {% endfor %}
-                </select>
-            </td>
-            <td></td> <!-- Schedule Date -->
-            <td>
-                <select id="filter-afs" class="form-select form-select-sm">
-                    <option value="all">All</option>
-                    <option value="completed">Completed</option>
-                    <option value="incomplete">Incomplete</option>
-                </select>
-            </td>
-            <td>
-                <select id="filter-itr14" class="form-select form-select-sm">
-                    <option value="all">All</option>
-                    <option value="completed">Completed</option>
-                    <option value="incomplete">Incomplete</option>
-                </select>
-            </td>
-            <td>
-                <select id="filter-invoice" class="form-select form-select-sm">
-                    <option value="all">All</option>
-                    <option value="invoiced">Invoiced</option>
-                    <option value="pending">Pending</option>
-                </select>
-            </td>
-        </tr>
-        <tr class="summary-row">
-            <td></td>
-            <td></td>
-            <td></td>
-            <td>{{ afs_complete }} completed</td>
-            <td>{{ itr14_complete }} completed</td>
-            <td>{{ invoiced }} invoiced</td>
-        </tr>
-    </thead>
-    <tbody>
-
-        {% for record in clients %}
-            <tr>
-                <td><a href="{% url 'client-detail' record.client.id %}" class="text-decoration-none">{{ record.client.get_client_full_name }}</a></td>
-                <td>{{ record.financial_year }}</td>
-                <td>{{ record.schedule_date|default:"Not Scheduled" }}</td>
-                <td> <button {% if record.finish_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.finish_date %} Completed {% else %}Incomplete {% endif %}</button></td>
-                <td> <button {% if record.itr14_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.itr14_date %} Completed {% else %}Incomplete {% endif %}</button></td>
-                <td> <button {% if record.invoice_date %} class="btn btn-success" {% else %}class="btn btn-warning" {% endif %}>{% if record.invoice_date %} Invoiced {% else %}Pending {% endif %}</button></td>
-            </tr>
-        {% endfor %}
-    </tbody>
+<!-- Table Header Section inside financials_progress.html -->
+<thead>
+    <tr>
+        <td></td> <!-- Name Search is via the form above -->
+        <td>
+            <select id="filter-year" class="form-select form-select-sm">
+                <option value="all">All</option>
+                {% for year in unique_years %}
+                <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td></td> <!-- Schedule Date -->
+        <td>
+            <select id="filter-afs" class="form-select form-select-sm">
+                <option value="all">All</option>
+                <option value="completed">Completed</option>
+                <option value="incomplete">Incomplete</option>
+            </select>
+        </td>
+        <td>
+            <!-- NEW SECRETARIAL FILTER -->
+            <select id="filter-sec" class="form-select form-select-sm">
+                <option value="all">All</option>
+                <option value="completed">Completed</option>
+                <option value="incomplete">Incomplete</option>
+            </select>
+        </td>
+        <td>
+            <select id="filter-itr14" class="form-select form-select-sm">
+                <option value="all">All</option>
+                <option value="completed">Completed</option>
+                <option value="incomplete">Incomplete</option>
+            </select>
+        </td>
+        <td>
+            <select id="filter-invoice" class="form-select form-select-sm">
+                <option value="all">All</option>
+                <option value="invoiced">Invoiced</option>
+                <option value="pending">Pending</option>
+            </select>
+        </td>
+    </tr>
+    <tr class="summary-row text-center fw-bold bg-light">
+        <td colspan="3" class="text-end">Totals:</td>
+        <td class="text-success">{{ afs_complete }} AFS</td>
+        <td class="text-info">{{ sec_complete }} SEC</td>
+        <td class="text-primary">{{ itr14_complete }} ITR</td>
+        <td class="text-dark">{{ invoiced }} INV</td>
+    </tr>
+</thead>
+<tbody>
+    {% for record in clients %}
+    <tr>
+        <td><a class="text-decoration-none fw-bold" href="{% url 'client-detail' record.client.id %}">{{ record.client.get_client_full_name }}</a></td>
+        <td>{{ record.financial_year.the_year }}</td>
+        <td>{{ record.schedule_date|default:"-" }}</td>
+        
+        <!-- AFS -->
+        <td><button class="btn {% if record.finish_date %}btn-success{% else %}btn-warning{% endif %} btn-sm w-100">
+            {% if record.finish_date %}Completed{% else %}Incomplete{% endif %}</button></td>
+        
+        <!-- SECRETARIAL (NEW) -->
+        <td><button class="btn {% if record.secretarial_finish_date %}btn-success{% else %}btn-secondary{% endif %} btn-sm w-100">
+            {% if record.secretarial_finish_date %}Completed{% else %}Incomplete{% endif %}</button></td>
+        
+        <!-- ITR14 -->
+        <td><button class="btn {% if record.itr14_date %}btn-success{% else %}btn-warning{% endif %} btn-sm w-100">
+            {% if record.itr14_date %}Completed{% else %}Incomplete{% endif %}</button></td>
+        
+        <!-- INVOICE -->
+        <td><button class="btn {% if record.invoice_date %}btn-success{% else %}btn-warning{% endif %} btn-sm w-100">
+            {% if record.invoice_date %}Invoiced{% else %}Pending{% endif %}</button></td>
+    </tr>
+    {% endfor %}
+</tbody>
     </table>
-    {% endif %}        
+    {% endif %}         
     {% endif %}
 {% endblock %}
+
 {% block extra_js %}
 <script src="{% static 'js/financials_progress.js' %}"></script>
-<script src="{% static 'js/searchClient.js' %}"></script>
+{% comment %} <script src="{% static 'js/searchClient.js' %}"></script> {% endcomment %}
 {% endblock extra_js %}

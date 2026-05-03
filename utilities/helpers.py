@@ -136,7 +136,7 @@ def get_client_model_fields():
         A list of all the fields except ManyToMany fields
     """
     all_list = ["name", "surname", "email", "cell_number", "contact_person", "contact_person_cell", "month_end", "is_active", "is_sa_resident", "last_day", "income_tax_number", "paye_reg_number",
-                "first_month_for_paye_sub", "uif_reg_number", "entity_reg_number", "birthday_of_entity", "vat_reg_number", "first_month_for_vat_sub", "vat_category", "registered_address", "coida_reg_number", "first_month_for_coida_sub", "internal_id_number", "uif_dept_reg_number", "accountant", "first_financial_year", "client_type"]
+                "first_month_for_paye_sub", "uif_reg_number", "entity_reg_number", "birthday_of_entity", "vat_reg_number", "first_month_for_vat_sub", "vat_category", "registered_address", "coida_reg_number", "first_month_for_coida_sub", "internal_id_number", "uif_dept_reg_number", "accountant", "first_financial_year", "client_type", "client_group"]
 
     return all_list
 
