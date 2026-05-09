@@ -27,6 +27,10 @@ from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissi
 from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv, get_optional_fields_for_client
 from users.models import CustomUser
 from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm, ScheduleEventForm, NormalEventForm, RecurringEventForm
+from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax, ClientGroup
+from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv, get_optional_fields_for_client
+from users.models import CustomUser
+from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm, CreateGroupForm
 
 
 @login_required
@@ -279,53 +283,71 @@ def reports(request):
 
 @login_required
 def view_all_clients(request):
-    form = ClientFilter(request.GET or None)
-    if form.is_valid():
-        client_type = form.cleaned_data.get("client_type", None)
-        accountant = form.cleaned_data.get("accountant", None)
-        service_offered = form.cleaned_data.get("service_offered", None)
-        year_end = form.cleaned_data.get("year_end", None)
+    # Check if any filter parameters were actually sent
+    has_filters = any(field in request.GET for field in [
+                      'client_type', 'client_group', 'accountant', 'year_end', 'service_offered', 'searchterm'])
 
-        all_clients = Client.objects.all().order_by("name")
+    form = ClientFilter(request.GET or None)
+    all_clients = Client.objects.none()  # Default to an empty queryset
+    headers = ["Name", "Internal ID", "Registration No.",
+               "Entity Type", "Year End", "Accountant"]
+
+    if has_filters and form.is_valid():
+        # Start with all clients only after form submission
+        all_clients = Client.objects.all().select_related(
+            'accountant', 'client_type').order_by("name")
+
+        client_type = form.cleaned_data.get("client_type")
+        client_group = form.cleaned_data.get("client_group")
+        accountant = form.cleaned_data.get("accountant")
+        service_offered = form.cleaned_data.get("service_offered")
+        year_end = form.cleaned_data.get("year_end")
+
         if client_type and client_type != "all":
-            all_clients = all_clients.filter(
-                client_type__id=client_type)
+            all_clients = all_clients.filter(client_type__id=client_type)
+
+        if client_group and client_group != "all":
+            all_clients = all_clients.filter(client_group__id=client_group)
+
         if accountant and accountant != "all":
-            all_clients = all_clients.filter(
-                accountant__id=accountant)
+            all_clients = all_clients.filter(accountant__id=accountant)
+
         if service_offered and service_offered != "all":
             all_clients = all_clients.filter(
                 client_service__id=service_offered).distinct()
+
         if year_end and year_end != "all":
             month = settings.MONTHS_LIST.index(year_end) + 1
             all_clients = all_clients.filter(month_end=month)
 
-        headers = ["Name", "Internal ID", "Registration No.",
-                   "Entity Type", "Year End",  "Accountant"]
-
-        query = request.GET.get("searchterm", "")
+        # Search logic
+        query = request.GET.get("searchterm", "").strip()
         if query:
-            all_clients = all_clients.filter(Q(name__icontains=query) |
-                                             Q(surname__icontains=query) |
-                                             Q(income_tax_number__icontains=query) |
-                                             Q(paye_reg_number__icontains=query) |
-                                             Q(uif_reg_number__icontains=query) |
-                                             Q(entity_reg_number__icontains=query) |
-                                             Q(vat_reg_number__icontains=query) |
-                                             Q(internal_id_number__icontains=query))
-        if request.GET.get("export") == "csv":
-            headers_export = ["Name", "Registration Number",
-                              "Internal ID", "First Year AFS", "Accountant", "Year End"]
-            rows = [
-                [c.get_client_full_name(), c.entity_reg_number,
-                 c.internal_id_number, c.first_financial_year, c.accountant, c.get_month_end_as_string(), ]
-                for c in all_clients
-            ]
-            return export_to_csv("all_clients_export.csv", headers_export, rows)
+            all_clients = all_clients.filter(
+                Q(name__icontains=query) |
+                Q(surname__icontains=query) |
+                Q(internal_id_number__icontains=query) |
+                Q(entity_reg_number__icontains=query)
+            )
 
-        count = len(all_clients)
-        return render(request, "client/all_clients.html", {"clients": all_clients, "headers": headers, "count": count, "form": form})
-    return render(request, "client/all_clients.html", {"form": form})
+    # Export logic should only trigger if there are actually results
+    if request.GET.get("export") == "csv" and all_clients.exists():
+        headers_export = ["Name", "Registration Number",
+                          "Internal ID", "First Year AFS", "Accountant", "Year End"]
+        rows = [
+            [c.get_client_full_name(), c.entity_reg_number, c.internal_id_number,
+             c.first_financial_year, c.accountant, c.get_month_end_as_string()]
+            for c in all_clients
+        ]
+        return export_to_csv("all_clients_export.csv", headers_export, rows)
+
+    return render(request, "client/all_clients.html", {
+        "clients": all_clients,
+        "headers": headers,
+        "count": all_clients.count(),
+        "form": form,
+        "has_filters": has_filters  # Pass this to the template
+    })
 
 
 @login_required
@@ -385,74 +407,81 @@ def scheduled_financials(request):
 def financials_progress(request):
     form = FilterAllFinancialClient(request.GET or None)
     data = []
-    headers = ["Client Name", "Year",
-               "Scheduled Date", "AFS", "ITR14", "Invoice"]
+    # Added "Secretarial" to headers
+    headers = ["Client Name", "Year", "Scheduled Date",
+               "AFS", "Secretarial", "ITR14", "Invoice"]
     unique_years = set()
-    afs_complete = itr14_complete = invoiced = 0
+    afs_complete = sec_complete = itr14_complete = invoiced = 0
     is_valid = False
+
     if form.is_valid():
-        selected_year_ids = form.cleaned_data.get("years", [])
+        is_valid = True
+        selected_year_ids = list(map(int, form.cleaned_data.get("years", [])))
         accountants = form.cleaned_data.get("accountant", [])
         searchterm = form.cleaned_data.get("searchterm", "")
-        month = form.cleaned_data.get("month", [])
-        client_type = form.cleaned_data.get("client_type", [])
+        month_list = list(map(int, form.cleaned_data.get("month", [])))
+        type_ids = list(map(int, form.cleaned_data.get("client_type", [])))
+        group_ids = form.cleaned_data.get("client_group", [])
 
-        month = list(map(int, month))
-
-        client_type = list(map(int, client_type))
-        is_valid = True
         today = datetime.now().date()
-
-        selected_year_ids = list(map(int, selected_year_ids))
         financial_years = FinancialYear.objects.filter(
             id__in=selected_year_ids)
 
-        valid_clients = [
-            c for c in Client.objects.all() if c.is_afs_client(today) and c.month_end in month]
+        # Base Client Filter
+        clients_qs = Client.objects.filter(
+            month_end__in=month_list, client_type__id__in=type_ids)
 
+        if group_ids:
+            if "None" in group_ids:
+                actual_g_ids = [int(gid) for gid in group_ids if gid != 'None']
+                clients_qs = clients_qs.filter(
+                    Q(client_group__isnull=True) | Q(client_group__id__in=actual_g_ids))
+            else:
+                clients_qs = clients_qs.filter(
+                    client_group__id__in=[int(gid) for gid in group_ids])
+
+        valid_client_ids = [c.id for c in clients_qs if c.is_afs_client(today)]
+
+        # Progress Query
         data = ClientFinancialYear.objects.filter(
-            client__in=valid_clients, financial_year__in=financial_years, client__client_type__id__in=client_type)
-        if "None" in accountants:
-            accountant_ids_list = [int(aid)
-                                   for aid in accountants if aid != 'None']
-            data = data.filter(
-                Q(client__accountant__isnull=True) | Q(
-                    client__accountant__id__in=accountant_ids_list)
-            )
-        else:
-            accountant_ids_list = [int(aid) for aid in accountants]
-            data = data.filter(client__accountant__id__in=accountant_ids_list)
+            client_id__in=valid_client_ids,
+            financial_year__in=financial_years
+        ).select_related('client', 'financial_year', 'client__accountant', 'client__client_group')
+
+        if accountants:
+            if "None" in accountants:
+                acc_ids = [int(aid) for aid in accountants if aid != 'None']
+                data = data.filter(Q(client__accountant__isnull=True) | Q(
+                    client__accountant__id__in=acc_ids))
+            else:
+                data = data.filter(client__accountant__id__in=[
+                                   int(aid) for aid in accountants])
+
         if searchterm:
-            data = data.filter(
-                client__name__icontains=searchterm)
+            data = data.filter(client__name__icontains=searchterm)
+
+        # Calculations
         unique_years = sorted(
             set(r.financial_year.the_year for r in data), reverse=True)
-
         afs_complete = sum(1 for r in data if r.finish_date)
+        sec_complete = sum(1 for r in data if r.secretarial_finish_date)  # New
         itr14_complete = sum(1 for r in data if r.itr14_date)
         invoiced = sum(1 for r in data if r.invoice_date)
 
         if request.GET.get("export") == "csv":
-            headers = ["Name", "Registration Number", "Internal ID",
-                       "Year", "Schedule Date", "AFSs Finish Date", "Sec Start Date", "Sec Finish Date", "ITR14 Start Date", "ITR14 Finish Date", "Invoice Date", "Accountant Email"]
-            rows = [
-                [c.client.get_client_full_name(), c.client.entity_reg_number,
-                 c.client.internal_id_number, c.financial_year.the_year, c.schedule_date, c.finish_date, c.secretarial_start_date, c.secretarial_finish_date, c.itr14_start_date, c.itr14_date, c.invoice_date, c.client.accountant.email if c.client.accountant else ""]
-                for c in data
-            ]
-            return export_to_csv("All_AFS_progress_export.csv", headers, rows)
+            csv_headers = ["Name", "Reg", "Year", "AFS Done",
+                           "Sec Done", "ITR14 Done", "Invoice Date"]
+            csv_rows = [[
+                c.client.get_client_full_name(), c.client.entity_reg_number, c.financial_year.the_year,
+                c.finish_date, c.secretarial_finish_date, c.itr14_date, c.invoice_date
+            ] for c in data]
+            return export_to_csv("Financial_Progress.csv", csv_headers, csv_rows)
 
     return render(request, "client/financials_progress.html", {
-        "form": form,
-        "clients": data,
-        "scheduled": data,
-        "count": len(data),
-        "headers": headers,
-        "unique_years": unique_years,
-        "afs_complete": afs_complete,
-        "itr14_complete": itr14_complete,
-        "invoiced": invoiced,
-        "is_valid": is_valid
+        "form": form, "clients": data, "count": len(data) if data else 0,
+        "headers": headers, "unique_years": unique_years,
+        "afs_complete": afs_complete, "sec_complete": sec_complete,
+        "itr14_complete": itr14_complete, "invoiced": invoiced, "is_valid": is_valid
     })
 
 
@@ -481,23 +510,42 @@ def search_users(request):
 
 @login_required
 def search_vat_clients(request):
+    # Check if a search has been initiated
+    filter_keys = ['client_type', 'client_group',
+                   'vat_category', 'month', 'accountant', 'searchterm']
+    has_filters = any(key in request.GET for key in filter_keys)
+
     form = VatClientSearchForm(request.GET or None)
-    clients = None
+    clients = Client.objects.none()
     count = 0
     headers = ["Client Name", "Client Type",
                "Month End", "VAT No", "Accountant", "Category"]
     searchterm = request.GET.get("searchterm", "")
 
-    if form.is_valid():
-        selected_category = form.cleaned_data["vat_category"]
-        selected_accountant = form.cleaned_data["accountant"]
-        month = form.cleaned_data["month"]
-        client_type = form.cleaned_data["client_type"]
+    if has_filters and form.is_valid():
+        selected_category = form.cleaned_data.get("vat_category")
+        selected_accountant = form.cleaned_data.get("accountant")
+        month = form.cleaned_data.get("month")
+        client_type = form.cleaned_data.get("client_type")
+        client_group = form.cleaned_data.get("client_group")  # New
 
-        clients = Client.objects.filter(
-            vat_category__isnull=False).order_by("name")
+        # Start with VAT clients only
+        clients = Client.objects.filter(vat_category__isnull=False).select_related(
+            'accountant', 'client_type', 'vat_category'
+        ).order_by("name")
+
+        # Apply Filters
         if selected_accountant and selected_accountant != "all":
-            clients = clients.filter(accountant=selected_accountant)
+            clients = clients.filter(accountant__id=selected_accountant)
+
+        if client_type and client_type != "all":
+            clients = clients.filter(client_type__id=client_type)
+
+        if client_group and client_group != "all":
+            clients = clients.filter(client_group__id=client_group)
+
+        if selected_category and selected_category != "all":
+            clients = clients.filter(vat_category__id=selected_category)
 
         if searchterm:
             clients = clients.filter(
@@ -505,13 +553,8 @@ def search_vat_clients(request):
                 Q(surname__icontains=searchterm) |
                 Q(vat_reg_number__icontains=searchterm)
             )
-        if client_type and client_type != "all":
-            clients = clients.filter(client_type=client_type)
 
-        if selected_category and selected_category != "all":
-            vat_cat = VatCategory.objects.get(id=selected_category)
-            clients = clients.filter(vat_category=vat_cat)
-
+        # VAT Period / Month Logic
         if month and month != "all":
             index = settings.MONTHS_LIST.index(month) + 1
             if month in ["january", "march", "may", "july", "september", "november"]:
@@ -520,7 +563,6 @@ def search_vat_clients(request):
                     Q(vat_category__vat_category="C") |
                     Q(vat_category__vat_category="E", month_end=index)
                 )
-
             elif month in ["february", "august"]:
                 clients = clients.filter(
                     Q(vat_category__vat_category="B") |
@@ -528,35 +570,31 @@ def search_vat_clients(request):
                     Q(vat_category__vat_category="D") |
                     Q(vat_category__vat_category="E", month_end=index)
                 )
-
             elif month in ["april", "june", "october", "december"]:
                 clients = clients.filter(
                     Q(vat_category__vat_category="B") |
                     Q(vat_category__vat_category="C") |
                     Q(vat_category__vat_category="E", month_end=index)
                 )
+
+        # Handle Export
         if request.GET.get("export") == "csv":
-            headers = ["Name", "Registration Number",
-                       "Internal ID", "Vat Number"]
-            rows = [
-                [c.get_client_full_name(), c.entity_reg_number,
-                 c.internal_id_number, c.vat_reg_number]
-                for c in clients
-            ]
-            return export_to_csv("vat_export.csv", headers, rows)
+            headers_csv = ["Name", "Registration Number",
+                           "Internal ID", "Vat Number"]
+            rows = [[c.get_client_full_name(), c.entity_reg_number,
+                     c.internal_id_number, c.vat_reg_number] for c in clients]
+            return export_to_csv("vat_export.csv", headers_csv, rows)
+
         count = clients.count()
 
-        return render(request, "client/search_vat_client.html", {
-            "form": form,
-            "clients": clients,
-            "headers": headers,
-            "vat_category": selected_category,
-            "selected_accountant": selected_accountant,
-            "searchterm": searchterm,
-            "count": count
-        })
-
-    return render(request, "client/search_vat_client.html", {"form": form})
+    return render(request, "client/search_vat_client.html", {
+        "form": form,
+        "clients": clients,
+        "headers": headers,
+        "count": count,
+        "has_filters": has_filters,
+        "searchterm": searchterm
+    })
 
 
 @login_required
@@ -976,6 +1014,7 @@ def progress_update_financials(request, client_id):
         if department == "invoicing":
             start_date = None
             end_date = None
+            invoice_date_as_date = None
             if invoice_date:
                 invoice_date_as_date = datetime.strptime(
                     invoice_date, '%Y-%m-%d').date()
@@ -993,6 +1032,7 @@ def progress_update_financials(request, client_id):
             elif department == "invoicing":
                 client_financial_year.inv_number = None
                 client_financial_year.invoice_date = None
+
             client_financial_year.save()
             return JsonResponse({"success": True, "message": "Cleared successfully"})
 
@@ -1141,7 +1181,7 @@ class ClientUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
 
-        optional_fields = []
+        optional_fields = ['client_group']
         boolean_fields = ['is_active', 'is_sa_resident']
         date_fields = ['birthday_of_entity']
 

@@ -1,73 +1,115 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}VAT Clients by Category and Accountant{% endblock %}
+{% block title %}VAT Clients Search{% endblock %}
 
 {% block content %}
 {% if user.is_authenticated %}
 <div class="container mt-3">
     <h6 class="h6 mt-2">Filter VAT Clients</h6>
 
-       <form method="GET">
+    <form method="GET">
         <div class="row g-3 mb-4">
+            <!-- Row 1 -->
             <div class="col-md-6">
                 {{ form.client_type.label_tag }}
                 {{ form.client_type }}
             </div>
             <div class="col-md-6">
+                {{ form.client_group.label_tag }}
+                {{ form.client_group }}
+            </div>
+
+            <!-- Row 2 -->
+            <div class="col-md-6">
                 {{ form.vat_category.label_tag }}
                 {{ form.vat_category }}
             </div>
-            
             <div class="col-md-6">
                 {{ form.month.label_tag }}
                 {{ form.month }}
             </div>
+
+            <!-- Row 3 -->
             <div class="col-md-6">
                 {{ form.accountant.label_tag }}
                 {{ form.accountant }}
             </div>
-
             <div class="col-md-6">
-                    <input type="text" name="searchterm" class="form-control"
-                       placeholder="Search by name or VAT No." >
+                <label for="searchterm">Search</label>
+                <input type="text" name="searchterm" id="searchterm" class="form-control"
+                       placeholder="Search by name or VAT No." value="{{ searchterm }}">
             </div>
-            <div class="col-md-6 mt-3"> 
-                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+
+            <!-- Row 4: Dedicated Button Row -->
+            <div class="col-12 mt-4"> 
+                <button type="submit" class="btn btn-primary w-100">Apply VAT Filters</button>
             </div>
         </div>
-        
-        </form>
+    </form>
 
-    {% if clients %}
+    <hr class="my-4">
 
-        <h6 class="h6">{{count}} Found:</h6>
-        <table class="table table-hover table-bordered table-striped">
-            <thead>
-                <tr>
-                    {% for header in headers %}
-                        <th>{{ header }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for client in clients %}
-                    <tr>
-                        <td><a href="{% url 'client-detail' client.id %}" class="text-decoration-none">{{client.get_client_full_name}}</a></td>
-                        <td>{{ client.client_type }}</td>
-                        <td>{{ client.month_end }}</td>
-                        <td>{{ client.vat_reg_number }}</td>
-                        <td>{{ client.accountant.get_full_name }}</td>
-                        <td>{{ client.vat_category.vat_category }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% if not has_filters %}
+        <div class="alert alert-info text-center shadow-sm">
+            <i class="fas fa-search me-2"></i> 
+            Select VAT criteria or enter a search term and click <strong>Apply VAT Filters</strong> to see results.
+        </div>
     {% else %}
-        <p class="mt-2">No clients found for the selected filters.</p>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="h6 mb-0"><strong>{{ count }}</strong> VAT Clients Found:</h6>
+            {% comment %} {% if clients %}
+                <a href="?{{ request.GET.urlencode }}&export=csv" class="btn btn-sm btn-outline-success">
+                    Export results to CSV
+                </a>
+            {% endif %} {% endcomment %}
+        </div>
+
+        {% if clients %}
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered table-striped shadow-sm">
+                    <thead>
+                        <tr>
+                            {% for header in headers %}
+                                <th>{{ header }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in clients %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'client-detail' client.id %}" class="text-decoration-none fw-bold">
+                                        {{ client.get_client_full_name }}
+                                    </a>
+                                </td>
+                                <td>{{ client.client_type.name }}</td>
+                                <td>{{ client.get_month_end_as_string }}</td>
+                                <td>{{ client.vat_reg_number }}</td>
+                                <td>
+                                    {% if client.accountant %}
+                                        {{ client.accountant.get_full_name|default:client.accountant.email }}
+                                    {% else %}
+                                        <span class="text-muted small italic">Not Assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ client.vat_category.vat_category }}</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-warning text-center">
+                No VAT clients found for the selected filters.
+            </div>
+        {% endif %}
     {% endif %}
 </div>
 {% endif %}
 {% endblock %}
+
 {% block extra_js %}
 <script src="{% static 'js/searchClient.js' %}"></script>
 {% endblock extra_js %}

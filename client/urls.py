@@ -63,9 +63,9 @@ urlpatterns = [
          views.save_client_service,
          name="save-client-service"
          ),
-    path("schedule-service/",
-         views.schedule_service,
-         name="schedule-service"
-         ),
-
+    path('group/add/', views.manage_client_group, name='add_client_group'),
+    path('group/edit/<int:pk>/', views.manage_client_group,
+         name='edit_client_group'),
+    path('clients/upload-groups/', views.upload_client_groups,
+         name='upload_client_groups'),
 ]

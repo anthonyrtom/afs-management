@@ -1,94 +1,90 @@
-$(document).ready(function() {
-    
-    $('.selectpicker').selectpicker();
+/**
+ * financial_progress.js
+ * Handles client-side filtering for the Financial Statements Progress table.
+ */
 
-    const tableBody = $("table.table tbody");
-    if (!tableBody.length) return;
-
+$(document).ready(function () {
     const yearFilter = $("#filter-year");
     const afsFilter = $("#filter-afs");
+    const secFilter = $("#filter-sec"); // New
     const itr14Filter = $("#filter-itr14");
     const invoiceFilter = $("#filter-invoice");
-
-    const filters = {
-        year: "all",
-        afs: "all",
-        itr14: "all",
-        invoice: "all"
-    };
-
-    function debounce(func, delay) {
-        let timeoutId;
-        return function (...args) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(this, args), delay);
-        };
-    }
-
-    function updateFilters() {
-        filters.year = yearFilter.val();
-        filters.afs = afsFilter.val();
-        filters.itr14 = itr14Filter.val();
-        filters.invoice = invoiceFilter.val();
-
-        applyFilters();
-    }
-
-    const debouncedUpdateFilters = debounce(updateFilters, 300);
+    const searchInput = $("input[name='searchterm']");
 
     function applyFilters() {
-        const rows = $("tbody tr");
-        let countFiltered = 0;
-        rows.each(function() {
+        const filters = {
+            year: yearFilter.val(),
+            afs: afsFilter.val(),
+            sec: secFilter.val(),
+            itr14: itr14Filter.val(),
+            invoice: invoiceFilter.val(),
+            search: searchInput.val() ? searchInput.val().toLowerCase().trim() : ""
+        };
+
+        const rows = $("table.table tbody tr");
+        let visibleCount = 0;
+
+        rows.each(function () {
             const row = $(this);
-            
-            if (row.hasClass("summary-row")) {
-                row.css("display", "");
-                return;
-            }
+            if (row.children('td').length < 7) return; // Updated for 7 columns
 
-            if (row.children().length < 6) {
-                row.css("display", "none");
-                return;
-            }
-
+            const name = row.find("td:eq(0)").text().toLowerCase();
             const year = row.find("td:eq(1)").text().trim();
-            const afsStatus = row.find("td:eq(3) button").text().toLowerCase().trim();
-            const itr14Status = row.find("td:eq(4) button").text().toLowerCase().trim();
-            const invoiceStatus = row.find("td:eq(5) button").text().toLowerCase().trim();
+            const afs = row.find("td:eq(3) button").text().toLowerCase().trim();
+            const sec = row.find("td:eq(4) button").text().toLowerCase().trim(); // New
+            const itr = row.find("td:eq(5) button").text().toLowerCase().trim();
+            const inv = row.find("td:eq(6) button").text().toLowerCase().trim();
 
+            const matchSearch = !filters.search || name.includes(filters.search);
             const matchYear = filters.year === "all" || year === filters.year;
-            const matchAFS = filters.afs === "all" || (filters.afs === "completed" && afsStatus === "completed") || (filters.afs === "incomplete" && afsStatus === "incomplete");
-            const matchITR = filters.itr14 === "all" || (filters.itr14 === "completed" && itr14Status === "completed") || (filters.itr14 === "incomplete" && itr14Status === "incomplete");
-            const matchINV = filters.invoice === "all" || (filters.invoice === "invoiced" && invoiceStatus === "invoiced") || (filters.invoice === "pending" && invoiceStatus === "pending");
-            const allMatch = matchYear && matchAFS && matchITR && matchINV;
-            row.css("display", (allMatch) ? "" : "none");
-            if(allMatch) countFiltered++;
+            const matchAFS = filters.afs === "all" || afs === filters.afs;
+            const matchSEC = filters.sec === "all" || sec === filters.sec;
+            const matchITR = filters.itr14 === "all" || itr === filters.itr14;
+
+            // Special case for invoice status text
+            const matchINV = filters.invoice === "all" ||
+                (filters.invoice === "invoiced" && inv === "invoiced") ||
+                (filters.invoice === "pending" && inv === "pending");
+
+            const isVisible = matchSearch && matchYear && matchAFS && matchSEC && matchITR && matchINV;
+            row.toggle(isVisible);
+            if (isVisible) visibleCount++;
         });
-        updateRowCount(countFiltered, rows.length)
+
+        $("#filtered-row-count").html(`Showing <strong>${visibleCount}</strong> records`);
     }
 
-   
-    yearFilter.on("change", updateFilters);
-    afsFilter.on("change", updateFilters);
-    itr14Filter.on("change", updateFilters);
-    invoiceFilter.on("change", updateFilters);
+    // Listen for changes
+    [yearFilter, afsFilter, secFilter, itr14Filter, invoiceFilter].forEach(el => el.on("change", applyFilters));
+    searchInput.on("input", applyFilters);
 
-    // Apply filters initially
-    updateFilters();
+    applyFilters();
 });
 
-    function updateRowCount(visible, total) {
-        
-        let countDisplay = document.getElementById("filtered-row-count");
+/**
+ * Utility: Debounce function to limit how often a function executes.
+ */
+function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
 
-        countDisplay.textContent = `Showing ${visible} of ${total} records`;
-        countDisplay.style.margin = "10px 0";
-        countDisplay.style.fontWeight = "bold";
-        countDisplay.style.backgroundColor = '#f8f9fa';
-        countDisplay.style.padding = '8px 15px';
-        countDisplay.style.borderRadius = '4px';
-        countDisplay.style.margin = '10px 0';
-        countDisplay.style.fontWeight = 'bold';
-        countDisplay.style.borderLeft = '4px solid #0d6efd';
+/**
+ * Updates the "Total Found" header text to reflect filtered results.
+ */
+function updateRowCount(visible, total) {
+    const countDisplay = document.getElementById("filtered-row-count");
+    if (countDisplay) {
+        countDisplay.innerHTML = `Showing <strong>${visible}</strong> of <strong>${total}</strong> records`;
+
+        // Optional: Add a subtle highlight if results are filtered
+        if (visible < total) {
+            countDisplay.classList.add("text-primary");
+        } else {
+            countDisplay.classList.remove("text-primary");
+        }
     }
+}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if is_edit %}Edit{% else %}Add New{% endif %} Client Group</h2>
+    <hr>
+
+    {% if perms.client.add_clientgroup or perms.client.change_clientgroup %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <div class="text-danger">
+                        {{ form.name.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-outline-primary">
+                {% if is_edit %}Update Group{% else %}Save Group{% endif %}
+            </button>
+            <a href="{% url 'process' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    {% else %}
+        <div class="alert alert-danger">
+            You do not have permission to perform this action. Please contact your administrator.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
