@@ -1694,7 +1694,7 @@ def upload_client_groups(request):
             messages.error(request, "Please upload a valid CSV file.")
             return redirect('upload_client_groups')
 
-        data_set = csv_file.read().decode('UTF-8')
+        data_set = csv_file.read().decode('utf-8')
         io_string = io.StringIO(data_set)
         next(io_string)
         count = 0
