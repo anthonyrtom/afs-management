@@ -9,6 +9,19 @@ class JobTitle(models.Model):
     def __str__(self):
         return self.title
 
+    @classmethod
+    def search(cls, query):
+        """
+        Searches job titles using case-insensitive partial matching.
+
+        :param query: str (The search keyword)
+        :return: QuerySet of JobTitle objects
+        """
+        if not query or not str(query).strip():
+            return cls.objects.none()
+
+        return cls.objects.filter(title__icontains=str(query).strip())
+
     def save(self, *args, **kwargs):
         self.title = self.title.title()
         super().save(*args, **kwargs)
@@ -44,6 +57,11 @@ class CustomUser(AbstractUser):
     job_title = models.ForeignKey(
         JobTitle, on_delete=models.SET_NULL, null=True)
 
+    # class Meta:
+    #     ordering = ['first_name', 'last_name', 'email']
+    #     verbose_name = 'User'
+    #     verbose_name_plural = 'Users'
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"  # Use email to log in
@@ -57,3 +75,34 @@ class CustomUser(AbstractUser):
             if not self.pk:
                 self.is_active = False
         super().save(*args, **kwargs)
+
+    @classmethod
+    def filter_by_status_and_job(cls, is_active=None, job_title=None, get_full_name=False):
+        """
+        Filters CustomUser records by active status and job title.
+
+        :param is_active: bool (True for active only, False for inactive only, None for all)
+        :param job_title: int (JobTitle ID) or str (JobTitle title)
+        :param get_full_name: bool (If True, returns a list of full names instead of a QuerySet)
+        :return: QuerySet of CustomUser OR list of full name strings
+        """
+        queryset = cls.objects.all().order_by('first_name', 'last_name')
+
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active)
+
+        if job_title is not None:
+            if isinstance(job_title, int) or (isinstance(job_title, str) and job_title.isdigit()):
+                queryset = queryset.filter(job_title_id=int(job_title))
+            elif isinstance(job_title, str):
+                queryset = queryset.filter(
+                    job_title__title__iexact=job_title.strip())
+
+        if get_full_name:
+            # Returns full names; falls back to email if first/last name are blank
+            return [
+                user.get_full_name() or user.email
+                for user in queryset
+            ]
+
+        return queryset

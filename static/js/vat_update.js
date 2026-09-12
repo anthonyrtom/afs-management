@@ -31,17 +31,19 @@ function getAjaxUrls() {
 
 function sendUpdate(clientId, field, value, updateStatusURL, clientName) {
     let headerObject = null;
-    if (field == "submitted"){
+    if (field == "submitted") {
         headerObject = document.querySelector(".submit-label");
     }
-    else if(field == "client_notified"){
+    else if (field == "client_notified") {
         headerObject = document.querySelector(".client-notified-label");
     }
-    else if(field == "paid"){
+    else if (field == "paid") {
         headerObject = document.querySelector(".paid-label");
     }
 
-    contentList = headerObject.textContent.split(" ");
+    if (!headerObject) return; // Prevent errors if header element does not exist
+
+    const contentList = headerObject.textContent.trim().split(" ");
     fetch(updateStatusURL, {
         method: "POST",
         headers: {
@@ -50,25 +52,21 @@ function sendUpdate(clientId, field, value, updateStatusURL, clientName) {
         },
         body: new URLSearchParams({ client_id: clientId, field: field, value: value })
     })
-    .then(res => res.json())
-    .then(data => {
-       
-        if (data.success) {
-            showToast(`Updated ${field} for client ${clientName}`);
-            if(value == true)
-                newAmount = parseInt(contentList[0]) + 1;
-            else
-                newAmount = parseInt(contentList[0]) - 1;
-            newLabel = String(newAmount) + " " + contentList[1] + " " + contentList[2];
-            headerObject.textContent = newLabel;
-        } else {
-            showToast(`Failed: ${data.error}`, false);
-        }
-    })
-    .catch(err => {
-        console.error("AJAX error:", err);
-        showToast("Failed to update: " + err, false);
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Updated ${field} for client ${clientName}`);
+                let newAmount = value ? parseInt(contentList[0]) + 1 : parseInt(contentList[0]) - 1;
+                let newLabel = String(newAmount) + " " + contentList[1] + " " + contentList[2];
+                headerObject.textContent = newLabel;
+            } else {
+                showToast(`Failed: ${data.error}`, false);
+            }
+        })
+        .catch(err => {
+            console.error("AJAX error:", err);
+            showToast("Failed to update: " + err, false);
+        });
 }
 
 function sendCommentUpdate(clientId, comment, updateCommentURL, clientName) {
@@ -80,15 +78,15 @@ function sendCommentUpdate(clientId, comment, updateCommentURL, clientName) {
         },
         body: new URLSearchParams({ client_id: clientId, comment: comment })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showToast(`Save successful for client ${clientName}`);
-        } else {
-            showToast(`Failed: ${data.error}`, false);
-        }
-    })
-    .catch(err => showToast("Failed to update comment: " + err, false));
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Save successful for client ${clientName}`);
+            } else {
+                showToast(`Failed: ${data.error}`, false);
+            }
+        })
+        .catch(err => showToast("Failed to update comment: " + err, false));
 }
 
 function bindFieldCheckboxes(updateStatusURL) {
@@ -110,17 +108,11 @@ function bindCommentButtons(updateCommentURL) {
     });
 }
 
-function getLabel(elementText, incrementVal = true){
-    const elementList = elementText.split(" ");
+function getLabel(elementText, incrementVal = true) {
+    const elementList = elementText.trim().split(" ");
     const firstElement = elementList[0];
-    let newElement;
-    let finalLabel;
-    if(incrementVal == true)
-        newElement = parseInt(firstElement) + 1;
-    else
-        newElement = parseInt(firstElement) - 1;
-    finalLabel = String(newElement) + " " + elementList[1] + " " + elementList[2];
-    return finalLabel;
+    let newElement = incrementVal ? parseInt(firstElement) + 1 : parseInt(firstElement) - 1;
+    return String(newElement) + " " + elementList[1] + " " + elementList[2];
 }
 
 function bindMarkComplete(updateStatusURL) {
@@ -129,14 +121,23 @@ function bindMarkComplete(updateStatusURL) {
             const clientId = this.dataset.clientId;
             const checked = this.checked;
             const clientName = this.dataset.clientName;
+
             let submittedLabel = document.querySelector(".submit-label");
             let clientNotifiedLabel = document.querySelector(".client-notified-label");
             let paidLabel = document.querySelector(".paid-label");
-            
-            const fields = ['submitted', 'client_notified', 'paid'];
+
+            // Only update paid field if the paid input exists on the page
+            const fields = ['submitted', 'client_notified'];
+            if (document.querySelector(`[data-client-id='${clientId}'][data-field='paid']`)) {
+                fields.push('paid');
+            }
+
+            const payload = new URLSearchParams({ client_id: clientId });
+
             fields.forEach(field => {
                 const box = document.querySelector(`[data-client-id='${clientId}'][data-field='${field}']`);
                 if (box) box.checked = checked;
+                payload.append(field, String(checked));
             });
 
             fetch(updateStatusURL, {
@@ -145,25 +146,21 @@ function bindMarkComplete(updateStatusURL) {
                     'X-CSRFToken': getCSRFToken(),
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: new URLSearchParams({
-                    client_id: clientId,
-                    submitted: String(checked),
-                    client_notified: String(checked),
-                    paid: String(checked)
+                body: payload
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(`Marked all as ${checked ? 'complete' : 'incomplete'} for client ${clientName}`);
+
+                        if (submittedLabel) submittedLabel.textContent = getLabel(submittedLabel.textContent, checked);
+                        if (clientNotifiedLabel) clientNotifiedLabel.textContent = getLabel(clientNotifiedLabel.textContent, checked);
+                        if (paidLabel) paidLabel.textContent = getLabel(paidLabel.textContent, checked);
+                    } else {
+                        showToast(`Failed: ${data.error}`, false);
+                    }
                 })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(`Marked all as ${checked ? 'complete' : 'incomplete'} for client ${clientName}`);
-                    submittedLabel.textContent = getLabel(submittedLabel.textContent,checked);
-                    clientNotifiedLabel.textContent = getLabel(clientNotifiedLabel.textContent,checked);
-                    paidLabel.textContent = getLabel(paidLabel.textContent,checked);
-                } else {
-                    showToast(`Failed: ${data.error}`, false);
-                }
-            })
-            .catch(err => showToast("Failed to update: " + err, false));
+                .catch(err => showToast("Failed to update: " + err, false));
         });
     });
 }
@@ -177,34 +174,33 @@ function debounce(func, delay) {
         }, delay);
     };
 }
+
 function setupFiltering() {
     const nameInput = document.querySelector("input[name='search']");
-    
-    if (!nameInput) return; 
-    
+    if (!nameInput) return;
+
     function applyFilters() {
         const name = nameInput.value.toLowerCase().trim();
         const table = document.querySelector("table.table");
-        
         if (!table) return;
-    
-        const rows = table.querySelectorAll("tbody tr:not(:first-child)");
+
+        const rows = table.querySelectorAll("tbody tr.data-row");
         let rowsCounter = 0;
         rows.forEach(row => {
-            const nameCell = row.querySelector("td:nth-child(2) a"); 
+            const nameCell = row.querySelector("td:nth-child(2) a");
             if (!nameCell) return;
-            
+
             const matchName = !name || nameCell.textContent.toLowerCase().includes(name);
             row.style.display = matchName ? "" : "none";
-            if(matchName) rowsCounter++;
+            if (matchName) rowsCounter++;
         });
-        updateRowCount(rowsCounter, rows.length);
+        if (typeof updateRowCount === "function") {
+            updateRowCount(rowsCounter, rows.length);
+        }
     }
     setTimeout(applyFilters, 0);
-    
     nameInput.addEventListener("input", debounce(applyFilters, 300));
 }
-
 
 document.addEventListener("DOMContentLoaded", function () {
     const { updateStatusURL, updateCommentURL } = getAjaxUrls();

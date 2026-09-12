@@ -44,6 +44,11 @@
                     
                     {{form.radio_option}}
                 </div>
+                <div class="col-md-4 mt-4 ms-auto">
+                    
+                    {{form.is_completion_stage.label}}
+                    {{form.is_completion_stage}}
+                </div>
             </div>
             <div class="row g-3 mt-2">
                 <div class="col-md-6 mt-2">
@@ -73,7 +78,9 @@
                     <td></td>
                     <td class="submit-label">{{ metrics.submitted }} of {{ count }}</td>
                     <td class="client-notified-label">{{ metrics.client_notified }} of {{ count }}</td>
-                    <td class="paid-label">{{ metrics.paid }} of {{ count }}</td>
+                    {% if is_payment_stage %}
+                        <td class="paid-label">{{ metrics.paid }} of {{ count }}</td>
+                    {% endif %}
                     <td colspan="2"></td>
                 </tr>
 
@@ -90,10 +97,11 @@
                         <td>
                             <input type="checkbox" class="update-field" data-field="client_notified" data-client-id="{{ client.id }}" data-client-name="{{client.client.name}}"{% if client.client_notified %}checked{% endif %} {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>
                         </td>
-                        <td>
-                            <input type="checkbox" class="update-field" data-field="paid" data-client-id="{{ client.id }}" data-client-name="{{client.client.name}}" {% if client.paid %}checked{% endif %} {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>
-                        </td>
-
+                        {% if is_payment_stage %}
+                            <td>
+                                <input type="checkbox" class="update-field" data-field="paid" data-client-id="{{ client.id }}" data-client-name="{{client.client.name}}" {% if client.paid %}checked{% endif %} {% if not perms.client.change_vatsubmissionhistory %} disabled {% endif %}>
+                            </td>
+                        {% endif %}
                         <td>
                             <textarea class="form-control update-comment" data-client-id="{{ client.id }}" data-client-name="{{ client.client.name }}" rows="2">{{ client.comment|default_if_none:'' }}</textarea>
                         </td>

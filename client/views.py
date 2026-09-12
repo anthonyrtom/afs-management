@@ -24,7 +24,7 @@ from django.views import View
 from . models import Client, FinancialYear, ClientType, VatCategory, VatSubmissionHistory, Service, ClientService, ClientCipcReturnHistory, ClientProvisionalTax, ClientGroup
 from utilities.helpers import construct_client_dict, calculate_unique_days_from_dict, calculate_max_days_from_dict, get_client_model_fields, export_to_csv, get_optional_fields_for_client
 from users.models import CustomUser
-from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  VatClientsPeriodProcess, ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm, CreateGroupForm
+from . forms import ClientFinancialYear, UserSearchForm, VatClientSearchForm,  ClientFinancialYearProcessForm, CreateandViewVATForm,  FilterByServiceForm, ClientFilter, FilterFinancialClient, FilterAllFinancialClient, BookServiceForm, FinancialProductivityForm, CreateUpdateProvCipcForm, ClientServiceForm, VatClientPeriodUpdateForm, CreateGroupForm
 
 
 @login_required
@@ -618,70 +618,6 @@ def create_or_update_vat(request):
         return render(request, "client/create_or_view_vat.html", {"created_clients": created_clients, "count": count, "headers": headers})
     return render(request, "client/create_or_view_vat.html", {"form": form})
 
-# deprecated
-# @login_required
-# def process_vat_clients_for_period(request):
-#     """Handles form submission and displays filtered VAT clients."""
-#     form = VatClientsPeriodProcess(request.GET or None)
-
-#     if form.is_valid():
-#         client = form.cleaned_data['client']
-#         year = form.cleaned_data['year']
-#         month = form.cleaned_data['month']
-#         accountant = form.cleaned_data['accountant']
-#         radio_option = form.cleaned_data["radio_option"]
-
-#         vat_clients = []
-#         if radio_option == "complete":
-#             vat_clients = VatSubmissionHistory.objects.filter(
-#                 year=year, submitted=True, client_notified=True, paid=True).order_by("client__name")
-#         elif radio_option == "incomplete":
-#             vat_clients = VatSubmissionHistory.objects.filter(
-#                 year=year, submitted=False, client_notified=False, paid=False).order_by("client__name")
-#         else:
-#             vat_clients = VatSubmissionHistory.objects.filter(
-#                 year=year).order_by("client__name")
-
-#         if client and client != "all":
-#             vat_clients = vat_clients.filter(client=client)
-#         if month and month != "all":
-#             month = month.lower()
-#             month = settings.MONTHS_LIST.index(month) + 1
-#             vat_clients = vat_clients.filter(month=month)
-#         if accountant:
-#             vat_clients = vat_clients.filter(client__accountant=accountant)
-#         metrics = {}
-#         metrics["submitted"] = len(vat_clients.filter(submitted=True))
-#         metrics["client_notified"] = len(
-#             vat_clients.filter(client_notified=True))
-#         metrics["paid"] = len(vat_clients.filter(paid=True))
-
-#         headers = ["Mark Complete", "Name", "Period", "Submitted",
-#                    "Client Notified", "Paid", "Comment", "Update Comment"]
-#         search_query = request.POST.get("search")
-#         if search_query:
-#             vat_clients = vat_clients.filter(
-#                 client__name__icontains=search_query)
-#         if request.GET.get("export") == "csv":
-#             headers = ["Name", "Registration Number", "Internal ID",
-#                        "Year", "Month", "Submitted", "Client Notified", "Client Paid", "Comment", "Marked Notified by", "Marked Submitted By", "Marked Paid By", "Date Submitted"]
-#             rows = [
-#                 [c.client.get_client_full_name(), c.client.vat_reg_number,
-#                  c.client.internal_id_number, c.year.the_year, c.month.name, c.submitted, c.client_notified, c.paid, c.comment, c.marked_notified_by, c.marked_submitted_by, c.marked_paid_by, c.date_marked_submitted]
-#                 for c in vat_clients
-#             ]
-#             return export_to_csv(f"vat_submission_{year}0{month}.csv", headers, rows)
-
-#         count = len(vat_clients)
-#         return render(request, "client/vat_clients_list.html", {
-#             "clients": vat_clients,
-#             "headers": headers, "count": count,
-#             "metrics": metrics,
-#             "form": form,
-#         })
-
-#     return render(request, "client/vat_clients_form.html", {"form": form})
-
 
 @login_required
 def update_vat_status_submission(request):
@@ -694,6 +630,7 @@ def update_vat_status_submission(request):
         month = form.cleaned_data['month']
         accountant = form.cleaned_data['accountant']
         radio_option = form.cleaned_data["radio_option"]
+        is_payment_stage = form.cleaned_data.get("is_completion_stage", False)
 
         client_type = list(map(int, client_type))
         year = int(year)
@@ -705,13 +642,24 @@ def update_vat_status_submission(request):
             year=fin_year, month=month_str)
 
         vat_clients = VatSubmissionHistory.objects.filter(
-            year=year, client__client_type_id__in=client_type, month=month).order_by("client__name")
+            year=year, client__client_type_id__in=client_type, month=month, client__is_active=True).order_by("client__name")
         if radio_option == "complete":
-            vat_clients = vat_clients.filter(
-                submitted=True, client_notified=True, paid=True)
+            if is_payment_stage:
+                vat_clients = vat_clients.filter(
+                    submitted=True, client_notified=True, paid=True)
+            else:
+                vat_clients = vat_clients.filter(
+                    submitted=True, client_notified=True)
+
         elif radio_option == "incomplete":
-            vat_clients = vat_clients.filter(
-                year=year, submitted=False, client_notified=False, paid=False)
+            if is_payment_stage:
+                vat_clients = vat_clients.filter(
+                    Q(submitted=False) | Q(client_notified=False) | Q(paid=False)
+                )
+            else:
+                vat_clients = vat_clients.filter(
+                    Q(submitted=False) | Q(client_notified=False)
+                )
 
         if "None" in accountant:
             accountant_ids_list = [int(aid)
@@ -731,8 +679,14 @@ def update_vat_status_submission(request):
             vat_clients.filter(client_notified=True))
         metrics["paid"] = len(vat_clients.filter(paid=True))
 
-        headers = ["Mark Complete", "Name", "Period", "Submitted",
-                   "Client Notified", "Paid", "Comment", "Update Comment"]
+        headers = None
+        if is_payment_stage:
+            headers = ["Mark Complete", "Name", "Period", "Submitted",
+                       "Client Notified", "Paid", "Comment", "Update Comment"]
+        else:
+            headers = ["Mark Complete", "Name", "Period", "Submitted",
+                       "Client Notified", "Comment", "Update Comment"]
+
         search_query = request.GET.get("search")
         if search_query:
             vat_clients = vat_clients.filter(
@@ -753,6 +707,7 @@ def update_vat_status_submission(request):
             "headers": headers, "count": count,
             "metrics": metrics,
             "form": form,
+            "is_payment_stage": is_payment_stage
         })
 
     return render(request, "client/vat_clients_form.html", {"form": form})
@@ -781,6 +736,7 @@ def ajax_update_vat_status(request):
     try:
         client = VatSubmissionHistory.objects.get(id=client_id)
 
+        # Single field update
         if "field" in request.POST and "value" in request.POST:
             field_name = request.POST.get("field")
             value = request.POST.get("value") == 'true'
@@ -799,6 +755,7 @@ def ajax_update_vat_status(request):
             else:
                 return JsonResponse({"success": False, "error": "Invalid field name"})
 
+        # Bulk update (Mark complete) - dynamically process present fields
         updated_any_field_in_bulk = False
         for field in ['submitted', 'client_notified', 'paid']:
             if field in request.POST:
@@ -812,6 +769,7 @@ def ajax_update_vat_status(request):
                     client.marked_notified_by = request.user
                 elif field == 'paid':
                     client.marked_paid_by = request.user
+
         if updated_any_field_in_bulk:
             client.save()
             return JsonResponse({"success": True})
@@ -850,20 +808,6 @@ def update_client_financial(request, financial_year_id):
         return JsonResponse({'success': False, 'error': 'Record not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-# deprecated
-# @login_required
-# @permission_required("client.change_clientfinancialyear", raise_exception=True)
-# def create_clients_for_financial_year(request):
-#     form = ClientFinancialYearProcessForm(request.POST or None)
-#     if form.is_valid():
-#         year = form.cleaned_data["financial_year"]
-#         created_clients = ClientFinancialYear.setup_clients_afs_for_year(
-#             year.the_year)
-#         messages.success(
-#             request, f"{len(created_clients)} created or returned")
-#         return redirect(reverse("process"))
-#     return render(request, "client/created_financial_years_form.html", {"form": form})
 
 
 class ClientDetailView(LoginRequiredMixin, DetailView):
@@ -986,9 +930,6 @@ def progress_update_financials(request, client_id):
             client_financial_year.secretarial_finish_date = end_date if end_date else None
         client_financial_year.save()
     except Exception as e:
-        # exc_tp, exc_obj, exc_tb = sys.exc_info()
-        # line_number = exc_tb.tb_lineno
-        # print(line_number)
         return JsonResponse({"success": False, "message": "Could not update"})
 
     return JsonResponse({"success": True, "message": "Was updated successfully"})

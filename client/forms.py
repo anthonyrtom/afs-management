@@ -67,8 +67,10 @@ class ClientFilter(forms.Form):
             title="Accountant").first()
         accountant_choices = [("all", "ALL")]
         if accountant_job_title:
-            accountant_users = CustomUser.objects.filter(
-                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            # accountant_users = CustomUser.objects.filter(
+            #     job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_users = CustomUser.filter_by_status_and_job(
+                True, accountant_job_title.id)
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
         self.fields['accountant'].choices = accountant_choices
@@ -214,8 +216,10 @@ class VatClientSearchForm(forms.Form):
             title="Accountant").first()
         accountant_choices = [("all", "ALL")]
         if accountant_job_title:
-            accountant_users = CustomUser.objects.filter(
-                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            # accountant_users = CustomUser.objects.filter(
+            #     job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_users = CustomUser.filter_by_status_and_job(
+                True, accountant_job_title.id)
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
         self.fields['accountant'].choices = accountant_choices
@@ -228,49 +232,6 @@ class VatClientSearchForm(forms.Form):
         # Populate Months
         self.fields['month'].choices = [("all", "ALL")] + \
             [(month, month.upper()) for month in settings.MONTHS_LIST]
-
-
-class VatClientsPeriodProcess(forms.Form):
-    client = forms.ModelChoiceField(
-        queryset=Client.objects.filter(
-            vat_category__isnull=False).order_by("name"),
-        required=False,
-        empty_label="All VAT Vendors",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    year = forms.ModelChoiceField(
-        queryset=FinancialYear.objects.all().order_by("-the_year"),
-        required=True,
-        empty_label="Select a year",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    months_list = settings.MONTHS_LIST
-    choices = [("all", "ALL")] + [(month, month.upper())
-                                  for month in months_list]
-
-    month = forms.ChoiceField(
-        choices=choices,
-        required=False,
-        widget=forms.Select(attrs={"class": "form-control"}),
-        label="VAT Period"
-    )
-
-    accountant = forms.ModelChoiceField(
-        queryset=CustomUser.objects.filter(job_title__title="Accountant"),
-        required=False,
-        empty_label="All Accountants",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-
-    radio_choices = [("all", "All"), ("complete",
-                                      "Completed"), ("incomplete", "Incomplete")]
-    radio_option = forms.ChoiceField(
-        label="Select",
-        choices=radio_choices,
-        widget=forms.RadioSelect(
-            attrs={"class": "form-check-inline"}),
-        initial="all",
-    )
 
 
 class VatClientPeriodUpdateForm(forms.Form):
@@ -328,6 +289,13 @@ class VatClientPeriodUpdateForm(forms.Form):
         initial="all",
     )
 
+    is_completion_stage = forms.BooleanField(
+        label="Payment stage",
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client_type'].choices = [
@@ -341,8 +309,10 @@ class VatClientPeriodUpdateForm(forms.Form):
 
         accountant_choices = [("None", "Not Assigned")]
         if accountant_job_title:
-            accountant_users = CustomUser.objects.filter(
-                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            # accountant_users = CustomUser.objects.filter(
+            #     job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_users = CustomUser.filter_by_status_and_job(
+                True, accountant_job_title.id)
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
             self.fields['accountant'].choices = accountant_choices
@@ -662,8 +632,10 @@ class BookServiceForm(forms.Form):
 
         accountant_choices = [("None", "Not Assigned")]
         if accountant_job_title:
-            accountant_users = CustomUser.objects.filter(
-                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            # accountant_users = CustomUser.objects.filter(
+            #     job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_users = CustomUser.filter_by_status_and_job(
+                True, accountant_job_title.id)
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
             self.fields['accountant'].choices = accountant_choices
