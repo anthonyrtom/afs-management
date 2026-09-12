@@ -94,8 +94,11 @@ class ClientAddForm(forms.ModelForm):
             title="Accountant").first()
         try:
             if accountant_job_title:
-                self.fields['accountant'].queryset = CustomUser.objects.filter(
-                    job_title=accountant_job_title)
+                # self.fields['accountant'].queryset = CustomUser.objects.filter(
+                #     job_title=accountant_job_title)
+                self.fields['accountant'].queryset = CustomUser.filter_by_status_and_job(
+                    True, accountant_job_title.id)
+
         except:
             pass
 
@@ -548,8 +551,10 @@ class FilterAllFinancialClient(forms.Form):
             title="Accountant").first()
         accountant_choices = [("None", "Not Assigned")]
         if accountant_job_title:
-            accountant_users = CustomUser.objects.filter(
-                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            # accountant_users = CustomUser.objects.filter(
+            #     job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_users = CustomUser.filter_by_status_and_job(
+                True, accountant_job_title.id)
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
         self.fields['accountant'].choices = accountant_choices
@@ -673,8 +678,10 @@ class FilterFinancialClient(forms.Form):
 
         accountant_choices = [("all", "ALL")]
         if accountant_job_title:
-            accountant_users = CustomUser.objects.filter(
-                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            # accountant_users = CustomUser.objects.filter(
+            #     job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_users = CustomUser.filter_by_status_and_job(
+                True, accountant_job_title.id)
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
             self.fields['accountant'].choices = accountant_choices
@@ -749,8 +756,10 @@ class FinancialProductivityForm(forms.Form):
 
         accountant_choices = [("None", "Not Assigned")]
         if accountant_job_title:
-            accountant_users = CustomUser.objects.filter(
-                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            # accountant_users = CustomUser.objects.filter(
+            #     job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_users = CustomUser.filter_by_status_and_job(
+                True, accountant_job_title.id)
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
             self.fields['accountant'].choices = accountant_choices
@@ -837,8 +846,10 @@ class CreateUpdateProvCipcForm(forms.Form):
 
         accountant_choices = [("None", "Not Assigned")]
         if accountant_job_title:
-            accountant_users = CustomUser.objects.filter(
-                job_title=accountant_job_title).order_by('first_name', 'last_name')
+            # accountant_users = CustomUser.objects.filter(
+            #     job_title=accountant_job_title).order_by('first_name', 'last_name')
+            accountant_users = CustomUser.filter_by_status_and_job(
+                True, accountant_job_title.id)
             accountant_choices.extend(
                 [(user.id, user.get_full_name() or user.email) for user in accountant_users])
             self.fields['accountant'].choices = accountant_choices
