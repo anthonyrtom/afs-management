@@ -96,24 +96,26 @@
                 Update/View (CIPC AR/ Prov Tax) progress
               </a>
             </li>
-            {% if user.is_superuser %}
+             {% comment %}
+              {% if user.is_superuser %}
             <li class="list-group-item">
-              <a
-                href="{% url 'upload-afs-csv' %}"
-                class="list-group-item list-group-item-action list-group-item-primary"
-              >
-                Upload AFSs CSVs
-              </a>
-            </li>
-            <li class="list-group-item">
-              <a
-                href="{% url 'upload_client_groups' %}"
-                class="list-group-item list-group-item-action list-group-item-primary"
-              >
-                Upload Groups
-              </a>
-            </li>
-            {% endif %}
+                <a
+                  href="{% url 'upload-afs-csv' %}"
+                  class="list-group-item list-group-item-action list-group-item-primary"
+                >
+                  Upload AFSs CSVs
+                </a>
+              </li>
+              <li class="list-group-item">
+                <a
+                  href="{% url 'upload_client_groups' %}"
+                  class="list-group-item list-group-item-action list-group-item-primary"
+                >
+                  Upload Groups
+                </a>
+              </li> 
+              {% endif %} 
+            {% endcomment %}
           </ul>
         </div>
       </div>
